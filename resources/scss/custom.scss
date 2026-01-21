@@ -1,0 +1,43 @@
+blockquote {
+    margin: 0 0 20px;
+    padding: 10px 20px;
+    font-size: 17.5px;
+    border-left: 5px solid $primary !important;
+    border: 1px solid rgba(120, 130, 140, .13);
+}
+
+#profile_display {
+    display: block;
+    width: 20%;
+    margin: 10px auto;
+    border-radius: 50%;
+}
+
+#toast-container {
+    .toast-success {
+        background-color: $success !important;
+        opacity: 1 !important;
+
+        .toast-progress {
+            background-color: $green-100 !important;
+        }
+    }
+
+    .toast-danger,
+    .toast-error {
+        background-color: $danger !important;
+        opacity: 1 !important;
+
+        .toast-progress {
+            background-color: $red-100 !important;
+        }
+    }
+
+}
+
+.dataTables_filter {
+    label {
+        display: flex;
+        align-items: center;
+    }
+}

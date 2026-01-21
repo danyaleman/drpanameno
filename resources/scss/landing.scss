@@ -1,0 +1,458 @@
+/*
+Template Name: Skote - Admin & Dashboard Template
+Author: Themesbrand
+Version: 4.1.0.
+Website: https://themesbrand.com/
+Contact: themesbrand@gmail.com
+File: Icons Css File
+*/
+
+// Plugins
+
+.landing-page {
+    p {
+        font-size: 15px;
+    }
+
+    .btn {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+
+    .navbar {
+        padding: 0 20px;
+        overflow: hidden;
+
+        &.nav-sticky {
+            padding: 0 20px;
+            background-color: $white;
+            box-shadow: 0px 0px 10px -1px $gray-400;
+
+            .nav-link {
+                &:hover {
+                    color: $primary;
+                }
+
+                &.active {
+                    color: $primary;
+                }
+
+                &:active {
+                    color: $primary;
+                }
+            }
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            color: $primary;
+        }
+
+        .navbar-nav {
+            .nav-link {
+                font-size: 15px;
+                padding: 10px;
+
+                @media (max-width:991px) {
+                    padding: 10px;
+                }
+
+                &:hover {
+                    color: $primary;
+                }
+
+                &:active {
+                    color: $primary;
+                }
+            }
+        }
+
+        .nav-btn {
+            @media (max-width:991px) {
+                margin-bottom: 10px;
+            }
+        }
+    }
+
+    // hero-section scss 
+
+    .hero-section {
+        overflow: hidden;
+        padding-bottom: 0px;
+
+        .hero-content {
+            padding-bottom: 100px;
+        }
+
+        .img-width {
+            max-width: 115% !important;
+
+            @media (max-width: 991px) {
+                max-width: 100% !important;
+            }
+
+        }
+
+        .img-part {
+            position: relative;
+            background-position: center center;
+
+            &::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                height: 360px;
+                width: 360px;
+                bottom: 70%;
+                background-color: $primary;
+                margin: 0 auto;
+                border-radius: 50%;
+                transform: translateY(50%);
+                transition: all 0.5s;
+                z-index: -1;
+
+                @media (max-width: 568px) {
+                    height: 200px;
+                    width: 200px;
+                }
+            }
+
+        }
+
+        .img-text {
+            position: absolute;
+            background-color: $light;
+            top: -25px;
+            left: -45px;
+
+            @media (max-width:991px) {
+                display: none;
+            }
+
+            i {
+                font-size: 40px;
+                color: $primary;
+                background-color: $white;
+                padding: 6px 12px;
+                border-radius: 10px;
+            }
+        }
+
+        .img-text-1 {
+            position: absolute;
+            display: flex;
+            top: -100px;
+            left: 220px;
+            border-radius: 0 !important;
+            background-color: $light;
+
+            @media (max-width:991px) {
+                display: none;
+            }
+
+            i {
+                font-size: 40px;
+                color: $primary;
+                border-radius: 10px;
+            }
+        }
+
+        .img-text-2 {
+            position: absolute;
+            display: flex;
+            top: 0;
+            left: 90%;
+            background-color: $light;
+
+            i {
+                font-size: 40px;
+                color: $primary;
+                border-radius: 10px;
+            }
+            @media (max-width:1147px) {
+                display: none;
+            }
+
+        }
+
+    }
+
+    // about-section scss 
+    .about-section {
+        .icon-text {
+            background-color: $white;
+            border-radius: 5px;
+
+            i {
+                font-size: 40px;
+                color: $primary;
+                padding: 10px 18px;
+                border-radius: 50%;
+                background-color: $light;
+            }
+        }
+    }
+
+    // services-section scss 
+    .services-section {
+        .services-content {
+            .content-main {
+                i {
+                    font-size: 40px;
+                    color: $primary;
+                }
+
+                a {
+                    font-size: 14px;
+                }
+            }
+        }
+
+    }
+
+    // features section scss 
+    .features-section {
+        padding-top: 80px;
+
+        .features-list {
+            i {
+                font-size: 30px;
+                color: $primary;
+            }
+        }
+
+        .img-text-2 {
+            position: absolute;
+            background-color: $light;
+            top: 180px;
+            left: -77px;
+
+            @media (max-width:1147px) {
+                display: none;
+            }
+
+            i {
+                font-size: 40px;
+                color: $primary;
+                background-color: $white;
+                padding: 6px 12px;
+                border-radius: 10px;
+            }
+        }
+    }
+
+    // team-section scss 
+    .team-section {
+        .team-content {
+            .doctor-img {
+                background-color: $light;
+                border-radius: 10px;
+
+                img {
+                    border-radius: 10px;
+                }
+            }
+        }
+
+        .swiper-slide {
+            p {
+                font-size: 14px;
+                margin-bottom: 0px;
+            }
+        }
+    }
+
+    .department-section {
+        .department-content {
+            i {
+                font-size: 50px;
+                color: $primary;
+            }
+
+            h5 {
+                color: $dark;
+            }
+
+            &:hover {
+                background-color: $primary !important;
+
+                h5 {
+                    color: $light;
+                }
+
+                i {
+                    color: $white;
+                }
+            }
+        }
+    }
+
+    // faq-section scss 
+    .faq-section {
+        .accordion {
+            .accordion-header {
+                .accordion-button {
+                    font-size: 16px;
+                }
+            }
+
+            .accordion-body {
+                font-size: 14px;
+            }
+
+            .accordion-button:not(.collapsed) {
+                background-color: $primary;
+                color: $light;
+            }
+
+            .accordion-button:not(.collapsed):after {
+                filter: brightness(0) invert(1);
+                opacity: 0.9;
+            }
+        }
+    }
+
+    // appoiment-section scss 
+    .appoiment-section {
+        .form-part {
+            .form-control {
+                padding: 14px;
+            }
+        }
+
+        .form-select {
+            padding: 14px;
+        }
+
+    }
+
+    .testimonial-section {
+        .testi-box {
+            i {
+                color: $warning;
+            }
+        }
+    }
+
+    // footer-section scss 
+    .footer-section {
+        .brand-logo {
+            font-size: 24px;
+            color: $light;
+        }
+
+        h5 {
+            color: $light;
+            margin-bottom: 1.5rem;
+            margin-top: 1.3rem;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+
+            li {
+                margin: 10px 0;
+                font-size: 16px;
+
+                a {
+                    font-size: 14px;
+                    color: rgba($white, 0.7);
+
+                    &:hover {
+                        color: $light;
+                    }
+                }
+            }
+
+        }
+    }
+
+    // footer-copyright scss 
+    .footer-copyright {
+        background-color: #30353a;
+    }
+
+    .swiper {
+        width: 100%;
+        height: 100%;
+    }
+
+    .swiper-slide {
+        text-align: center;
+        font-size: 18px;
+        background: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .swiper-slide img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .swiper-pagination {
+        bottom: 0px !important;
+    }
+
+    .swiper-pagination-bullet-active {
+        background: $primary;
+    }
+
+    .testi-slider {
+        .swiper-pagination-bullets {
+            bottom: -10px;
+
+            .swiper-pagination-bullet {
+                width: 14px;
+                height: 5px;
+                border: none;
+                margin: 5px 7px;
+                border-radius: 20px;
+
+                &.swiper-pagination-bullet-active {
+                    background-color: $primary;
+                }
+            }
+        }
+    }
+
+    .swiper-btn {
+        .swiper-pagination-bullets {
+            bottom: -10px !important;
+
+            .swiper-pagination-bullet {
+                width: 14px;
+                height: 5px;
+                border: none;
+                margin: 5px 7px;
+                border-radius: 20px;
+
+                &.swiper-pagination-bullet-active {
+                    background-color: $primary;
+                }
+            }
+        }
+    }
+
+    .social-icon {
+        border: 2px solid #40434e;
+        border-radius: 50%;
+        color: #6b707d !important;
+        width: 36px;
+        height: 36px;
+        display: block;
+        font-size: 15px;
+        line-height: 32px;
+        text-align: center;
+        i{
+            &:hover{
+                color: $light;
+            }
+        }
+    }
+}

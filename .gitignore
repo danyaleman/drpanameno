@@ -29,3 +29,7 @@ Homestead.json
 
 # PHPUnit
 .phpunit.result.cache
+
+# Files to ignore but keep the directory
+/storage/*
+!/storage/.gitignore

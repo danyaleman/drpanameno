@@ -125,17 +125,9 @@ class PatientController extends Controller
                 'last_name' => 'required|alpha',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
-                'age' => 'required|numeric',
+                'birth_date' => 'required|date',
                 'address' => 'required|max:100',
                 'gender' => 'required',
-                'height' => 'required',
-                'b_group' => 'required',
-                'pulse' => 'required',
-                'allergy' => 'required',
-                'weight' => 'required|numeric',
-                'b_pressure' => 'required',
-                'respiration' => 'required',
-                'diet' => 'required',
                 'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
             if ($request->profile_photo != null) {
@@ -269,17 +261,9 @@ class PatientController extends Controller
                 'last_name' => 'required|alpha',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
-                'age' => 'required|numeric',
+                'birth_date' => 'required|date',
                 'address' => 'required|max:100',
                 'gender' => 'required',
-                'height' => 'required|numeric',
-                'b_group' => 'required',
-                'pulse' => 'required',
-                'allergy' => 'required',
-                'weight' => 'required|numeric',
-                'b_pressure' => 'required',
-                'respiration' => 'required',
-                'diet' => 'required',
                 'profile_photo'=>'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
             try {

@@ -108,6 +108,19 @@
                                                 </span>
                                             @enderror
                                         </div>
+                                         <div class="mb-3 col-md-12">
+                                            <label class="form-label">{{ __('Estado civil') }}</label>
+                                            <select class="form-control @error('marital_status') is-invalid @enderror"
+                                                name="marital_status">
+                                                <option value="">{{ __('Seleccione') }}</option>
+                                                @foreach (['soltero','casado','divorciado','viudo'] as $status)
+                                                    <option value="{{ $status }}"
+                                                        {{ old('marital_status', $patient->marital_status ?? '') == $status ? 'selected' : '' }}>
+                                                        {{ ucfirst($status) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>   
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
@@ -136,6 +149,27 @@
                                                 </span>
                                             @enderror
                                         </div>
+                                            <div class="col-md-12 mb-3">
+                                            <label class="form-label">{{ __('Ocupación') }}</label>
+                                            <input type="text"
+                                                class="form-control @error('occupation') is-invalid @enderror"
+                                                name="occupation"
+                                                value="{{ old('occupation', $patient->occupation ?? '') }}">
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">{{ __('Lugar de trabajo') }}</label>
+                                            <input type="text"
+                                                class="form-control @error('workplace') is-invalid @enderror"
+                                                name="workplace"
+                                                value="{{ old('workplace', $patient->workplace ?? '') }}">
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">{{ __('Referido por') }}</label>
+                                            <input type="text"
+                                                class="form-control"
+                                                name="referred_by"
+                                                value="{{ old('referred_by', $patient->referred_by ?? '') }}">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -155,17 +189,15 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Edad ') }}<span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control @error('age') is-invalid @enderror"
-                                                tabindex="4" name="age" id="patientAge" value="@if ($patient && $patient_info ){{ old('age', $patient_info->age) }}@elseif(old('age')){{ old('age') }}@endif"
-                                                placeholder="{{ __('Ingresar Edad') }}">
-                                            @error('age')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
+                                        <label class="form-label">{{ __('Fecha de nacimiento') }}</label>
+                                        <input type="date"
+                                            class="form-control @error('birth_date') is-invalid @enderror"
+                                            name="birth_date"
+                                            value="{{ old('birth_date', optional($patient->birth_date ?? null)->format('d-m-Y')) }}">
+                                        @error('birth_date')
+                                            <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
+                                        @enderror
+                                    </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
@@ -180,6 +212,13 @@
                                                     <strong>{{ $message }}</strong>
                                                 </span>
                                             @enderror
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">{{ __('Teléfono secundario') }}</label>
+                                            <input type="text"
+                                                class="form-control @error('phone_secondary') is-invalid @enderror"
+                                                name="phone_secondary"
+                                                value="{{ old('phone_secondary', $patient->phone_secondary ?? '') }}">
                                         </div>
                                     </div>
                                     <div class="row">
@@ -199,16 +238,71 @@
                                                 </span>
                                             @enderror
                                         </div>
+                                        <div class="col-md-12 mb-3">
+                                                <label class="form-label">{{ __('Contacto de emergencia') }}</label>
+                                                <input type="text"
+                                                    class="form-control"
+                                                    name="emergency_contact_name"
+                                                    value="{{ old('emergency_contact_name', $patient->emergency_contact_name ?? '') }}">
+                                            </div>
+
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label">{{ __('Teléfono de emergencia') }}</label>
+                                                <input type="text"
+                                                    class="form-control"
+                                                    name="emergency_contact_phone"
+                                                    value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone ?? '') }}">
+                                            </div>
                                     </div>
                                 </div>
                             </div>
+                            <blockquote class="mt-4">{{ __('Antecedentes del paciente') }}</blockquote>
+
+                        <div class="row">
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">{{ __('Antecedentes patológicos') }}</label>
+                                <textarea
+                                    class="form-control @error('pathological_history') is-invalid @enderror"
+                                    name="pathological_history"
+                                    rows="3"
+                                >{{ old('pathological_history', $patient->pathological_history ?? '') }}</textarea>
+                                @error('pathological_history')
+                                    <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">{{ __('Antecedentes no patológicos') }}</label>
+                                <textarea
+                                    class="form-control @error('non_pathological_history') is-invalid @enderror"
+                                    name="non_pathological_history"
+                                    rows="3"
+                                >{{ old('non_pathological_history', $patient->non_pathological_history ?? '') }}</textarea>
+                                @error('non_pathological_history')
+                                    <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">{{ __('Medicamentos y alergias') }}</label>
+                                <textarea
+                                    class="form-control @error('medications_allergies') is-invalid @enderror"
+                                    name="medications_allergies"
+                                    rows="3"
+                                >{{ old('medications_allergies', $patient->medications_allergies ?? '') }}</textarea>
+                                @error('medications_allergies')
+                                    <span class="invalid-feedback"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+
+                        </div>  
                             <blockquote>{{ __('Información Médica') }}</blockquote>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Altura ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Altura ') }}</label>
                                             <input type="text" class="form-control @error('height') is-invalid @enderror"
                                                 name="height" tabindex="9" value="@if ($patient && $patient_info && $medical_info){{ old('height', $medical_info->height) }}@elseif(old('height')){{ old('height') }}@endif"
                                                 id="patientHeight" placeholder="{{ __('Ingresar Altura en Centímetros') }}">
@@ -221,8 +315,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="mb-3 col-md-12">
-                                            <label for="formmessage">{{ __('Tipo de sangre ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label for="formmessage">{{ __('Tipo de sangre ') }}</label>
                                             <select class="form-control @error('b_group') is-invalid @enderror"
                                                 tabindex="11" name="b_group">
                                                 <option selected disabled>{{ __('-- Select Blood Group --') }}</option>
@@ -244,8 +337,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Pulso (BPM) ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Pulso (BPM) ') }}</label>
                                             <input type="text" class="form-control @error('pulse') is-invalid @enderror"
                                                 tabindex="13" name="pulse" value="@if ($patient && $patient_info && $medical_info){{ old('pulse', $medical_info->pulse) }}@elseif(old('pulse')){{ old('pulse') }}@endif"
                                                 id="patientPulse" placeholder="{{ __('Ingresar Pulso') }}">
@@ -258,8 +350,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Alergias ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Alergias ') }}</label>
                                             <input type="text" class="form-control @error('allergy') is-invalid @enderror"
                                                 tabindex="15" name="allergy" id="patientAllergy"
                                                 value="@if ($patient && $patient_info && $medical_info){{ old('allergy', $medical_info->allergy) }}@elseif(old('allergy')){{ old('allergy') }}@endif"
@@ -275,8 +366,7 @@
                                 <div class="col-md-6">
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Peso (lb) ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Peso (lb) ') }}</label>
                                             <input type="text" class="form-control @error('weight') is-invalid @enderror"
                                                 tabindex="10" name="weight" id="patientWeight"
                                                 value="@if ($patient && $patient_info && $medical_info){{ old('weight', $medical_info->weight) }}@elseif(old('weight')){{ old('weight') }}@endif" placeholder="{{ __('Enter Weight') }}">
@@ -289,8 +379,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Presión arterial ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Presión arterial ') }}</label>
                                             <input type="tel"
                                                 class="form-control @error('b_pressure') is-invalid @enderror"
                                                 tabindex="12" name="b_pressure" id="blood_pressure"
@@ -305,8 +394,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Notas ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Notas ') }}</label>
                                             <input type="tel"
                                                 class="form-control @error('respiration') is-invalid @enderror"
                                                 tabindex="14" name="respiration" id="patientRespiration"
@@ -321,8 +409,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">{{ __('Dieta especial ') }}<span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('Dieta especial ') }}</label>
                                             <select class="form-control @error('diet') is-invalid @enderror" tabindex="16"
                                                 name="diet">
                                                 <option selected disabled>{{ __('-- Select Diet --') }}</option>

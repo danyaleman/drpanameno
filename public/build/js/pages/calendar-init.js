@@ -75,14 +75,14 @@
                             var data = response.appointments;
                             var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>Sr.No</th>';
                             if (response.role == 'doctor') {
-                                list += '<th>Patient Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre de Paciente</th>';
+                                list += '<th>Numero de Telefono</th>';
                             } else if (response.role == 'patient') {
-                                list += '<th>Doctor Name</th>';
-                                list += '<th>Doctor Number</th>';
+                                list += '<th>Doctor</th>';
+                                list += '<th>Numero de Doctor</th>';
                             } else {
-                                list += '<th>Patient Name</th><th>Doctor Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre de Paciente</th><th>Nombre de Doctor</th>';
+                                list += '<th>Numero de Telefono</th>';
                             }
 
                             list += '<th>Time</th></tr></thead><tbody>';

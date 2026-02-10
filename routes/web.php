@@ -7,7 +7,7 @@ use App\Http\Controllers\RazorpayPaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\ArchivoController;
-
+use App\Http\Controllers\PatientController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -91,8 +91,8 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('today-appointment', 'AppointmentController@today_appointment');
     Route::get('patient-appointment', 'AppointmentController@patient_appointment');
     Route::get('/doctor/{id}/available-days', [DoctorController::class, 'availableDays']);
-
-
+    Route::post('patient/header-info', [PatientController::class, 'headerInfo'])->name('patient.header.info');
+    Route::post('patient-clinical-info',[PatientController::class, 'patientClinicalInfo'])->name('patient_clinical_info');
 
     // Revenue / Earning / calender
     Route::get('getMonthlyUsersRevenue', 'ReportController@getMonthlyUsersRevenue');

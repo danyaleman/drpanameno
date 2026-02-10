@@ -16,7 +16,7 @@ use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\DataTables;
-
+use Carbon\Carbon;
 
 class PatientController extends Controller
 {
@@ -242,6 +242,80 @@ class PatientController extends Controller
         else{
             return redirect('/dashboard')->with('error', 'Patient not found');
         }
+    }
+
+    public function patientClinicalInfo(Request $request)
+    {
+    // CAMBIO IMPORTANTE: Usamos where('user_id', ...) en lugar de find()
+    // Esto asume que el ID que viene del select es el del Usuario (Sentinel)
+    $patient = Patient::where('user_id', $request->patient_id)->first();
+
+    // Si no encontramos el perfil en la tabla patients, intentamos buscarlo como Usuario
+    // para al menos devolver el nombre, aunque falten antecedentes.
+    if (!$patient) {
+        // Opción A: Devolver error (como lo tenías)
+        return response()->json([
+            'isSuccess' => false,
+            'message' => 'Perfil de paciente no encontrado (Asegúrese que el usuario tenga perfil médico creado)'
+        ]);
+    }
+
+    // Buscamos las citas usando el user_id o patient_id según como guardes las citas.
+    // Asumiendo que en Appointment guardas el 'patient_id' como la ID de la tabla users:
+    $appointments = Appointment::where('appointment_for', $request->patient_id)->get(); 
+    // NOTA: Verifica si en tu tabla appointments la columna es 'patient_id' o 'appointment_for'
+    // En tu función 'show' usabas 'appointment_for', aquí lo ajusté para que coincida.
+
+    $options = '<option selected value="">--- Seleccionar Cita ---</option>';
+    foreach ($appointments as $appointment) {
+        $options .= '<option value="'.$appointment->id.'">'
+                . $appointment->appointment_date . ' ' . $appointment->time_slot .
+                '</option>';
+    }
+
+    $age = $patient->birth_date
+        ? Carbon::parse($patient->birth_date)->age
+        : null;
+
+    return response()->json([
+        'isSuccess' => true,
+        'options' => $options,
+        'patient' => [
+            // Asumiendo que first_name está en la tabla patients. 
+            // Si está en users, tendrías que hacer $patient->user->first_name
+            'name' => $patient->first_name.' '.$patient->last_name,
+            'info' => trim(
+                ($age ? $age.' años · ' : '') .
+                ($patient->occupation ?? '') .
+                ($patient->address ? ' · '.$patient->address : '')
+            ),
+            'pathological_history'     => $patient->pathological_history,
+            'non_pathological_history' => $patient->non_pathological_history,
+            'medications_allergies'    => $patient->medications_allergies,
+        ]
+    ]);
+    }
+
+    public function patientByAppointment(Request $request)
+    {
+        // Esta función hace básicamente lo mismo, la actualizamos para que no de error
+        return $this->patientClinicalInfo($request);
+    }
+
+    public function headerInfo(Request $request)
+    {
+        $patient = Patient::with('user')
+            ->findOrFail($request->patient_id);
+
+        return response()->json([
+            'name' => $patient->first_name . ' ' . $patient->last_name,
+            'phone' => $patient->user->mobile ?? '',
+            'email' => $patient->user->email ?? '',
+            'age' => $patient->birth_date
+                ? \Carbon\Carbon::parse($patient->birth_date)->age
+                : '—',
+            'address' => $patient->address
+        ]);
     }
 
     /**

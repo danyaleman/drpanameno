@@ -46,15 +46,15 @@
                                 <div class="col-md-12 mb-3">
                                     <label class="control-label">{{ __('Paciente ') }}<span
                                             class="text-danger">*</span></label>
-                                    <select class="form-control select2 @error('appointment_for') is-invalid @enderror"
-                                        name="appointment_for" id="patient">
+                                    <select class="form-control select2 @error('patient_id') is-invalid @enderror"
+                                        name="patient_id" id="patient">
                                         <option hidden selected disabled>{{ __('Seleccionar') }}</option>
                                         @foreach ($patients as $patient)
                                             <option value="{{ $patient->id }}">{{ $patient->first_name }}
                                                 {{ $patient->last_name }}</option>
                                         @endforeach
                                     </select>
-                                    @error('appointment_for')
+                                    @error('patient_id')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
@@ -62,7 +62,7 @@
                                 </div>
                             </div>
                         @else
-                            <input type="hidden" name="appointment_for" value="{{ $user->id }}">
+                            <input type="hidden" name="patient_id" value="{{ $user->id }}">
                         @endif
                         @if ($role != 'doctor')
                             <div class="row">

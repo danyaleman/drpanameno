@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Appointment;
 use App\Doctor;
+use App\Patient;
 use Illuminate\Http\Request;
 use App\Invoice;
 use App\InvoiceDetail;
@@ -79,8 +80,7 @@ class InvoiceController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('invoice.create')) {
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->get();
+            $patients = Patient::where('is_deleted', 0)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctor = $doctor_role->users()->with('roles')->get();
             return view('invoice.invoice-details', compact('user', 'role', 'patients', 'doctor'));
@@ -186,8 +186,7 @@ class InvoiceController extends Controller
         if ($user->hasAccess('invoice.edit')) {
             $user = Sentinel::getUser();
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->get();
+            $patients = Patient::where('is_deleted', 0)->get();
             $invoice_detail = Invoice::with('invoice_detail', 'patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('id', $id)->first();
             $patient_id = $invoice_detail->patient->id;
             $appointment = Appointment::where('appointment_for', $patient_id)->where('is_deleted', 0)->get();

@@ -40,7 +40,7 @@
                         <div class="row">
                             <div class="col-sm-4">
                                 <div class="avatar-md profile-user-wid mb-4">
-                                    <img src="@if ($patient->profile_photo != null){{ URL::asset('storage/images/users/' . $patient->profile_photo) }}@else{{ URL::asset('build/images/users/noImage.png') }}@endif" alt="{{ $patient->first_name }}"
+                                    <img src="@if ($patient->photo != null){{ URL::asset('storage/images/patients/' . $patient->photo) }}@else{{ URL::asset('build/images/users/noImage.png') }}@endif" alt="{{ $patient->first_name }}"
                                         class="img-thumbnail rounded-circle">
                                 </div>
                                 <h5 class="font-size-15 text-truncate"> {{ $patient->first_name }}
@@ -51,7 +51,7 @@
                                     <div class="row">
                                         <div class="col-12">
                                             <h5 class="font-size-12">{{ __('Última consulta :') }}</h5>
-                                            <p class="text-muted mb-0"> {{ $patient->last_login }} </p>
+                                            <p class="text-muted mb-0"> {{ $patient->updated_at }} </p>
                                         </div>
                                     </div>
                                     <div class="mt-4">
@@ -85,15 +85,15 @@
                                     </tr>
                                     <tr>
                                         <th scope="row">{{ __('Edad:') }}</th>
-                                        <td> {{ $patient_info->age }} </td>
+                                        <td> {{ optional($medical_Info)->age ?? 'N/A' }} </td>
                                     </tr>
                                     <tr>
                                         <th scope="row">{{ __('Género:') }}</th>
-                                        <td> {{ $patient_info->gender }} </td>
+                                        <td> {{ optional($medical_Info)->gender ?? 'N/A' }} </td>
                                     </tr>
                                     <tr>
                                         <th scope="row">{{ __('Domicilio:') }}</th>
-                                        <td> {{ $patient_info->address }} </td>
+                                        <td> {{ optional($medical_Info)->address ?? 'N/A' }} </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -193,35 +193,35 @@
                                         <tbody>
                                             <tr>
                                                 <th scope="row">{{ __('Altura') }}</th>
-                                                <td> {{ $medical_Info->height }} </td>
+                                                <td> {{ optional($medical_Info)->height ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Peso') }}</th>
-                                                <td> {{ $medical_Info->weight }} </td>
+                                                <td> {{ optional($medical_Info)->weight ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Grupo Sanguíneo') }}</th>
-                                                <td> {{ $medical_Info->b_group }} </td>
+                                                <td> {{ optional($medical_Info)->b_group ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Presión Arterial') }}</th>
-                                                <td> {{ $medical_Info->b_pressure }} </td>
+                                                <td> {{ optional($medical_Info)->b_pressure ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Pulso (BPM)') }}</th>
-                                                <td> {{ $medical_Info->pulse }} </td>
+                                                <td> {{ optional($medical_Info)->pulse ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Notas') }}</th>
-                                                <td> {{ $medical_Info->respiration }} </td>
+                                                <td> {{ optional($medical_Info)->respiration ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Alergias') }}</th>
-                                                <td> {{ $medical_Info->allergy }} </td>
+                                                <td> {{ optional($medical_Info)->allergy ?? 'N/A' }} </td>
                                             </tr>
                                             <tr>
                                                 <th scope="row">{{ __('Dieta especial') }}</th>
-                                                <td> {{ $medical_Info->diet }} </td>
+                                                <td> {{ optional($medical_Info)->diet ?? 'N/A' }} </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -253,9 +253,9 @@
                                     @foreach ($appointments as $item)
                                         <tr>
                                             <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                            <td>{{ @$item->doctor->user->first_name }} {{ @$item->doctor->user->last_name }}</td>
+                                            <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}</td>
                                             <td>{{ $item->appointment_date }}</td>
-                                            <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
+                                            <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -297,7 +297,7 @@
                                         @foreach ($prescriptions as $item)
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                <td>{{ @$item->doctor->user->first_name }} {{ @$item->doctor->user->last_name }}
+                                                <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
                                                 </td>
                                                 <td>{{ date('d-m-Y', strtotime($item->created_at)) }}</td>
                                                 <td>

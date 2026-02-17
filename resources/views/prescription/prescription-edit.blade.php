@@ -49,7 +49,7 @@
                                         <option disabled selected>{{ __('Select Patient') }}</option>
                                         @foreach ($patients as $patient)
                                             <option value="{{ $patient->id }}"
-                                                {{ $patient->id == $prescription->patient->id ? 'selected' : '' }}>
+                                                {{ $prescription->patient && $patient->id == $prescription->patient->id ? 'selected' : '' }}>
                                                 {{ $patient->first_name }} {{ $patient->last_name }}</option>
                                         @endforeach
                                     </select>
@@ -68,7 +68,7 @@
                                         <option disabled selected>{{ __('Select Appointment') }}</option>
                                         @foreach ($appointment as $item)
                                             <option value="{{ $item->id }}"
-                                                {{ $item->id == $prescription->appointment->id ? 'selected' : '' }}>
+                                                {{ $prescription->appointment && $item->id == $prescription->appointment->id ? 'selected' : '' }}>
                                                 {{ $item->appointment_date }}</option>
                                         @endforeach
                                     </select>

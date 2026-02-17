@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Appointment;
+use App\Patient;
 use Illuminate\Http\Request;
 use App\Doctor;
 use Cartalyst\Sentinel\Laravel\Facades\Sentinel;
@@ -54,15 +55,14 @@ class HomeController extends Controller
         $accountant_role = Sentinel::findRoleBySlug('accountant');
         $accountants = $accountant_role->users()->pluck('id');
         if ($role == 'admin') {
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->orderBy('id', 'DESC')->where('is_deleted', 0)->limit(5)->get();
+            $patients = Patient::where('is_deleted', 0)->orderBy('id', 'DESC')->limit(5)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with(['doctor'])->where('is_deleted', 0)->orderBy('id', 'DESC')->limit(5)->get();
             $receptionist_role = Sentinel::findRoleBySlug('receptionist');
             $receptionists = $receptionist_role->users()->with('roles')->orderBy('id', 'DESC')->where('is_deleted', 0)->limit(5)->get();
             $accountant_role = Sentinel::findRoleBySlug('accountant');
             $accountants = $accountant_role->users()->with('roles')->orderBy('id', 'DESC')->where('is_deleted', 0)->limit(5)->get();
-            $tot_patient = $patient_role->users()->with('roles')->where('is_deleted', 0)->get();
+            $tot_patient = Patient::where('is_deleted', 0)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $tot_doctor = $doctor_role->users()->with('roles')->where('is_deleted', 0)->get();
             $tot_receptionist = $receptionist_role->users()->with('roles')->where('is_deleted', 0)->get();
@@ -180,8 +180,7 @@ class HomeController extends Controller
             $today = Carbon::today()->format('Y/m/d');
             $user_id = Sentinel::getUser();
             $userId = $user_id->id;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->where('is_deleted', 0)->orderBy('id', 'DESC')->limit(5)->get();
+            $patients = Patient::where('is_deleted', 0)->orderBy('id', 'DESC')->limit(5)->get();
             $doctors = ReceptionListDoctor::with('doctor')->where('reception_id', $user_id->id)->orderby('id', 'DESC')->limit(5)->get();
             $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $user_id->id)->pluck('doctor_id');
             $appointments = Appointment::with('patient', 'doctor')->where(function ($re) use ($userId, $receptionists_doctor_id) {
@@ -197,7 +196,7 @@ class HomeController extends Controller
                 $re->orWhereIN('booked_by', $receptionists_doctor_id);
                 $re->orWhere('booked_by', $user_id);
             })->get();
-            $tot_patient = $patient_role->users()->with('roles')->where('is_deleted', 0)->get();
+            $tot_patient = Patient::where('is_deleted', 0)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $tot_doctor = ReceptionListDoctor::where('reception_id', $user_id->id)->where('is_deleted', 0)->get();
             $monthlyEarning = ReportController::getMonthlyEarning();

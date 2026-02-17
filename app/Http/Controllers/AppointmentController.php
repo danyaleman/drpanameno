@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Appointment;
 use App\Doctor;
+use App\Patient;
 use App\DoctorAvailableDay;
 use App\DoctorAvailableSlot;
 use App\DoctorAvailableTime;
@@ -67,8 +68,7 @@ class AppointmentController extends Controller
         if ($user->hasAccess('appointment.create')) {
             $userId = $user->id;
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->get();
+            $patients = Patient::where('is_deleted', 0)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with('roles')->get();
             if ($role == 'doctor') {
@@ -536,8 +536,7 @@ class AppointmentController extends Controller
             $doctor_available_day = '';
             $doctor_available_time = '';
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->get();
+            $patients = Patient::where('is_deleted', 0)->get();
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with('roles')->where('is_deleted', 0)->get();
             if ($role == 'receptionist') {
@@ -583,7 +582,7 @@ class AppointmentController extends Controller
         $userId = $user->id;
         if ($user->hasAccess('appointment.create')) {
             $request->validate([
-                'appointment_for' => 'required',
+                'patient_id' => 'required',
                 'appointment_with' => 'required',
                 'appointment_date' => 'required',
                 'available_time' => 'required',
@@ -598,7 +597,8 @@ class AppointmentController extends Controller
                     $date = $request->appointment_date;
                     $newDate = Carbon::createFromFormat('m/d/Y', $date)->format('Y-m-d');
                     $appointment = new Appointment();
-                    $appointment->appointment_for = $request->appointment_for;
+                    $appointment->patient_id = $request->patient_id;
+                    $appointment->appointment_for = $request->patient_id;  // Mantener para compatibilidad
                     $appointment->appointment_with = $request->appointment_with;
                     $appointment->appointment_date = $newDate;
                     $appointment->available_time = $request->available_time;
@@ -607,7 +607,18 @@ class AppointmentController extends Controller
                     $appointment->save();
                     // appointment create notification send and mail send
                     // Find Mail
-                    $MailAppointment = Appointment::with('doctor','patient','BookedBy','timeSlot')->where('id',$appointment->id)->first();
+                    $MailAppointment = Appointment::with('patient', 'bookedBy', 'timeSlot')
+                        ->whereHas('doctor')
+                        ->where('id', $appointment->id)
+                        ->first();
+                    
+                    // Cargar el doctor User si existe
+                    if ($MailAppointment && $MailAppointment->appointment_with) {
+                        $doctorModel = Doctor::find($MailAppointment->appointment_with);
+                        if ($doctorModel) {
+                            $MailAppointment->doctor = $doctorModel->user;
+                        }
+                    }
                     if ($role == 'patient') {
                         $doctor_id = $appointment->appointment_with;
                         $receptionists_doctor_id = ReceptionListDoctor::where('doctor_id', $appointment->appointment_with)->pluck('reception_id');

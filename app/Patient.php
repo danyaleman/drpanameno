@@ -3,14 +3,13 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Patient extends Model
 {
     protected $table = 'patients';
 
     protected $fillable = [
-        'user_id',
-
         // Datos personales
         'first_name',
         'last_name',
@@ -49,26 +48,61 @@ class Patient extends Model
         'birth_date' => 'date',
     ];
 
-     /* =====================
+    /* =====================
      |  RELACIONES
      ===================== */
 
-    function appointment(){
-        return $this->hasMany(Appointment::class,'appointment_for','id');
+    /**
+     * Citas del paciente
+     */
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id', 'id');
     }
-    function user(){
-        return $this->belongsTo(User::class)->where('is_deleted', 0);
+
+    /**
+     * Información médica del paciente
+     */
+    public function medicalInfo()
+    {
+        return $this->hasOne(MedicalInfo::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Recetas del paciente
+     */
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Facturas/Invoices del paciente
+     */
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'patient_id', 'id');
     }
 
     /* =====================
      |  ACCESORES
      ===================== */
 
-    // Edad calculada (NO guardada en BD)
+    /**
+     * Edad calculada (NO guardada en BD)
+     */
     public function getAgeAttribute()
     {
         return $this->birth_date
             ? Carbon::parse($this->birth_date)->age
             : null;
+    }
+
+    /**
+     * Nombre completo
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name}";
     }
 }

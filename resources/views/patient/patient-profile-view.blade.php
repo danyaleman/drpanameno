@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-sm-4">
                                 <div class="avatar-md profile-user-wid mb-4">
-                                    <img src="@if ($patient->profile_photo != null){{ URL::asset('storage/images/users/' . $patient->profile_photo) }}@else{{ URL::asset('build/images/users/noImage.png') }}@endif" alt="{{ $patient->first_name }}"
+                                    <img src="@if ($patient->photo != null){{ URL::asset('storage/images/patients/' . $patient->photo) }}@else{{ URL::asset('build/images/users/noImage.png') }}@endif" alt="{{ $patient->first_name }}"
                                         class="img-thumbnail rounded-circle">
                                 </div>
                                 <h5 class="font-size-15 text-truncate"> {{ $patient->first_name }}
@@ -244,9 +244,9 @@
                                     @foreach ($appointments as $item)
                                         <tr>
                                             <td>{{ $loop->index + 1 }}</td>
-                                            <td>{{ @$item->doctor->user->first_name }} {{ @$item->doctor->user->last_name }}</td>
+                                            <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}</td>
                                             <td>{{ $item->appointment_date }}</td>
-                                            <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
+                                            <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -288,7 +288,7 @@
                                         @foreach ($prescriptions as $item)
                                             <tr>
                                                 <td> {{ $loop->index + 1 }} </td>
-                                                <td>{{ @$item->doctor->user->first_name }} {{ @$item->doctor->user->last_name }}
+                                                <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
                                                 </td>
                                                 <td>{{ date('d-m-Y', strtotime($item->created_at)) }}</td>
                                                 <td>

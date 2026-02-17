@@ -92,21 +92,18 @@
                                 <tr>
                                     <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
                                     @if ($role == 'receptionist')
-                                        <td>{{ $prescription->patient->first_name . ' ' . $prescription->patient->first_name }}
+                                        <td>{{ $prescription->patient ? $prescription->patient->first_name . ' ' . $prescription->patient->last_name : 'N/A' }}
                                         </td>
-                                        <td>{{ @$prescription->doctor->first_name . ' ' . @$prescription->doctor->first_name }}
+                                        <td>{{ $prescription->doctor ? $prescription->doctor->first_name . ' ' . $prescription->doctor->last_name : 'N/A' }}
                                         </td>
                                     @elseif ($role == 'doctor')
-                                        <td>{{ $prescription->patient->first_name }}
-                                            {{ $prescription->patient->last_name }}</td>
+                                        <td>{{ $prescription->patient ? $prescription->patient->first_name . ' ' . $prescription->patient->last_name : 'N/A' }}</td>
                                     @elseif ($role == 'patient')
-                                        <td>{{ @$prescription->doctor->user->first_name }}
-                                            {{ @$prescription->doctor->user->last_name }}</td>
+                                        <td>{{ $prescription->doctor ? $prescription->doctor->first_name . ' ' . $prescription->doctor->last_name : 'N/A' }}</td>
                                     @else
-                                        <td>{{ $prescription->patient->first_name }}
-                                            {{ $prescription->patient->last_name }}</td>
-                                        <td>{{ @$prescription->doctor->user->first_name }}
-                                            {{ @$prescription->doctor->user->last_name }}</td>
+                                        <td>{{ $prescription->patient ? $prescription->patient->first_name . ' ' . $prescription->patient->last_name : 'N/A' }}
+                                        </td>
+                                        <td>{{ $prescription->doctor ? $prescription->doctor->first_name . ' ' . $prescription->doctor->last_name : 'N/A' }}</td>
                                     @endif
                                     <td>{{ $prescription->appointment->appointment_date }}</td>
                                     <td>{{ $prescription->appointment->timeSlot->from . ' to ' . $prescription->appointment->timeSlot->to }}

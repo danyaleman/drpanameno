@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Appointment;
 use App\Invoice;
 use App\Prescription;
+use App\Patient;
 use Illuminate\Http\Request;
 use App\Medicine;
 use App\TestReport;
@@ -53,7 +54,8 @@ class PrescriptionController extends Controller
             if ($role == 'doctor') {
                 $prescriptions = Prescription::with('patient', 'appointment', 'appointment.timeSlot')->where('created_by', '=', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
             } elseif ($role == 'patient') {
-                $prescriptions = Prescription::with('doctor', 'appointment', 'appointment.timeSlot')->where('patient_id', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
+                // Para pacientes, devolver paginación vacía hasta vincular usuario con paciente
+                $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('id', -1)->paginate($this->limit);
             } else {
                 $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
             }
@@ -73,8 +75,7 @@ class PrescriptionController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.create')) {
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->get();
+            $patients = Patient::where('is_deleted', 0)->get();
             return view('prescription.prescription-details', compact('user', 'role', 'patients'));
         } else {
             return view('error.403');
@@ -231,8 +232,7 @@ class PrescriptionController extends Controller
             $prescription = Prescription::with('patient','doctor','appointment','signos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
 
             if ($prescription) {
-                $patient_role = Sentinel::findRoleBySlug('patient');
-                $patients = $patient_role->users()->with('roles')->get();
+                $patients = Patient::where('is_deleted', 0)->get();
                 $appointment = Appointment::where('appointment_for', $prescription->patient->id)->where('is_deleted', 0)->get();
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();

@@ -17,22 +17,44 @@ class Invoice extends Model
         'updated_by',
         'is_deleted',
     ];
-    function invoice_detail(){
-        return $this->hasMany(InvoiceDetail::class)->where('is_deleted',0);
+
+    /**
+     * Detalles de la factura
+     */
+    public function invoice_detail()
+    {
+        return $this->hasMany(InvoiceDetail::class)->where('is_deleted', 0);
     }
-    function user(){
-        return $this->hasOne(user::class,'id','patient_id');
+
+    /**
+     * Paciente de la factura
+     */
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
-    function patient(){
-        return $this->hasOne(user::class,'id','patient_id');
+
+    /**
+     * Doctor relacionado a la factura
+     */
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class, 'id', 'doctor_id');
     }
-    function doctor(){
-        return $this->hasOne(Doctor::class,'id', 'doctor_id');
+
+    /**
+     * Cita relacionada
+     */
+    public function appointment()
+    {
+        return $this->hasOne(Appointment::class, 'id', 'appointment_id');
     }
-    function appointment(){
-        return $this->hasOne(Appointment::class,'id','appointment_id');
-    }
-    function transaction(){
+
+    /**
+     * Transacción relacionada
+     */
+    public function transaction()
+    {
         return $this->hasOne(Transaction::class);
     }
 }

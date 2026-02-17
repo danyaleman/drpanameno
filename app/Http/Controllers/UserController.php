@@ -185,11 +185,8 @@ class UserController extends Controller
                 $role = $user->roles[0]->slug;
                 return view('accountant.accountant-profile-edit', compact('user', 'role', 'accountant'));
             } elseif ($role == 'patient') {
-                $patient = Sentinel::getUser();
-                $patient_info = Patient::where('user_id', '=', $patient->id)->first();
-                $medical_info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                // return $patient;
-                return view('patient.patient-edit', compact('user', 'role', 'patient', 'patient_info', 'medical_info'));
+                // Los pacientes ya no son usuarios, esta ruta no debería ser accesible
+                return redirect('/dashboard')->with('error', 'Acceso denegado');
             }
         } else {
             return view('error.403');
@@ -472,46 +469,8 @@ class UserController extends Controller
                     $patient->email = $request->email;
                     $patient->updated_by = $user->id;
                     $patient->save();
-                    $patient_info = Patient::where('user_id', '=', $user->id)->first();
-                    if ($patient_info == null) {
-                        $patient_info = new Patient();
-                        $patient_info->age = $request->age;
-                        $patient_info->gender = $request->gender;
-                        $patient_info->address = $request->address;
-                        $patient_info->user_id = $user->id;
-                        $patient_info->save();
-                    } else {
-                        $patient_info->age = $request->age;
-                        $patient_info->gender = $request->gender;
-                        $patient_info->address = $request->address;
-                        $patient_info->user_id = $user->id;
-                        $patient_info->save();
-                    }
-                    $medical_info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                    if ($medical_info == null) {
-                        $medical_info = new MedicalInfo();
-                        $medical_info->height = $request->height;
-                        $medical_info->b_group = $request->b_group;
-                        $medical_info->pulse = $request->pulse;
-                        $medical_info->allergy = $request->allergy;
-                        $medical_info->weight = $request->weight;
-                        $medical_info->b_pressure = $request->b_pressure;
-                        $medical_info->respiration = $request->respiration;
-                        $medical_info->diet = $request->diet;
-                        $medical_info->user_id = $user->id;
-                        $medical_info->save();
-                    } else {
-                        $medical_info->height = $request->height;
-                        $medical_info->b_group = $request->b_group;
-                        $medical_info->pulse = $request->pulse;
-                        $medical_info->allergy = $request->allergy;
-                        $medical_info->weight = $request->weight;
-                        $medical_info->b_pressure = $request->b_pressure;
-                        $medical_info->respiration = $request->respiration;
-                        $medical_info->diet = $request->diet;
-                        $medical_info->user_id = $user->id;
-                        $medical_info->save();
-                    }
+                    // Los pacientes ya no son usuarios, no crear información de paciente aquí
+                    // Los pacientes se crean directamente a través de PatientController
                     if ($role == 'patient') {
                         return redirect('/dashboard')->with('success', 'Profile updated successfully!');
                     } else {
@@ -539,31 +498,11 @@ class UserController extends Controller
     {
         $user = Sentinel::getUser();
         $role = $user->roles[0]->slug;
+        
         if ($role == 'patient') {
-            $patient = Sentinel::getUser();
-            $patient_info = Patient::where('user_id', '=', $patient->id)->first();
-            if ($patient) {
-                $medical_Info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                $patient_role = Sentinel::findRoleBySlug('patient');
-                $patients = $patient_role->users()->with('roles')->get();
-                $appointments = Appointment::with('doctor')->where('appointment_for', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
-                $prescriptions = Prescription::with('doctor')->where('patient_id', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescription');
-                $invoices = Invoice::where('patient_id', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
-                $tot_appointment = Appointment::where('appointment_for', $patient->id)->get();
-                $invoice = Invoice::withCount(['invoice_detail as total' => function ($re) {
-                    $re->select(DB::raw('SUM(amount)'));
-                }])->where('patient_id', $patient->id)->pluck('id');
-                $revenue = InvoiceDetail::whereIn('invoice_id', $invoice)->where('is_deleted', 0)->sum('amount');
-                $pending_bill = Invoice::where(['patient_id' => $patient->id, 'payment_status' => 'Unpaid'])->count();
-                $data = [
-                    'total_appointment' => $tot_appointment->count(),
-                    'revenue' => $revenue,
-                    'pending_bill' => $pending_bill
-                ];
-                return view('patient.patient-profile-view', compact('user', 'role', 'patient', 'patient_info', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices'));
-            } else {
-                return redirect('/dashboard')->with('error', 'Patient not found');
-            }
+            // Los pacientes ya no son usuarios, están separados
+            // Redirigir a la vista de perfil del paciente
+            return redirect('/patient-profile');
         } elseif ($role == 'doctor') {
             $doctor = Sentinel::getUser();
             $doctor_id = $doctor->id;

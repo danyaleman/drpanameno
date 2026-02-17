@@ -9,7 +9,7 @@ class MedicalInfo extends Model
     protected $table = 'medical_infos';
 
     protected $fillable = [
-        'user_id',
+        'patient_id',
         'height',
         'weight',
         'b_group',
@@ -20,4 +20,16 @@ class MedicalInfo extends Model
         'diet',
         'is_deleted',
     ];
+
+    /* =====================
+     |  RELACIONES
+     ===================== */
+
+    /**
+     * Paciente dueño de la información médica
+     */
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
+    }
 }

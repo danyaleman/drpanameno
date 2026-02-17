@@ -41,10 +41,10 @@
                                         @forelse ($appointment as $item)
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                <td> {{ @$item->doctor->user->first_name . ' ' . @$item->doctor->user->last_name }}
+                                                <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
                                                 </td>
                                                 <td>{{ $item->appointment_date }}</td>
-                                                <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
+                                                <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                                 <td>
                                                     @if ($item->status == 0)
                                                         <span class="badge bg-warning">Pending</span>

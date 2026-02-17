@@ -45,24 +45,19 @@ class AuthController extends Controller
             $remember = $request->remember == 'On' ? true : false;
             $user = Sentinel::authenticate($validatedData, $remember);
             if ($user) {
-                $patient = Patient::where('user_id', '=', $user->id)->count();
-                $medical_info = MedicalInfo::where('user_id', '=', $user->id)->count();
-                if ($user->roles[0]->slug == 'patient' && ($patient == 0 || $medical_info == 0)) {
-                    return view('profile-details');
-                } else {
-                    return redirect('/dashboard');
-                }
+                // Los pacientes ya no se crean como usuarios, por lo que no necesitamos verificar perfil
+                return redirect('/dashboard');
             } else {
-                return redirect()->back()->with('error', 'Email or password not match with our records!!!');
+                return redirect()->back()->with('error', 'Email o contraseña incorrectos');
             }
         } catch (NotActivatedException $e) {
-            return redirect()->back()->with('error', 'Your account is deactivated. Please Contact us for more details!!!');
+            return redirect()->back()->with('error', 'Tu cuenta ha sido desactivada. Contacta con soporte para más detalles.');
         } catch (ThrottlingException $e) {
             $second = $e->getDelay();
             $delay = gmdate('i', $second);
-            return redirect('login')->with('error', 'Your can\'t login to your account for next ' . $delay . ' Minutes.');
+            return redirect('login')->with('error', 'No puedes iniciar sesión durante los próximos ' . $delay . ' minutos.');
         } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Algo salió mal: ' . $e->getMessage());
         }
     }
 
@@ -85,7 +80,9 @@ class AuthController extends Controller
      */
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        // La autoregistración de pacientes ha sido deshabilitada
+        // Los pacientes son creados solo por administradores/receptcionistas
+        return redirect('login')->with('error', 'El auto-registro no está disponible. Contacta con administración.');
     }
 
     /**
@@ -96,28 +93,8 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $validatedData = $request->validate([
-            'first_name' => 'required|alpha|max:20',
-            'last_name' => 'required|alpha|max:20',
-            'mobile' => 'required|numeric|digits_between:8,20',
-            'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
-            'password' => 'required|min:6|max:50|confirmed|regex:/^[A-Za-z0-9]+$/'
-        ]);
-        try {
-            $dispatcher = User::getEventDispatcher();
-            User::unsetEventDispatcher();
-            //Create a new user
-            $user = Sentinel::registerAndActivate($validatedData);
-            //Attach the user to the role
-            $role = Sentinel::findRoleBySlug('patient');
-            $role->users()->attach($user);
-            User::setEventDispatcher($dispatcher);
-            $Auth_user = Sentinel::authenticate($validatedData);
-            //return view('profile-details');
-            return redirect('user/profile-details');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
-        }
+        // La autoregistración de pacientes ha sido deshabilitada
+        return redirect('login')->with('error', 'El auto-registro no está disponible. Contacta con administración.');
     }
 
     /**

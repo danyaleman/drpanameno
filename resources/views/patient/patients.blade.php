@@ -77,7 +77,7 @@
         $(document).ready(function() {
             $('#patientList').DataTable({
                 processing: true,
-                serverSide: true,
+                serverSide: false,
                 dom: 'Bfrtip',
                 buttons: [
                     'copy', 'excel', 'pdf'
@@ -92,7 +92,7 @@
                     {
                         data: 'name',
                         name: 'name',
-                        sortable: false,
+                        sortable: true,
                         visible: true
                     },
                     {

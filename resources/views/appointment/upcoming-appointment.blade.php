@@ -78,14 +78,14 @@
                                             @foreach ($Upcoming_appointment as $item)
                                                 <tr>
                                                     <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                    <td> {{ @$item->doctor->user->first_name . ' ' . @$item->doctor->user->last_name }}
+                                                    <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
                                                     </td>
-                                                    <td> {{ $item->patient->first_name . ' ' . $item->patient->last_name }}
+                                                    <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                     </td>
-                                                    <td> {{ $item->patient->mobile }} </td>
-                                                    <td>{{ $item->patient->email }}</td>
+                                                    <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
+                                                    <td>{{ optional($item->patient)->email ?? 'N/A' }}</td>
                                                     <td>{{ $item->appointment_date }}</td>
-                                                    <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
+                                                    <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

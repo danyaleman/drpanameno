@@ -34,16 +34,16 @@
 
                                 </tr>
                                 <tr>
-                                    <td><b>Name: </b>{{ $MailAppointment->doctor->user->first_name .' '. $MailAppointment->doctor->user->last_name}}</td>
-                                    <td><b>Name: </b>{{ $MailAppointment->patient->first_name .' '. $MailAppointment->patient->last_name}}</td>
+                                    <td><b>Name: </b>{{ optional($MailAppointment->doctor)->first_name . ' ' . optional($MailAppointment->doctor)->last_name}}</td>
+                                    <td><b>Name: </b>{{ optional($MailAppointment->patient)->first_name . ' ' . optional($MailAppointment->patient)->last_name}}</td>
                                 </tr>
                                 <tr>
-                                    <td><b>Contact: </b>{{ $MailAppointment->doctor->user->mobile }}</td>
-                                    <td><b>Contact: </b>{{ $MailAppointment->patient->mobile }}</td>
+                                    <td><b>Contact: </b>{{ optional($MailAppointment->doctor)->mobile ?? 'N/A' }}</td>
+                                    <td><b>Contact: </b>{{ optional($MailAppointment->patient)->phone_primary ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <td><b>Email: </b>{{ $MailAppointment->doctor->user->email }}</td>
-                                    <td><b>Email: </b>{{ $MailAppointment->patient->email }}</td>
+                                    <td><b>Email: </b>{{ optional($MailAppointment->doctor)->email ?? 'N/A' }}</td>
+                                    <td><b>Email: </b>{{ optional($MailAppointment->patient)->email ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding-top:10px;"><b>Booked By: </b></td>

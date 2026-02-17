@@ -10,6 +10,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'appointment_for',
+        'patient_id',
         'appointment_with',
         'appointment_date',
         'appointment_time',
@@ -18,33 +19,47 @@ class Appointment extends Model
         'is_deleted',
     ];
 
-    function patient()
+    /**
+     * Paciente de la cita
+     */
+    public function patient()
     {
-        return $this->hasOne(User::class, 'id', 'appointment_for');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
-    function BookedBy()
+
+    /**
+     * Usuario que reservó la cita
+     */
+    public function bookedBy()
     {
         return $this->hasOne(User::class, 'id', 'booked_by');
     }
 
-    function doctor()
+    /**
+     * Doctor de la cita
+     */
+    public function doctor()
     {
         return $this->hasOne(Doctor::class, 'id', 'appointment_with');
     }
 
-    function receptionlist_doctor()
+    public function receptionlist_doctor()
     {
         return $this->hasMany(ReceptionListDoctor::class, 'doctor_id', 'appointment_with');
     }
 
-    function timeSlot()
+    public function timeSlot()
     {
         return $this->hasOne(DoctorAvailableSlot::class, 'id', 'available_slot');
     }
-    function invoice(){
-        return $this->hasOne(Invoice::class)->where('payment_status','Paid');
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class)->where('payment_status', 'Paid');
     }
-    function prescription(){
-        return $this->hasOne(Prescription::class)->where('is_deleted',0);
+
+    public function prescription()
+    {
+        return $this->hasOne(Prescription::class)->where('is_deleted', 0);
     }
 }

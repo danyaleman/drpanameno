@@ -52,38 +52,43 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.list')) {
             $role = $user->roles[0]->slug;
-            $patient_role = Sentinel::findRoleBySlug('patient');
-            $patients = $patient_role->users()->with('roles')->where('is_deleted', 0)->orderByDesc('id')->get();
             
             // Load Datatables
             if ($request->ajax()) {
+                $patients = Patient::where('is_deleted', 0)->orderByDesc('id')->get();
                 return Datatables::of($patients)
                     ->addIndexColumn()
                     ->addColumn('name', function($row){
-                        $name = $row->first_name.' '.$row->last_name;
-                        return $name;
+                        return $row->first_name.' '.$row->last_name;
+                    })
+                    ->addColumn('mobile', function($row){
+                        return $row->phone_primary ?? 'N/A';
+                    })
+                    ->addColumn('email', function($row){
+                        return $row->email ?? 'N/A';
                     })
                     ->addColumn('option', function($row){
                         $option = '
                             <a href="patient/'.$row->id.'">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
+                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Ver Perfil">
                                     <i class="mdi mdi-eye"></i>
                                 </button>
                             </a>
                             <a href="patient/'.$row->id.'/edit">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Update Profile">
+                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Editar Perfil">
                                     <i class="mdi mdi-lead-pencil"></i>
                                 </button>
                             </a>
-                            <a href=" javascript:void(0)">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Deactivate Profile" data-id="'.$row->id.'" id="delete-patient">
+                            <a href="javascript:void(0)">
+                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Eliminar Perfil" data-id="'.$row->id.'" id="delete-patient">
                                     <i class="mdi mdi-trash-can"></i>
                                 </button>
                             </a>';
                         return $option;
                     })->rawColumns(['option'])->make(true);
             }
-            // End
+            // Para carga inicial (no AJAX), pasar datos vacíos
+            $patients = collect();
             return view('patient.patients', compact('user', 'role', 'patients'));
         } else {
             return view('error.403');
@@ -123,197 +128,199 @@ class PatientController extends Controller
             $validatedData = $request->validate([
                 'first_name' => 'required|alpha',
                 'last_name' => 'required|alpha',
-                'mobile' => 'required|numeric|digits_between:8,20',
-                'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
+                'phone_primary' => 'required|numeric|digits_between:8,20',
+                'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
                 'address' => 'required|max:100',
                 'gender' => 'required',
-                'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
+                'photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
-            if ($request->profile_photo != null) {
-                $request->validate([
-                    'profile_photo' => 'image'
-                ]);
-                $file = $request->file('profile_photo');
-                $extention = $file->getClientOriginalExtension();
-                $imageName = time() . '.' . $extention;
-                $file->move(public_path('storage/images/users'), $imageName);
-                $validatedData['profile_photo'] = $imageName;
+            
+            if ($request->photo != null) {
+                $file = $request->file('photo');
+                $extension = $file->getClientOriginalExtension();
+                $imageName = time() . '.' . $extension;
+                $file->move(public_path('storage/images/patients'), $imageName);
+                $validatedData['photo'] = $imageName;
             }
+            
             try {
-                $user = Sentinel::getUser();
-                // Set Default Password for Doctor
-                $validatedData['password'] = Config::get('app.DEFAULT_PASSWORD');
-                $validatedData['created_by'] = $user->id;
-                $validatedData['updated_by'] = $user->id;
-                //Create a new user
-                $patient = Sentinel::registerAndActivate($validatedData);
-                //Attach the user to the role
-                $role = Sentinel::findRoleBySlug('patient');
-                $role->users()->attach($patient);
-                $validatedData['user_id'] = $patient->id;
-                $this->patient_info->create($validatedData);
-                $this->medical_info->create($validatedData);
+                // Crear paciente directamente sin crear usuario
+                $patient = Patient::create($validatedData);
+                
+                // Crear información médica si se proporciona
+                if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
+                    MedicalInfo::create([
+                        'patient_id' => $patient->id,
+                        'height' => $request->height,
+                        'weight' => $request->weight,
+                        'b_group' => $request->b_group,
+                        'b_pressure' => $request->b_pressure,
+                        'pulse' => $request->pulse,
+                        'respiration' => $request->respiration,
+                        'allergy' => $request->allergy,
+                        'diet' => $request->diet,
+                    ]);
+                }
 
-                $app_name =  AppSetting('title');
+                // Enviar email de bienvenida
+                $app_name = AppSetting('title');
                 $verify_mail = trim($request->email);
-                Mail::send('emails.WelcomeEmail', ['user' => $patient, 'email' => $verify_mail], function ($message) use ($verify_mail, $app_name) {
-                    $message->to($verify_mail);
-                    $message->subject($app_name . ' ' . 'Welcome email from Doctorly - Hospital Management System');
-                });
-                return redirect('/patient')->with('success', 'Patient created successfully!');
+                try {
+                    Mail::send('emails.PatientWelcomeEmail', ['patient' => $patient], function ($message) use ($verify_mail, $app_name) {
+                        $message->to($verify_mail);
+                        $message->subject($app_name . ' - Nuevo paciente registrado');
+                    });
+                } catch (\Exception $e) {
+                    // Log email error pero continuar
+                    \Log::error('Error sending patient welcome email: ' . $e->getMessage());
+                }
+                
+                return redirect('/patient')->with('success', '¡Paciente creado exitosamente!');
             } catch (Exception $e) {
-                return redirect('patient')->with('error', 'Something went wrong!!! ' . $e->getMessage());
-                //dd($e->getMessage());
+                return redirect('patient')->with('error', 'Algo salió mal: ' . $e->getMessage());
             }
         } else {
             return view('error.403');
-
         }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\User  $patient
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(User $patient)
+    public function show($id)
     {
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.view')) {
             $role = $user->roles[0]->slug;
-            $patient = $user::whereHas('roles',function($rq){
-                $rq->where('slug','patient');
-            })->where('id', $patient->id)->where('is_deleted', 0)->first();
+            $patient = Patient::where('id', $id)->where('is_deleted', 0)->first();
+            
             if ($patient) {
-                $patient_info = Patient::where('user_id', '=', $patient->id)->first();
-                if ($patient_info) {
-                    $medical_Info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                    $patient_role = Sentinel::findRoleBySlug('patient');
-                    $patients = $patient_role->users()->with('roles')->get();
-                    $appointments = Appointment::with('doctor')->where('appointment_for', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
-                    $prescriptions = Prescription::with('doctor')->where('patient_id', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
-                    $invoices = Invoice::where('patient_id', $patient->id)->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
-                    $tot_appointment = Appointment::where('appointment_for', $patient->id)->get();
-                    $invoice = Invoice::where('patient_id', $patient->id)->where('is_deleted', 0)->pluck('id');
-                    $revenue = InvoiceDetail::whereIn('invoice_id',$invoice)->sum('amount');
-                    $pending_bill = Invoice::where(['patient_id' => $patient->id, 'payment_status' => 'Unpaid'])->count();
-                    $data = [
-                        'total_appointment' => $tot_appointment->count(),
-                        'revenue' => $revenue,
-                        'pending_bill' => $pending_bill
-                    ];
-                    return view('patient.patient-profile', compact('user', 'role', 'patient', 'patient_info', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices'));
-                } else {
-                    return redirect('/dashboard')->with('error', 'Patient information  not found, update patient information');
+                $medical_Info = $patient->medicalInfo;
+                
+                // Buscar citas por patient_id (nuevas) O por appointment_for si existe un usuario con el mismo email
+                $appointmentQuery = Appointment::where('patient_id', $patient->id);
+                
+                // Para citas antiguas: buscar por appointment_for (user_id) del usuario con mismo email
+                $userWithSameEmail = User::where('email', $patient->email)->first();
+                if ($userWithSameEmail) {
+                    $appointmentQuery->orWhere('appointment_for', $userWithSameEmail->id);
                 }
+                
+                $appointments = $appointmentQuery->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
+                
+                $prescriptions = $patient->prescriptions()->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
+                $invoices = $patient->invoices()->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
+                
+                // Contar todas las citas (nuevas + antiguas)
+                $tot_appointment = Appointment::where('patient_id', $patient->id);
+                if ($userWithSameEmail) {
+                    $tot_appointment->orWhere('appointment_for', $userWithSameEmail->id);
+                }
+                $tot_appointment = $tot_appointment->count();
+                
+                $invoice = $patient->invoices()->where('is_deleted', 0)->pluck('id');
+                $revenue = InvoiceDetail::whereIn('invoice_id', $invoice)->sum('amount');
+                $pending_bill = $patient->invoices()->where('payment_status', 'Unpaid')->count();
+                
+                $data = [
+                    'total_appointment' => $tot_appointment,
+                    'revenue' => $revenue,
+                    'pending_bill' => $pending_bill
+                ];
+                
+                return view('patient.patient-profile', compact('user', 'role', 'patient', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices'));
             } else {
-                return redirect('/dashboard')->with('error', 'Patient not found');
+                return redirect('/dashboard')->with('error', 'Paciente no encontrado');
             }
         } else {
             return view('error.403');
-
         }
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\User  $patient
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(User $patient)
+    public function edit($id)
     {
         $user = Sentinel::getUser();
-        $patient = $user::whereHas('roles',function($rq){
-            $rq->where('slug','patient');
-        })->where('id', $patient->id)->where('is_deleted', 0)->first();
-        if($patient){
+        $patient = Patient::where('id', $id)->where('is_deleted', 0)->first();
+        
+        if ($patient) {
             if ($user->hasAccess('patient.update')) {
                 $role = $user->roles[0]->slug;
-                $patient_info = Patient::where('user_id', '=', $patient->id)->first();
-                $medical_info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                return view('patient.patient-details', compact('user', 'role', 'patient', 'patient_info', 'medical_info'));
+                $medical_info = $patient->medicalInfo;
+                return view('patient.patient-details', compact('user', 'role', 'patient', 'medical_info'));
             } else {
                 return view('error.403');
             }
-        }
-        else{
-            return redirect('/dashboard')->with('error', 'Patient not found');
+        } else {
+            return redirect('/dashboard')->with('error', 'Paciente no encontrado');
         }
     }
 
     public function patientClinicalInfo(Request $request)
     {
-    // CAMBIO IMPORTANTE: Usamos where('user_id', ...) en lugar de find()
-    // Esto asume que el ID que viene del select es el del Usuario (Sentinel)
-    $patient = Patient::where('user_id', $request->patient_id)->first();
+        $patient = Patient::findOrFail($request->patient_id);
 
-    // Si no encontramos el perfil en la tabla patients, intentamos buscarlo como Usuario
-    // para al menos devolver el nombre, aunque falten antecedentes.
-    if (!$patient) {
-        // Opción A: Devolver error (como lo tenías)
-        return response()->json([
-            'isSuccess' => false,
-            'message' => 'Perfil de paciente no encontrado (Asegúrese que el usuario tenga perfil médico creado)'
-        ]);
-    }
+        // Si no encontramos el perfil, devolver error
+        if (!$patient) {
+            return response()->json([
+                'isSuccess' => false,
+                'message' => 'Perfil de paciente no encontrado'
+            ]);
+        }
 
-    // Buscamos las citas usando el user_id o patient_id según como guardes las citas.
-    // Asumiendo que en Appointment guardas el 'patient_id' como la ID de la tabla users:
-    $appointments = Appointment::where('appointment_for', $request->patient_id)->get(); 
-    // NOTA: Verifica si en tu tabla appointments la columna es 'patient_id' o 'appointment_for'
-    // En tu función 'show' usabas 'appointment_for', aquí lo ajusté para que coincida.
+        // Buscamos las citas del paciente
+        $appointments = $patient->appointments()->get();
 
-    $options = '<option selected value="">--- Seleccionar Cita ---</option>';
-    foreach ($appointments as $appointment) {
-        $options .= '<option value="'.$appointment->id.'">'
-                . $appointment->appointment_date . ' ' . $appointment->time_slot .
+        $options = '<option selected value="">--- Seleccionar Cita ---</option>';
+        foreach ($appointments as $appointment) {
+            $options .= '<option value="' . $appointment->id . '">'
+                . $appointment->appointment_date . ' ' . ($appointment->appointment_time ?? '') .
                 '</option>';
-    }
+        }
 
-    $age = $patient->birth_date
-        ? Carbon::parse($patient->birth_date)->age
-        : null;
+        $age = $patient->age; // Ahora disponible como accessor
 
-    return response()->json([
-        'isSuccess' => true,
-        'options' => $options,
-        'patient' => [
-            // Asumiendo que first_name está en la tabla patients. 
-            // Si está en users, tendrías que hacer $patient->user->first_name
-            'name' => $patient->first_name.' '.$patient->last_name,
-            'info' => trim(
-                ($age ? $age.' años · ' : '') .
-                ($patient->occupation ?? '') .
-                ($patient->address ? ' · '.$patient->address : '')
-            ),
-            'pathological_history'     => $patient->pathological_history,
-            'non_pathological_history' => $patient->non_pathological_history,
-            'medications_allergies'    => $patient->medications_allergies,
-        ]
-    ]);
+        return response()->json([
+            'isSuccess' => true,
+            'options' => $options,
+            'patient' => [
+                'name' => $patient->full_name, // Nuevo accessor
+                'info' => trim(
+                    ($age ? $age . ' años · ' : '') .
+                    ($patient->occupation ?? '') .
+                    ($patient->address ? ' · ' . $patient->address : '')
+                ),
+                'pathological_history' => $patient->pathological_history,
+                'non_pathological_history' => $patient->non_pathological_history,
+                'medications_allergies' => $patient->medications_allergies,
+            ]
+        ]);
     }
 
     public function patientByAppointment(Request $request)
     {
-        // Esta función hace básicamente lo mismo, la actualizamos para que no de error
+        // Esta función hace básicamente lo mismo
         return $this->patientClinicalInfo($request);
     }
 
     public function headerInfo(Request $request)
     {
-        $patient = Patient::with('user')
-            ->findOrFail($request->patient_id);
+        $patient = Patient::findOrFail($request->patient_id);
 
         return response()->json([
-            'name' => $patient->first_name . ' ' . $patient->last_name,
-            'phone' => $patient->user->mobile ?? '',
-            'email' => $patient->user->email ?? '',
-            'age' => $patient->birth_date
-                ? \Carbon\Carbon::parse($patient->birth_date)->age
-                : '—',
+            'name' => $patient->full_name,
+            'phone' => $patient->phone_primary ?? '',
+            'email' => $patient->email ?? '',
+            'age' => $patient->age ?? '—',
             'address' => $patient->address
         ]);
     }
@@ -322,148 +329,121 @@ class PatientController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\User  $patient
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $patient)
+    public function update(Request $request, $id)
     {
-        // return $request;
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.update')) {
+            $patient = Patient::findOrFail($id);
+            
             $validatedData = $request->validate([
                 'first_name' => 'required|alpha',
                 'last_name' => 'required|alpha',
-                'mobile' => 'required|numeric|digits_between:8,20',
+                'phone_primary' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
                 'address' => 'required|max:100',
                 'gender' => 'required',
-                'profile_photo'=>'image|mimes:jpg,png,jpeg,gif,svg|max:500'
+                'photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
+            
             try {
-                $user = Sentinel::getUser();
-                $role = $user->roles[0]->slug;
-                if ($request->hasFile('profile_photo')) {
-                    $des = 'storage/images/users/.' . $patient->profile_photo;
-                    if (File::exists($des)) {
-                        File::delete($des);
+                // Manejar foto
+                if ($request->hasFile('photo')) {
+                    if ($patient->photo && File::exists(public_path('storage/images/patients/' . $patient->photo))) {
+                        File::delete(public_path('storage/images/patients/' . $patient->photo));
                     }
-                    $file = $request->file('profile_photo');
-                    $extention = $file->getClientOriginalExtension();
-                    $imageName = time() . '.' . $extention;
-                    $file->move(public_path('storage/images/users'), $imageName);
-                    $patient->profile_photo = $imageName;
+                    $file = $request->file('photo');
+                    $extension = $file->getClientOriginalExtension();
+                    $imageName = time() . '.' . $extension;
+                    $file->move(public_path('storage/images/patients'), $imageName);
+                    $validatedData['photo'] = $imageName;
                 }
-                $patient->first_name = $validatedData['first_name'];
-                $patient->last_name = $validatedData['last_name'];
-                $patient->mobile = $validatedData['mobile'];
-                $patient->email = $validatedData['email'];
-                $patient->updated_by = $user->id;
-                $patient->save();
-                $patient_info= Patient::where('user_id', '=', $patient->id)->first();
-                    if($patient_info == null){
-                        $patient_info = new Patient();
-                        $patient_info->age = $request->age;
-                        $patient_info->gender = $request->gender;
-                        $patient_info->address = $request->address;
-                        $patient_info->user_id = $patient->id;
-                        $patient_info->save();
+                
+                // Actualizar paciente
+                $patient->update($validatedData);
+                
+                // Actualizar información médica
+                $medical_info = $patient->medicalInfo;
+                if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
+                    $medicalData = [
+                        'height' => $request->height,
+                        'weight' => $request->weight,
+                        'b_group' => $request->b_group,
+                        'b_pressure' => $request->b_pressure,
+                        'pulse' => $request->pulse,
+                        'respiration' => $request->respiration,
+                        'allergy' => $request->allergy,
+                        'diet' => $request->diet,
+                    ];
+                    
+                    if ($medical_info) {
+                        $medical_info->update($medicalData);
+                    } else {
+                        $medicalData['patient_id'] = $patient->id;
+                        MedicalInfo::create($medicalData);
                     }
-                    else{
-                        $patient_info->age = $request->age;
-                        $patient_info->gender = $request->gender;
-                        $patient_info->address = $request->address;
-                        $patient_info->user_id = $patient->id;
-                        $patient_info->save();
-                    }
-                    $medical_info = MedicalInfo::where('user_id', '=', $patient->id)->first();
-                    if($medical_info == null){
-                        $medical_info = new MedicalInfo();
-                        $medical_info->height = $request->height;
-                        $medical_info->b_group = $request->b_group;
-                        $medical_info->pulse = $request->pulse;
-                        $medical_info->allergy = $request->allergy;
-                        $medical_info->weight = $request->weight;
-                        $medical_info->b_pressure = $request->b_pressure;
-                        $medical_info->respiration = $request->respiration;
-                        $medical_info->diet = $request->diet;
-                        $medical_info->user_id = $patient->id;
-                        $medical_info->save();
-                    }
-                    else{
-                        $medical_info->height = $request->height;
-                        $medical_info->b_group = $request->b_group;
-                        $medical_info->pulse = $request->pulse;
-                        $medical_info->allergy = $request->allergy;
-                        $medical_info->weight = $request->weight;
-                        $medical_info->b_pressure = $request->b_pressure;
-                        $medical_info->respiration = $request->respiration;
-                        $medical_info->diet = $request->diet;
-                        $medical_info->user_id = $patient->id;
-                        $medical_info->save();
-                    }
+                }
+                
+                $role = $user->roles[0]->slug;
                 if ($role == 'patient') {
-                    return redirect('/dashboard')->with('success', 'Profile updated successfully!');
+                    return redirect('/dashboard')->with('success', '¡Perfil actualizado exitosamente!');
                 } else {
-                    return redirect('patient')->with('success', 'Patient Profile updated successfully!');
+                    return redirect('patient')->with('success', '¡Perfil del paciente actualizado exitosamente!');
                 }
             } catch (Exception $e) {
-                return redirect('patient')->with('error', 'Something went wrong!!! ' . $e->getMessage());
+                return redirect('patient')->with('error', 'Algo salió mal: ' . $e->getMessage());
             }
         } else {
             return view('error.403');
-
         }
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\User  $patient
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request)
     {
         $user = Sentinel::getUser();
-        $patient = $user::whereHas('roles',function($rq){
-            $rq->where('slug','patient');
-        })->where('id', $request->id)->where('is_deleted', 0)->first();
-        if($patient){
+        $patient = Patient::where('id', $request->id)->where('is_deleted', 0)->first();
+        
+        if ($patient) {
             if ($user->hasAccess('patient.delete')) {
                 try {
-                    $User = User::where('id',$request->id)->first();
-                    if ($User != Null) {
-                        $User->is_deleted = 1;
-                        $User->save();
-                        return response()->json([
-                            'success' => true,
-                            'message' => 'Patient deleted successfully.',
-                            'data' => $User,
-                        ], 200);
-                    } else {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Patient not found.',
-                            'data' => [],
-                        ], 409);
-                    }
+                    // Soft delete del paciente
+                    $patient->is_deleted = 1;
+                    $patient->save();
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Paciente eliminado exitosamente.',
+                        'data' => $patient,
+                    ], 200);
                 } catch (Exception $e) {
                     return response()->json([
-                        'success' =>false,
-                        'message' => 'Something went wrong!!!' . $e->getMessage(),
+                        'success' => false,
+                        'message' => 'Algo salió mal: ' . $e->getMessage(),
                         'data' => [],
-                    ],409);
+                    ], 409);
                 }
-            }
-            else {
+            } else {
                 return response()->json([
-                    'success' =>false,
-                    'message' =>'You have no permission to delete patient',
-                    'data'=> [],
-                ],409);
+                    'success' => false,
+                    'message' => 'No tienes permiso para eliminar pacientes',
+                    'data' => [],
+                ], 409);
             }
-        }else{
-            return redirect('/dashboard')->with('error', 'Patient not found');
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paciente no encontrado',
+                'data' => [],
+            ], 404);
         }
     }
 }

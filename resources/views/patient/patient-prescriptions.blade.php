@@ -61,27 +61,27 @@
                                             {{-- {{$item->appointment->prescription}} --}}
                                             <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
                                             @if ($role == 'receptionist')
-                                                <td>{{ $item->patient->first_name . ' ' . $item->patient->first_name }}
+                                                <td>{{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
-                                                <td>{{ @$item->doctor->user->first_name . ' ' . @$item->doctor->user->first_name }}
+                                                <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
                                                 </td>
                                             @elseif ($role == 'doctor')
-                                                <td>{{ $item->patient->first_name }}
-                                                    {{ $item->patient->last_name }}</td>
+                                                <td>{{ optional($item->patient)->first_name ?? 'N/A' }}
+                                                    {{ optional($item->patient)->last_name ?? '' }}</td>
                                             @elseif ($role == 'patient')
-                                                <td>{{ @$item->doctor->user->first_name }}
-                                                    {{ @$item->doctor->user->last_name }}</td>
+                                                <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }}
+                                                    {{ optional(optional($item->doctor)->user)->last_name ?? '' }}</td>
                                             @else
-                                                <td>{{ $item->patient->first_name }}
-                                                    {{ $item->patient->last_name }}</td>
-                                                <td>{{ @$item->doctor->user->first_name }}
-                                                    {{ @$item->doctor->user->last_name }}</td>
+                                                <td>{{ optional($item->patient)->first_name ?? 'N/A' }}
+                                                    {{ optional($item->patient)->last_name ?? '' }}</td>
+                                                <td>{{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }}
+                                                    {{ optional(optional($item->doctor)->user)->last_name ?? '' }}</td>
                                             @endif
-                                            <td>{{ $item->appointment->appointment_date }}</td>
-                                            <td>{{ $item->appointment->timeSlot->from . ' to ' . $item->appointment->timeSlot->to }}
+                                            <td>{{ optional($item->appointment)->appointment_date ?? 'N/A' }}</td>
+                                            <td>{{ optional(optional($item->appointment)->timeSlot)->from ?? 'N/A' }} {{ optional(optional($item->appointment)->timeSlot)->to ? '- ' . optional(optional($item->appointment)->timeSlot)->to : '' }}
                                             </td>
                                             <td>
-                                                <a href="{{ url('prescription-view/' . $item->appointment->prescription->id) }}">
+                                                <a href="{{ url('prescription-view/' . optional(optional($item->appointment)->prescription)->id) }}">
                                                     <button type="button"
                                                         class="btn btn-primary btn-sm btn-rounded waves-effect waves-light"
                                                         title="View item">

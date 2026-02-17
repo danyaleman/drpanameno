@@ -260,13 +260,13 @@
                             @foreach ($appointments as $item)
                                 <tr>
                                     <td>{{ $loop->index + 1 }}</td>
-                                    <td>{{ $item->patient->first_name }} {{ $item->patient->last_name }}</td>
-                                    <td>{{ $item->patient->mobile }}</td>
-                                    <td>{{ $item->patient->email }}</td>
+                                    <td>{{ optional($item->patient)->first_name }} {{ optional($item->patient)->last_name }}</td>
+                                    <td>{{ optional($item->patient)->mobile }}</td>
+                                    <td>{{ optional($item->patient)->email }}</td>
                                     <td>{{ $item->appointment_date }}</td>
                                     <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
                                     <td>
-                                        <a href="tel:{{ $item->patient->mobile }}">
+                                        <a href="tel:{{ optional($item->patient)->mobile }}">
                                             <button type="button"
                                                 class="btn btn-primary btn-sm btn-rounded waves-effect waves-light"
                                                 data-bs-toggle="modal" data-target=".exampleModal">

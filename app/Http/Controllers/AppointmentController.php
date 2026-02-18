@@ -72,9 +72,9 @@ class AppointmentController extends Controller
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with('roles')->get();
             if ($role == 'doctor') {
-                $appointments = Appointment::with('patient', 'timeSlot')->where('appointment_with', $userId)->where('appointment_date', Carbon::today())->get();
+                $appointments = Appointment::with('patient', 'timeSlot')->where('appointment_with', $userId)->where('appointment_date', Carbon::today())->where('status', '!=', 2)->get();
             } elseif ($role == 'patient') {
-                $appointments = Appointment::with('doctor', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', Carbon::today())->get();
+                $appointments = Appointment::with('doctor', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', Carbon::today())->where('status', '!=', 2)->get();
             } else {
                 $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $userId)->pluck('doctor_id');
                 $appointments = Appointment::with('doctor', 'patient', 'timeSlot')
@@ -83,6 +83,7 @@ class AppointmentController extends Controller
                         $re->orWhereIN('booked_by', $receptionists_doctor_id);
                         $re->orWhere('booked_by', $userId);
                     })->where('appointment_date', Carbon::today())
+                    ->where('status', '!=', 2)
                     ->get();
             }
             return view('appointment.appointment', compact('user', 'role', 'patients', 'doctors', 'appointments'));
@@ -150,9 +151,9 @@ class AppointmentController extends Controller
         $userId = $user->id;
         if ($role == 'doctor') {
             $doctor = Doctor::where('user_id', $user->id)->where('is_deleted', 0)->first();
-            $res = Appointment::with('patient', 'timeSlot')->where('appointment_with', $doctor->id)->where('appointment_date', $request->date)->get();
+            $res = Appointment::with('patient', 'timeSlot')->where('appointment_with', $doctor->id)->where('appointment_date', $request->date)->where('status', '!=', 2)->get();
         } elseif ($role == 'patient') {
-            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', $request->date)->get();
+            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', $request->date)->where('status', '!=', 2)->get();
         } else {
             $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $userId)->pluck('doctor_id');
             $res = Appointment::with('patient', 'timeSlot', 'doctor', 'doctor.user')->where('appointment_date', $request->date)
@@ -161,6 +162,7 @@ class AppointmentController extends Controller
                     $re->orWhereIN('booked_by', $receptionists_doctor_id);
                     $re->orWhere('booked_by', $userId);
                 })
+                ->where('status', '!=', 2)
                 ->get();
         }
         if (empty($res)) {
@@ -749,7 +751,7 @@ class AppointmentController extends Controller
                 $dates = Carbon::createFromFormat('m/d/Y', $date)->format('Y-m-d');
 
                 $appointment_slot = DoctorAvailableSlot::with(['appointment' => function ($re) use ($dates) {
-                    $re->where('appointment_date', $dates);
+                    $re->where('appointment_date', $dates)->where('status', '!=', 2);
                 }])
                     ->where('doctor_available_time_id', $timeId)->get();
                 return response()->json([
@@ -774,11 +776,13 @@ class AppointmentController extends Controller
                 $appointment = Appointment::select(DB::raw('count(id) as `total_appointment`'), DB::raw('appointment_date'))
                     ->whereDate('appointment_date', '>=', $request->start)
                     ->whereDate('appointment_date',   '<=', $request->end)
+                    ->where('status', '!=', 2)
                     ->groupBy(DB::raw('appointment_date'))->where('appointment_with', $doctor->id)->get();
             } elseif ($role == 'patient') {
                 $appointment = Appointment::select(DB::raw('count(id) as `total_appointment`'), DB::raw('appointment_date'))
                     ->whereDate('appointment_date', '>=', $request->start)
                     ->whereDate('appointment_date',   '<=', $request->end)
+                    ->where('status', '!=', 2)
                     ->groupBy(DB::raw('appointment_date'))->where('appointment_for', $user->id)->get();
             } elseif ($role == 'receptionist') {
                 $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $userId)->pluck('doctor_id');
@@ -790,6 +794,7 @@ class AppointmentController extends Controller
                         $re->orWhereIN('booked_by', $receptionists_doctor_id);
                         $re->orWhere('booked_by', $userId);
                     })
+                    ->where('status', '!=', 2)
                     ->groupBy(DB::raw('appointment_date'))->get();
             }
 

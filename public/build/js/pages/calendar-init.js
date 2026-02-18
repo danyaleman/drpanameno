@@ -25,11 +25,11 @@
         /* initialize the external events
          -----------------------------------------------------------------*/
 
-        
+
 
         /* initialize the calendar
          -----------------------------------------------------------------*/
-         var calendarEl = document.getElementById('calendar');
+        var calendarEl = document.getElementById('calendar');
 
         var SITEURL = "{{url('/')}}"
         var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -37,7 +37,6 @@
             droppable: true,
             selectable: true,
             initialView: 'dayGridMonth',
-            locale: 'es',
             themeSystem: 'bootstrap',
             weekNumbers: true,
             headerToolbar: {
@@ -75,17 +74,17 @@
                             var data = response.appointments;
                             var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>Sr.No</th>';
                             if (response.role == 'doctor') {
-                                list += '<th>Nombre de Paciente</th>';
-                                list += '<th>Numero de Telefono</th>';
+                                list += '<th>Patient Name</th>';
+                                list += '<th>Patient Number</th>';
                             } else if (response.role == 'patient') {
-                                list += '<th>Doctor</th>';
-                                list += '<th>Numero de Doctor</th>';
+                                list += '<th>Doctor Name</th>';
+                                list += '<th>Doctor Number</th>';
                             } else {
-                                list += '<th>Nombre de Paciente</th><th>Nombre de Doctor</th>';
-                                list += '<th>Numero de Telefono</th>';
+                                list += '<th>Patient Name</th><th>Doctor Name</th>';
+                                list += '<th>Patient Number</th>';
                             }
 
-                            list += '<th>Time</th></tr></thead><tbody>';
+                            list += '<th>Time</th><th>Acción</th></tr></thead><tbody>';
                             if (response.role == 'receptionist') {
 
                                 $.each(data, function (i, appointments) {
@@ -95,9 +94,11 @@
                                     let PLast_name = appointments.patient.last_name;
                                     let from = appointments.time_slot.from;
                                     let to = appointments.time_slot.to;
-                                    let mobile = appointments.patient.mobile
+                                    let mobile = appointments.patient.mobile;
+                                    let patientId = appointments.patient_id;
+                                    let appointmentId = appointments.id;
                                     list += "<tr><td>" + t + "</td><td>" + DFirst_name + "&nbsp;" + DLast_name + "</td><td>" + PFirst_name + "&nbsp;" + PLast_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
-                                        "</td></td>";
+                                        "</td><td><a href='/prescription/create?patient_id=" + patientId + "&appointment_id=" + appointmentId + "' class='btn btn-sm btn-success'><i class='bx bx-plus'></i> Expediente</a></td></tr>";
                                     t++;
                                 });
 
@@ -109,7 +110,7 @@
                                     let to = appointments.time_slot.to;
                                     let mobile = appointments.doctor.user.mobile
                                     list += "<tr><td>" + t + "</td><td>" + first_name + "&nbsp;" + last_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
-                                        "</td></td>";
+                                        "</td><td>-</td></tr>";
                                     t++;
                                 });
 
@@ -119,9 +120,102 @@
                                     let last_name = appointments.patient.last_name;
                                     let from = appointments.time_slot.from;
                                     let to = appointments.time_slot.to;
-                                    let mobile = appointments.patient.mobile
+                                    let mobile = appointments.patient.mobile;
+                                    let patientId = appointments.patient_id;
+                                    let appointmentId = appointments.id;
                                     list += "<tr><td>" + t + "</td><td>" + first_name + "&nbsp;" + last_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
-                                        "</td></td>";
+                                        "</td><td><a href='/prescription/create?patient_id=" + patientId + "&appointment_id=" + appointmentId + "' class='btn btn-sm btn-success'><i class='bx bx-plus'></i> Expediente</a></td></tr>";
+                                    t++;
+                                });
+
+                            }
+                            list += "</tbody></table>";
+
+                            $('#new_list').html(list);
+                        }
+                    },
+                    error: function () {
+                        console.log('Errors...Something went wrong!!!!');
+                    }
+                });
+            },
+            eventClick: function (info) {
+                // Prevenir el comportamiento por defecto
+                info.jsEvent.preventDefault();
+
+                // Obtener la fecha del evento clickeado
+                var eventDate = moment(info.event.start).format('YYYY-MM-DD');
+
+                // Actualizar la fecha seleccionada
+                $('#selected_date').html(eventDate);
+                $('#appointment_list').hide();
+                $('#new_list').show();
+
+                // Realizar la misma llamada AJAX que en select
+                $.ajax({
+                    method: 'get',
+                    url: aplist_url,
+                    data: { date: eventDate },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status == 'error') {
+                            $('#new_list').html('<h6>' + response.message + eventDate + '</h6>');
+                        } else {
+                            var t = 1;
+                            var data = response.appointments;
+                            var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>Sr.No</th>';
+                            if (response.role == 'doctor') {
+                                list += '<th>Patient Name</th>';
+                                list += '<th>Patient Number</th>';
+                            } else if (response.role == 'patient') {
+                                list += '<th>Doctor Name</th>';
+                                list += '<th>Doctor Number</th>';
+                            } else {
+                                list += '<th>Patient Name</th><th>Doctor Name</th>';
+                                list += '<th>Patient Number</th>';
+                            }
+
+                            list += '<th>Time</th><th>Acción</th></tr></thead><tbody>';
+                            if (response.role == 'receptionist') {
+
+                                $.each(data, function (i, appointments) {
+                                    let DFirst_name = appointments.doctor.user.first_name;
+                                    let DLast_name = appointments.doctor.user.last_name;
+                                    let PFirst_name = appointments.patient.first_name;
+                                    let PLast_name = appointments.patient.last_name;
+                                    let from = appointments.time_slot.from;
+                                    let to = appointments.time_slot.to;
+                                    let mobile = appointments.patient.mobile;
+                                    let patientId = appointments.patient_id;
+                                    let appointmentId = appointments.id;
+                                    list += "<tr><td>" + t + "</td><td>" + DFirst_name + "&nbsp;" + DLast_name + "</td><td>" + PFirst_name + "&nbsp;" + PLast_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
+                                        "</td><td><a href='/prescription/create?patient_id=" + patientId + "&appointment_id=" + appointmentId + "' class='btn btn-sm btn-success'><i class='bx bx-plus'></i> Expediente</a></td></tr>";
+                                    t++;
+                                });
+
+                            } else if (response.role == 'patient') {
+                                $.each(data, function (i, appointments) {
+                                    let first_name = appointments.doctor.user.first_name;
+                                    let last_name = appointments.doctor.user.last_name;
+                                    let from = appointments.time_slot.from;
+                                    let to = appointments.time_slot.to;
+                                    let mobile = appointments.doctor.user.mobile
+                                    list += "<tr><td>" + t + "</td><td>" + first_name + "&nbsp;" + last_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
+                                        "</td><td>-</td></tr>";
+                                    t++;
+                                });
+
+                            } else if (response.role == 'doctor') {
+                                $.each(data, function (i, appointments) {
+                                    let first_name = appointments.patient.first_name;
+                                    let last_name = appointments.patient.last_name;
+                                    let from = appointments.time_slot.from;
+                                    let to = appointments.time_slot.to;
+                                    let mobile = appointments.patient.mobile;
+                                    let patientId = appointments.patient_id;
+                                    let appointmentId = appointments.id;
+                                    list += "<tr><td>" + t + "</td><td>" + first_name + "&nbsp;" + last_name + "</td><td>" + mobile + "</td><td>" + from + " to " + to +
+                                        "</td><td><a href='/prescription/create?patient_id=" + patientId + "&appointment_id=" + appointmentId + "' class='btn btn-sm btn-success'><i class='bx bx-plus'></i> Expediente</a></td></tr>";
                                     t++;
                                 });
 
@@ -139,7 +233,6 @@
             events: function (date, callback) {
                 var start = moment(date.start).format('YYYY-MM-DD')
                 var end = moment(date.end).format('YYYY-MM-DD')
-                // console.log(start);
                 $.ajax({
                     type: "get",
                     url: "/cal-appointment-show",

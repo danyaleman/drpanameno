@@ -1,29 +1,27 @@
-<div class="repeater mb-4">
+<div class="repeater-wrapper mb-4" data-type="medicines">
     <label class="fw-bold mb-2">Medicamentos</label>
 
-    <div data-repeater-list="medicines">
-        <div data-repeater-item class="row mb-3 align-items-center">
+    <div class="repeater-container">
+        <div class="repeater-item row mb-3 align-items-center">
 
             <div class="col-md-4">
-                <input type="text" name="name" class="form-control"
+                <input type="text" name="medicines[0][name]" class="form-control"
                        placeholder="Nombre del medicamento">
             </div>
 
             <div class="col-md-6">
-                <textarea name="notes" class="form-control"
+                <textarea name="medicines[0][notes]" class="form-control"
                           placeholder="Dosis, vía, frecuencia"></textarea>
             </div>
 
             <div class="col-md-2 text-center">
-                <button data-repeater-delete type="button"
-                        class="btn btn-outline-danger btn-sm">X</button>
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-item">X</button>
             </div>
 
         </div>
     </div>
 
-    <button data-repeater-create type="button"
-            class="btn btn-primary btn-sm">
+    <button type="button" class="btn btn-primary btn-sm btn-add-item">
         + Agregar medicamento
     </button>
 </div>

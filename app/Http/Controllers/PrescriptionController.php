@@ -70,13 +70,38 @@ class PrescriptionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.create')) {
             $role = $user->roles[0]->slug;
             $patients = Patient::where('is_deleted', 0)->get();
-            return view('prescription.prescription-details', compact('user', 'role', 'patients'));
+            
+            // Obtener parámetros opcionales de la URL
+            $preloadPatientId = $request->query('patient_id');
+            $preloadAppointmentId = $request->query('appointment_id');
+            
+            // Si vienen parámetros, obtener datos del paciente
+            $preloadPatient = null;
+            $preloadAppointment = null;
+            
+            if ($preloadPatientId) {
+                $preloadPatient = Patient::find($preloadPatientId);
+            }
+            
+            if ($preloadAppointmentId) {
+                $preloadAppointment = Appointment::with('patient')->find($preloadAppointmentId);
+            }
+            
+            return view('prescription.prescription-details', compact(
+                'user', 
+                'role', 
+                'patients', 
+                'preloadPatientId', 
+                'preloadAppointmentId',
+                'preloadPatient',
+                'preloadAppointment'
+            ));
         } else {
             return view('error.403');
         }

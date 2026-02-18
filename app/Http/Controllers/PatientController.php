@@ -278,32 +278,52 @@ class PatientController extends Controller
         }
 
         // Buscamos las citas del paciente
-        $appointments = $patient->appointments()->get();
+    $appointments = $patient->appointments()->orderBy('appointment_date', 'desc')->get();
 
-        $options = '<option selected value="">--- Seleccionar Cita ---</option>';
-        foreach ($appointments as $appointment) {
-            $options .= '<option value="' . $appointment->id . '">'
-                . $appointment->appointment_date . ' ' . ($appointment->appointment_time ?? '') .
-                '</option>';
-        }
+    // Opción predeterminada y opción "Sin Cita"
+    $options = '<option value="" selected disabled>Seleccionar Cita</option>';
+    $options .= '<option value="0">⚠️ Sin Cita (Atención Inmediata)</option>';
+    
+    foreach ($appointments as $appointment) {
+        $options .= '<option value="' . $appointment->id . '">'
+            . \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') . ' ' . 
+            ($appointment->AvailableTime ? ' - ' . $appointment->AvailableTime->from . ' a ' . $appointment->AvailableTime->to : '') .
+            '</option>';
+    }
 
-        $age = $patient->age; // Ahora disponible como accessor
+    $age = $patient->age; // Ahora disponible como accessor
 
-        return response()->json([
-            'isSuccess' => true,
-            'options' => $options,
-            'patient' => [
-                'name' => $patient->full_name, // Nuevo accessor
-                'info' => trim(
-                    ($age ? $age . ' años · ' : '') .
-                    ($patient->occupation ?? '') .
-                    ($patient->address ? ' · ' . $patient->address : '')
-                ),
-                'pathological_history' => $patient->pathological_history,
-                'non_pathological_history' => $patient->non_pathological_history,
-                'medications_allergies' => $patient->medications_allergies,
-            ]
-        ]);
+    return response()->json([
+        'isSuccess' => true,
+        'options' => $options,
+        'patient' => [
+            'id' => $patient->id,
+            'name' => $patient->first_name . ' ' . $patient->last_name,
+            'info' => trim(
+                ($age ? $age . ' años · ' : '') .
+                ($patient->occupation ?? '') .
+                ($patient->address ? ' · ' . $patient->address : '')
+            ),
+            // Datos adicionales para el Tab de Información General
+            'first_name' => $patient->first_name,
+            'last_name' => $patient->last_name,
+            'gender' => $patient->gender,
+            'dob' => $patient->birth_date, // Date of Birth
+            'age' => $age,
+            'mobile' => $patient->phone_primary,
+            'email' => $patient->email,
+            'blood_group' => $patient->medicalInfo->b_group ?? null,
+            'marital_status' => $patient->marital_status,
+            'address' => $patient->address,
+            'occupation' => $patient->occupation ?? 'No especificada',
+            'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
+            
+            // Antecedentes
+            'pathological_history' => $patient->pathological_history,
+            'non_pathological_history' => $patient->non_pathological_history,
+            'medications_allergies' => $patient->medications_allergies,
+        ]
+    ]);
     }
 
     public function patientByAppointment(Request $request)

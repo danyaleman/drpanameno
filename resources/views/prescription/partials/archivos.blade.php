@@ -1,28 +1,26 @@
-<div class="repeater mb-4">
+<div class="repeater-wrapper mb-4" data-type="archivos">
     <label class="fw-bold mb-2">Archivos clínicos</label>
 
-    <div data-repeater-list="archivos">
-        <div data-repeater-item class="row mb-3 align-items-center">
+    <div class="repeater-container">
+        <div class="repeater-item row mb-3 align-items-center">
 
             <div class="col-md-5">
-                <input type="file" name="file" class="form-control">
+                <input type="file" name="archivos[0][file]" class="form-control">
             </div>
 
             <div class="col-md-5">
-                <input type="text" name="observaciones" class="form-control"
+                <input type="text" name="archivos[0][observaciones]" class="form-control"
                        placeholder="Observaciones">
             </div>
 
             <div class="col-md-2 text-center">
-                <button data-repeater-delete type="button"
-                        class="btn btn-outline-danger btn-sm">X</button>
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-item">X</button>
             </div>
 
         </div>
     </div>
 
-    <button data-repeater-create type="button"
-            class="btn btn-primary btn-sm">
+    <button type="button" class="btn btn-primary btn-sm btn-add-item">
         + Agregar archivo
     </button>
 </div>

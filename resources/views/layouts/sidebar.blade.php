@@ -87,6 +87,21 @@
                             <span>{{ __('translation.appointment-list') }}</span>
                         </a>
                     </li>
+
+                    <li class="menu-title" key="t-menu">💉 Inmunización</li>
+                    <li>
+                        <a href="javascript: void(0);" class="has-arrow waves-effect">
+                            <i class='bx bx-injection'></i>
+                            <span>Vacunas</span>
+                        </a>
+                        <ul class="sub-menu" aria-expanded="true">
+                            <li><a href="{{ route('vaccines.records.index') }}">Registros de Vacunación</a></li>
+                            <li><a href="{{ route('vaccines.records.create') }}">Registrar Vacuna</a></li>
+                            <li><a href="{{ route('vaccines.catalog.index') }}">Catálogo de Vacunas</a></li>
+                            <li><a href="{{ route('vaccines.catalog.create') }}">Nueva Vacuna</a></li>
+                        </ul>
+                    </li>
+
                     <li class="menu-title" key="t-menu">{{ __('Transactions') }}</li>
                     <li>
                         <a href="{{ url('transaction') }}" class="waves-effect">
@@ -147,6 +162,18 @@
                             <li><a
                                     href="{{ route('prescription.create') }}">{{ __('translation.create-prescription') }}</a>
                             </li>
+                        </ul>
+                    </li>
+
+                    <li class="menu-title" key="t-menu">💉 Inmunización</li>
+                    <li>
+                        <a href="javascript: void(0);" class="has-arrow waves-effect">
+                            <i class='bx bx-injection'></i>
+                            <span>Vacunas</span>
+                        </a>
+                        <ul class="sub-menu" aria-expanded="true">
+                            <li><a href="{{ route('vaccines.records.index') }}">Registros de Vacunación</a></li>
+                            <li><a href="{{ route('vaccines.records.create') }}">Registrar Vacuna</a></li>
                         </ul>
                     </li>
 

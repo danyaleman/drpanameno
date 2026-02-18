@@ -399,3 +399,192 @@
     </div>
 </div>
 <!-- end row -->
+
+{{-- ============================================================== --}}
+{{-- SECCIÓN: VACUNACIONES PENDIENTES                               --}}
+{{-- ============================================================== --}}
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header d-flex align-items-center justify-content-between py-3"
+                 style="background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); border-radius: 8px 8px 0 0;">
+                <div class="d-flex align-items-center">
+                    <div class="me-3" style="width:42px;height:42px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                        <i class="bx bx-injection font-size-22 text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 text-white fw-bold">💉 Vacunaciones Pendientes</h5>
+                        <small class="text-white-50">Pacientes con dosis pendientes según esquema de vacunación</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if(isset($upcoming_vaccines) && $upcoming_vaccines->count() > 0)
+                    <span class="badge rounded-pill text-white fw-bold px-3 py-2"
+                          style="background:rgba(255,255,255,0.25);font-size:0.9rem;">
+                        {{ $upcoming_vaccines->count() }} pendiente(s)
+                    </span>
+                    @endif
+                    <a href="{{ route('vaccines.records.index') }}" class="btn btn-light btn-sm waves-effect">
+                        <i class="bx bx-list-ul me-1"></i>Ver todos
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                @if(isset($upcoming_vaccines) && $upcoming_vaccines->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="upcoming-vaccines-table">
+                        <thead style="background:#f8f9fa;">
+                            <tr>
+                                <th class="ps-4 py-3 text-muted fw-semibold" style="font-size:0.8rem;letter-spacing:0.05em;">PACIENTE</th>
+                                <th class="py-3 text-muted fw-semibold" style="font-size:0.8rem;letter-spacing:0.05em;">VACUNA</th>
+                                <th class="py-3 text-muted fw-semibold" style="font-size:0.8rem;letter-spacing:0.05em;">DOSIS</th>
+                                <th class="py-3 text-muted fw-semibold" style="font-size:0.8rem;letter-spacing:0.05em;">FECHA PROGRAMADA</th>
+                                <th class="py-3 text-muted fw-semibold" style="font-size:0.8rem;letter-spacing:0.05em;">TELÉFONO</th>
+                                <th class="py-3 text-muted fw-semibold text-center" style="font-size:0.8rem;letter-spacing:0.05em;">ACCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($upcoming_vaccines as $vRecord)
+                                @php
+                                    $daysUntil = \Carbon\Carbon::today()->diffInDays($vRecord->scheduled_date, false);
+                                    if ($daysUntil < 0) {
+                                        $urgencyClass = 'danger';
+                                        $urgencyText  = 'Vencida (' . abs((int)$daysUntil) . 'd)';
+                                    } elseif ($daysUntil == 0) {
+                                        $urgencyClass = 'danger';
+                                        $urgencyText  = 'HOY';
+                                    } elseif ($daysUntil <= 3) {
+                                        $urgencyClass = 'warning';
+                                        $urgencyText  = $daysUntil == 1 ? 'MAÑANA' : "En {$daysUntil} días";
+                                    } else {
+                                        $urgencyClass = 'info';
+                                        $urgencyText  = "En {$daysUntil} días";
+                                    }
+                                @endphp
+                                <tr class="border-bottom">
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3 flex-shrink-0">
+                                                <div class="avatar-title rounded-circle bg-primary-subtle text-primary fw-bold">
+                                                    {{ strtoupper(substr($vRecord->patient->first_name ?? 'P', 0, 1)) }}{{ strtoupper(substr($vRecord->patient->last_name ?? '', 0, 1)) }}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p class="mb-0 fw-semibold text-dark">
+                                                    {{ $vRecord->patient->first_name ?? 'N/A' }} {{ $vRecord->patient->last_name ?? '' }}
+                                                </p>
+                                                <small class="text-muted">
+                                                    <i class="bx bx-id-card me-1"></i>
+                                                    {{ $vRecord->patient->dui ?? 'Sin DUI' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bx bx-injection text-primary me-2 font-size-18"></i>
+                                            <span class="fw-medium">{{ $vRecord->vaccine->name ?? 'N/A' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-medium">
+                                            {{ $vRecord->dose_label }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <div>
+                                            <span class="fw-medium text-dark">
+                                                {{ \Carbon\Carbon::parse($vRecord->scheduled_date)->format('d/m/Y') }}
+                                            </span>
+                                            <br>
+                                            <span class="badge bg-{{ $urgencyClass }}-subtle text-{{ $urgencyClass }} px-2 py-1 rounded-pill mt-1" style="font-size:0.7rem;">
+                                                {{ $urgencyText }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        @if($vRecord->patient->phone_primary)
+                                            <a href="tel:{{ $vRecord->patient->phone_primary }}" class="text-dark text-decoration-none">
+                                                <i class="bx bx-phone text-success me-1"></i>
+                                                {{ $vRecord->patient->phone_primary }}
+                                            </a>
+                                        @elseif($vRecord->patient->phone_secondary)
+                                            <a href="tel:{{ $vRecord->patient->phone_secondary }}" class="text-dark text-decoration-none">
+                                                <i class="bx bx-phone text-success me-1"></i>
+                                                {{ $vRecord->patient->phone_secondary }}
+                                            </a>
+                                        @else
+                                            <span class="text-muted"><i class="bx bx-phone-off me-1"></i>Sin teléfono</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 text-center">
+                                        @php
+                                            $phone = $vRecord->patient->phone_primary ?? $vRecord->patient->phone_secondary ?? '';
+                                            $patientName = ($vRecord->patient->first_name ?? '') . ' ' . ($vRecord->patient->last_name ?? '');
+                                            $vaccineName = $vRecord->vaccine->name ?? '';
+                                            $doseLabel   = $vRecord->dose_label ?? '';
+                                            $schedDate   = \Carbon\Carbon::parse($vRecord->scheduled_date)->format('d/m/Y');
+                                            $waMsg = urlencode("Estimado/a {$patientName}, le recordamos que tiene programada la {$doseLabel} de la vacuna {$vaccineName} para el {$schedDate}. Por favor confírmenos su asistencia. Gracias.");
+                                        @endphp
+                                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                            @if($phone)
+                                                <a href="tel:{{ $phone }}"
+                                                   class="btn btn-sm btn-success waves-effect"
+                                                   title="Llamar al paciente">
+                                                    <i class="bx bx-phone-call me-1"></i>Llamar
+                                                </a>
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $phone) }}?text={{ $waMsg }}"
+                                                   target="_blank"
+                                                   class="btn btn-sm waves-effect"
+                                                   style="background:#25D366;color:#fff;"
+                                                   title="Enviar WhatsApp">
+                                                    <i class="bx bxl-whatsapp me-1"></i>WhatsApp
+                                                </a>
+                                            @else
+                                                <span class="text-muted small">Sin contacto</span>
+                                            @endif
+                                            <a href="{{ route('vaccines.patient-history', $vRecord->patient_id) }}"
+                                               class="btn btn-sm btn-outline-primary waves-effect">
+                                                <i class="bx bx-history me-1"></i>Historial
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                {{-- Estado vacío: no hay vacunas pendientes --}}
+                <div class="text-center py-5">
+                    <div class="mb-3" style="font-size:3.5rem; opacity:0.3;">💉</div>
+                    <p class="text-muted fw-medium mb-1">No hay vacunas pendientes en el esquema de vacunación</p>
+                    <p class="text-muted small mb-3">Todos los pacientes tienen su esquema al día o no hay dosis registradas.</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ route('vaccines.records.create') }}" class="btn btn-primary btn-sm waves-effect">
+                            <i class="bx bx-plus me-1"></i>Registrar Vacuna
+                        </a>
+                        <a href="{{ route('vaccines.records.index') }}" class="btn btn-outline-primary btn-sm waves-effect">
+                            <i class="bx bx-list-ul me-1"></i>Ver todos los registros
+                        </a>
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="card-footer bg-white border-top-0 py-3 text-center">
+                <small class="text-muted">
+                    <i class="bx bx-info-circle me-1"></i>
+                    Solo se muestran pacientes con dosis <strong>pendientes</strong> según su esquema de vacunación.
+                    &nbsp;|&nbsp;
+                    <a href="{{ route('vaccines.catalog.index') }}" class="text-primary">Gestionar catálogo</a>
+                    &nbsp;|&nbsp;
+                    <a href="{{ route('vaccines.records.index') }}" class="text-primary">Ver todos los registros</a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{{-- ============================================================== --}}
+{{-- FIN SECCIÓN VACUNACIONES PRÓXIMAS                              --}}
+{{-- ============================================================== --}}
+

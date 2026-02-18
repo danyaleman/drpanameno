@@ -34,16 +34,29 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         Paginator::useBootstrap();
         view()->composer('*', function ($view) {
-            $Cnotification_count = [];
-            if (Sentinel::getUser()) {
-                $user_id =Sentinel::getUser()->id;
-                $Cnotification_count = Notification::with(['user'])->where(['to_user'=>$user_id])->where('read_at','=',null)->take(10)->orderBy('id','desc')->get();
+            $Cnotification_count = collect();
+            $user = null;
+            $role = null;
+            try {
+                $sentinelUser = Sentinel::getUser();
+                if ($sentinelUser) {
+                    $user = $sentinelUser;
+                    $role = $sentinelUser->roles[0]->slug ?? null;
+                    $Cnotification_count = Notification::with(['user'])
+                        ->where('to_user', $sentinelUser->id)
+                        ->where('read_at', null)
+                        ->take(10)
+                        ->orderBy('id', 'desc')
+                        ->get();
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('AppServiceProvider ViewComposer error: ' . $e->getMessage());
             }
-            $data =
-            [
+            $view->with([
                 'Cnotification_count' => $Cnotification_count,
-            ];
-        $view->with($data);
+                'user'                => $view->getData()['user'] ?? $user,
+                'role'                => $view->getData()['role'] ?? $role,
+            ]);
         });
     }
 }

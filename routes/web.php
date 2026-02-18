@@ -137,4 +137,27 @@ Route::middleware('sentinel.auth')->group(function () {
 
     // Payment Api key add
     Route::resource('payment-key', 'PaymentApiController');
+
+    // ─── Módulo de Vacunas ────────────────────────────────────────────────────
+    // Catálogo de vacunas
+    Route::get('vaccines/catalog',                  'VaccineController@catalogIndex')->name('vaccines.catalog.index');
+    Route::get('vaccines/catalog/create',           'VaccineController@catalogCreate')->name('vaccines.catalog.create');
+    Route::post('vaccines/catalog',                 'VaccineController@catalogStore')->name('vaccines.catalog.store');
+    Route::get('vaccines/catalog/{id}/edit',        'VaccineController@catalogEdit')->name('vaccines.catalog.edit');
+    Route::put('vaccines/catalog/{id}',             'VaccineController@catalogUpdate')->name('vaccines.catalog.update');
+    Route::post('vaccines/catalog/{id}/toggle',     'VaccineController@catalogToggle')->name('vaccines.catalog.toggle');
+
+    // Registros de vacunación
+    Route::get('vaccines/records',                  'VaccineController@recordsIndex')->name('vaccines.records.index');
+    Route::get('vaccines/records/create',           'VaccineController@recordsCreate')->name('vaccines.records.create');
+    Route::post('vaccines/records',                 'VaccineController@recordsStore')->name('vaccines.records.store');
+    Route::post('vaccines/records/{id}/apply',      'VaccineController@recordsApply')->name('vaccines.records.apply');
+    Route::post('vaccines/records/{id}/cancel',     'VaccineController@recordsCancel')->name('vaccines.records.cancel');
+
+    // Historial por paciente
+    Route::get('vaccines/patient/{patientId}',      'VaccineController@patientHistory')->name('vaccines.patient-history');
+
+    // AJAX: esquema de dosis de una vacuna
+    Route::get('vaccines/schedule/{vaccineId}',     'VaccineController@getSchedule')->name('vaccines.schedule');
+    // ─────────────────────────────────────────────────────────────────────────
 });

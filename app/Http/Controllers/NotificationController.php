@@ -45,6 +45,7 @@ class NotificationController extends Controller
         if ($notification) {
             $notification->read_at = Carbon::now();
             $notification->save();
+
             if ($notification->notification_type_id == 1) {
                 if ($user_role == 'patient') {
                     $url = '/notification-list';
@@ -69,10 +70,22 @@ class NotificationController extends Controller
                 } else {
                     $url = 'invoice/' . $notification->data;
                 }
+            } elseif ($notification->notification_type_id == 5) {
+                // data contiene el vaccine_record_id → buscar patient_id
+                $record = \App\VaccineRecord::find($notification->data);
+                if ($record && $record->patient_id) {
+                    $url = '/vaccines/patient/' . $record->patient_id;
+                } else {
+                    $url = '/vaccines/records';
+                }
+            } else {
+                $url = '/notification-list';
             }
+
             return redirect($url);
         }
-        return $notification;
+
+        return redirect('/notification-list');
     }
     public function notification_top(Request $request)
     {

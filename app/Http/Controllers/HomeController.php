@@ -105,7 +105,14 @@ class HomeController extends Controller
                 'monthly_earning' => $monthlyEarning['monthlyEarning'],
                 'monthly_diff' => $monthlyEarning['diff']
             ];
-            return view('index', compact('user', 'role', 'patients', 'doctors', 'receptionists', 'accountants', 'data'));
+
+            // Vacunas pendientes para el dashboard (todos los pacientes con dosis pendientes)
+            $upcoming_vaccines = \App\VaccineRecord::with(['patient', 'vaccine'])
+                ->where('status', 'pending')
+                ->orderBy('scheduled_date', 'asc')
+                ->get();
+
+            return view('index', compact('user', 'role', 'patients', 'doctors', 'receptionists', 'accountants', 'data', 'upcoming_vaccines'));
         } elseif ($role == 'doctor') {
             $doctor_info = Doctor::where('user_id', '=', $user->id)->first();
             $doctor_id = $doctor_info->id;

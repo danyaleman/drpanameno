@@ -72,26 +72,53 @@
                             </div>
                         </div>
                     </div>
-                    <div data-simplebar class="notification-list-scroll overflow-auto" style="max-height: 230px;">
+                    <div data-simplebar class="notification-list-scroll overflow-auto" style="max-height: 280px;">
                         @forelse ($Cnotification_count as $item)
+                            @php
+                                $isVaccineNotif = isset($item->notification_type_id) && $item->notification_type_id == 5;
+                            @endphp
                             <a href="/notification/{{ $item->id }}"
-                                class="text-reset notification-item bg-light ">
-                                <div class="d-flex">
-                                    <img src="@if ($user->profile_photo != '') {{ URL::asset('storage/images/users/' . $user->profile_photo) }}@else{{ URL::asset('build/images/users/noImage.png') }} @endif"
-                                        class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                    <div class="flex-grow-1">
-                                        <h6 class="mt-0 mb-1">
-                                            {{ $item->user->first_name . ' ' . $item->user->last_name }}</h6>
+                                class="text-reset notification-item {{ $isVaccineNotif ? 'border-start border-3 border-info bg-info-subtle' : 'bg-light' }}"
+                                style="display:block; padding: 10px 16px; border-bottom: 1px solid #f0f0f0;">
+                                <div class="d-flex align-items-start">
+                                    @if($isVaccineNotif)
+                                        <div class="me-3 flex-shrink-0">
+                                            <div class="avatar-xs">
+                                                <span class="avatar-title rounded-circle fw-bold"
+                                                      style="background:linear-gradient(135deg,#0dcaf0,#0a8fa8);color:#fff;font-size:1rem;">
+                                                    💉
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <img src="@if($item->user && $item->user->profile_photo != '') {{ URL::asset('storage/images/users/' . $item->user->profile_photo) }}@else{{ URL::asset('build/images/users/noImage.png') }} @endif"
+                                            class="me-3 rounded-circle avatar-xs" alt="user-pic">
+                                    @endif
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h6 class="mt-0 mb-1 {{ $isVaccineNotif ? 'text-info fw-bold' : '' }}" style="font-size:0.82rem;">
+                                            @if($isVaccineNotif)
+                                                💉 Vacuna Próxima
+                                            @else
+                                                {{ optional($item->user)->first_name . ' ' . optional($item->user)->last_name }}
+                                            @endif
+                                        </h6>
                                         <div class="font-size-12 text-muted">
-                                            <p class="mb-1">{{ $item->title }}</p>
-                                            <p class="mb-0"><i class="mdi mdi-clock-outline"></i>
-                                                {{ $item->created_at->diffForHumans() }} </p>
+                                            <p class="mb-1 text-truncate" style="max-width:220px;">{{ $item->title }}</p>
+                                            <p class="mb-0">
+                                                <i class="mdi mdi-clock-outline me-1"></i>{{ $item->created_at->diffForHumans() }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </a>
-                        @endforeach
+                        @empty
+                            <div class="text-center py-4 text-muted">
+                                <i class="bx bx-bell-off font-size-24 d-block mb-2 opacity-50"></i>
+                                <small>Sin notificaciones nuevas</small>
+                            </div>
+                        @endforelse
                     </div>
+
                     <div class="p-2 border-top d-grid">
                         <a class="btn btn-sm btn-link font-size-14 w-100 text-center"
                             href="{{ url('/notification-list') }}">
@@ -100,6 +127,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="dropdown d-inline-block">
                 <button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

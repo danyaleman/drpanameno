@@ -84,6 +84,24 @@ class Patient extends Model
         return $this->hasMany(Invoice::class, 'patient_id', 'id');
     }
 
+    /**
+     * Registros de vacunación del paciente
+     */
+    public function vaccineRecords()
+    {
+        return $this->hasMany(VaccineRecord::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Vacunas pendientes del paciente
+     */
+    public function pendingVaccines()
+    {
+        return $this->hasMany(VaccineRecord::class, 'patient_id', 'id')
+                    ->where('status', 'pending')
+                    ->orderBy('scheduled_date');
+    }
+
     /* =====================
      |  ACCESORES
      ===================== */

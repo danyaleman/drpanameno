@@ -123,24 +123,26 @@ class PrescriptionController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.create')) {
             $request->validate([
-                'patient_id' => 'required',
+                'patient_id_hidden' => 'required',
                 'appointment_id' => 'required',
                 'symptoms' => 'required',
-                'diagnosis' => 'required'
+                'diagnostico' => 'required'
             ]);
 
             try {
                 $user = Sentinel::getUser();
-                if ($request->medicines[0]['medicine'] == null && $request->medicines[0]['notes'] == null) {
+                // Verificamos si al menos el primer medicamento tiene nombre
+                if (empty($request->medicines[0]['name']) && empty($request->medicines[0]['notes'])) {
                     return redirect()->back()->with('error', 'Add at least one medicine to create prescription!!!');
                 } else {
-                    $this->prescription->patient_id = $request->patient_id;
+                    $this->prescription->patient_id = $request->patient_id_hidden;
                     $this->prescription->appointment_id = $request->appointment_id;
                     $this->prescription->symptoms = $request->symptoms;
-                    $this->prescription->diagnosis = $request->diagnosis;
+                    $this->prescription->diagnosis = $request->diagnostico;
                     $this->prescription->created_by = $request->created_by;
                     $this->prescription->updated_by = $user->id;
                     $this->prescription->save();
+                    
                     Signos::create([
                         'prescription_id' => $this->prescription->id,
                         'peso' => $request->peso,
@@ -154,45 +156,44 @@ class PrescriptionController extends Controller
                         'examen' => $request->examen,
                         'observaciones_adicionales' => $request->observaciones_adicionales,
                     ]);
+
                     foreach ($request->medicines as $item) {
-                        $this->medicine = new Medicine();
-                        $this->medicine->prescription_id = $this->prescription->id;
-                        $this->medicine->name = $item['medicine'];
-                        $this->medicine->notes = $item['notes'];
-                        $this->medicine->save();
+                        if (!empty($item['name'])) {
+                            $medicine = new Medicine();
+                            $medicine->prescription_id = $this->prescription->id;
+                            $medicine->name = $item['name'];
+                            $medicine->notes = $item['notes'];
+                            $medicine->save();
+                        }
                     }
-                    if ($request->test_reports[0]['test_report'] != null && $request->test_reports[0]['notes'] != null) {
+
+                    if ($request->has('test_reports') && $request->test_reports[0]['test_report'] != null) {
                         foreach ($request->test_reports as $item) {
-                            $this->test_report = new TestReport();
-                            $this->test_report->prescription_id = $this->prescription->id;
-                            $this->test_report->name = $item['test_report'];
-                            $this->test_report->notes = $item['notes'];
-                            $this->test_report->save();
+                            $test_report = new TestReport();
+                            $test_report->prescription_id = $this->prescription->id;
+                            $test_report->name = $item['test_report'];
+                            $test_report->notes = $item['notes'];
+                            $test_report->save();
                         }
                     }
+
                     if ($request->has('archivos')) {
-                            foreach ($request->archivos as $archivo) {
-
-                                // si no subieron archivo, saltar
-                                if (!isset($archivo['file'])) {
-                                    continue;
-                                }
-
-                                $file = $archivo['file'];
-
-                                if (!$file instanceof \Illuminate\Http\UploadedFile) {
-                                    continue;
-                                }
-
-                                $path = $file->store('clinical_files', 'public');
-
-                                Archivo::create([
-                                    'prescription_id' => $this->prescription->id,
-                                    'url_file' => $path,
-                                    'observaciones' => $archivo['observaciones'] ?? null,
-                                ]);
+                        foreach ($request->archivos as $archivo) {
+                            if (!isset($archivo['file'])) {
+                                continue;
                             }
+                            $file = $archivo['file'];
+                            if (!$file instanceof \Illuminate\Http\UploadedFile) {
+                                continue;
+                            }
+                            $path = $file->store('clinical_files', 'public');
+                            Archivo::create([
+                                'prescription_id' => $this->prescription->id,
+                                'url_file' => $path,
+                                'observaciones' => $archivo['observaciones'] ?? null,
+                            ]);
                         }
+                    }
 
                     if ($request->has('vacunas')) {
                         foreach ($request->vacunas as $item) {
@@ -205,7 +206,6 @@ class PrescriptionController extends Controller
                             }
                         }
                     }
-
 
                     return redirect('prescription')->with('success', 'Prescription created successfully!');
                 }

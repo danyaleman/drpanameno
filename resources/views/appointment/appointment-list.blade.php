@@ -51,13 +51,12 @@
                                     <thead>
                                         <tr>
                                             <th>{{ __('No.') }}</th>
-                                            <th>{{ __('Nombre de Doctor') }}</th>
                                             <th>{{ __('Nombre de Paciente') }}</th>
-                                            <th>{{ __('Telefono de Paciente') }}</th>
-                                            <th>{{ __('Correo de Paciente') }}</th>
+                                            <th>{{ __('Teléfono') }}</th>
+                                            <th>{{ __('Correo Electrónico') }}</th>
                                             <th>{{ __('Fecha') }}</th>
                                             <th>{{ __('Hora') }}</th>
-                                            <th>{{ __('Estado') }}</th>
+                                            <th>{{ __('Acción') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -76,21 +75,19 @@
                                         @foreach ($pending_appointment as $item)
                                             <tr>
                                                 <td> {{ $loop->index + 1 + $per_page * ($currentpage - 1) }} </td>
-                                                <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
-                                                </td>
                                                 <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
                                                 <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
                                                 <td> {{ optional($item->patient)->email ?? 'N/A' }} </td>
-                                                <td>{{ $item->appointment_date }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                                 <td>
                                                     @if ($role == 'doctor' || $role == 'receptionist')
                                                         <button type="button" class="btn btn-success complete"
-                                                            data-id="{{ $item->id }}">Complete</button>
+                                                            data-id="{{ $item->id }}">Completar</button>
                                                     @endif
                                                     <button type="button" class="btn btn-danger cancel"
-                                                        data-id="{{ $item->id }}">Cancel</button>
+                                                        data-id="{{ $item->id }}">Cancelar</button>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -103,10 +100,9 @@
                                     <thead>
                                         <tr>
                                             <th>{{ __('No.') }}</th>
-                                            <th>{{ __('Nombre de Doctor') }}</th>
                                             <th>{{ __('Nombre de Paciente') }}</th>
-                                            <th>{{ __('Telefono de Paciente') }}</th>
-                                            <th>{{ __('Correo de Paciente') }}</th>
+                                            <th>{{ __('Teléfono') }}</th>
+                                            <th>{{ __('Correo Electrónico') }}</th>
                                             <th>{{ __('Fecha') }}</th>
                                             <th>{{ __('Hora') }}</th>
                                         </tr>
@@ -127,13 +123,11 @@
                                         @foreach ($Upcoming_appointment as $item)
                                             <tr>
                                                 <td> {{ $loop->index + 1 + $per_page * ($currentpage - 1) }} </td>
-                                                <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
-                                                </td>
                                                 <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
                                                 <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
                                                 <td>{{ optional($item->patient)->email ?? 'N/A' }}</td>
-                                                <td>{{ $item->appointment_date }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                             </tr>
                                         @endforeach
@@ -146,10 +140,9 @@
                                     <thead>
                                         <tr>
                                            <th>{{ __('No.') }}</th>
-                                            <th>{{ __('Nombre de Doctor') }}</th>
                                             <th>{{ __('Nombre de Paciente') }}</th>
-                                            <th>{{ __('Telefono de Paciente') }}</th>
-                                            <th>{{ __('Correo de Paciente') }}</th>
+                                            <th>{{ __('Teléfono') }}</th>
+                                            <th>{{ __('Correo Electrónico') }}</th>
                                             <th>{{ __('Fecha') }}</th>
                                             <th>{{ __('Hora') }}</th>
                                         </tr>
@@ -170,13 +163,11 @@
                                         @foreach ($Complete_appointment as $item)
                                             <tr>
                                                 <td> {{ $loop->index + 1 + $per_page * ($currentpage - 1) }} </td>
-                                                <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
-                                                </td>
                                                 <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
                                                 <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
                                                 <td>{{ optional($item->patient)->email ?? 'N/A' }}</td>
-                                                <td>{{ $item->appointment_date }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                             </tr>
                                         @endforeach
@@ -188,13 +179,12 @@
                                     style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                                     <thead>
                                         <tr>
-                                            <th>{{ __('Sr. No') }}</th>
-                                            <th>{{ __('Doctor Name') }}</th>
-                                            <th>{{ __('Patient Name') }}</th>
-                                            <th>{{ __('Patient Contact No') }}</th>
-                                            <th>{{ __('Patient Email') }}</th>
-                                            <th>{{ __('Date') }}</th>
-                                            <th>{{ __('Time') }}</th>
+                                            <th>{{ __('No.') }}</th>
+                                            <th>{{ __('Nombre de Paciente') }}</th>
+                                            <th>{{ __('Teléfono') }}</th>
+                                            <th>{{ __('Correo Electrónico') }}</th>
+                                            <th>{{ __('Fecha') }}</th>
+                                            <th>{{ __('Hora') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -213,13 +203,11 @@
                                         @foreach ($Cancel_appointment as $item)
                                             <tr>
                                                 <td> {{ $loop->index + 1 + $per_page * ($currentpage - 1) }} </td>
-                                                <td> {{ optional(optional($item->doctor)->user)->first_name ?? 'N/A' }} {{ optional(optional($item->doctor)->user)->last_name ?? '' }}
-                                                </td>
                                                 <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
                                                 <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
                                                 <td>{{ optional($item->patient)->email ?? 'N/A' }}</td>
-                                                <td>{{ $item->appointment_date }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                             </tr>
                                         @endforeach
@@ -248,7 +236,7 @@
                 var id = $(this).data('id');
                 var token = $("input[name='_token']").val();
                 var status = 1;
-                if (confirm('Are you sure you want to confirm appointment?')) {
+                if (confirm('¿Estás seguro de que quieres confirmar la cita?')) {
                     $.ajax({
                         type: "post",
                         url: "appointment-status/" + id,
@@ -278,7 +266,7 @@
                 var id = $(this).data('id');
                 var token = $("input[name='_token']").val();
                 var status = 2;
-                if (confirm('Are you sure you want to cancel appointment?')) {
+                if (confirm('¿Estás seguro de que quieres cancelar la cita?')) {
                     $.ajax({
                         type: "post",
                         url: "appointment-status/" + id,

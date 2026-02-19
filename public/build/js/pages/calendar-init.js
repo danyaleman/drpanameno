@@ -32,19 +32,51 @@
         var calendarEl = document.getElementById('calendar');
 
         var SITEURL = "{{url('/')}}"
+
+        // Definir locale español para FullCalendar v6
+        var esLocale = {
+            code: 'es',
+            week: {
+                dow: 1,   // Lunes es el primer día de la semana
+                doy: 4
+            },
+            buttonText: {
+                prev: 'Ant',
+                next: 'Sig',
+                today: 'Hoy',
+                year: 'Año',
+                month: 'Mes',
+                week: 'Semana',
+                day: 'Día',
+                list: 'Lista'
+            },
+            weekText: 'Sm',
+            allDayText: 'Todo el día',
+            moreLinkText: 'más',
+            noEventsText: 'No hay citas para mostrar'
+        };
+
         var calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: esLocale,
             editable: true,
             droppable: true,
             selectable: true,
             initialView: 'dayGridMonth',
             themeSystem: 'bootstrap',
             weekNumbers: true,
+            firstDay: 1,
             headerToolbar: {
                 left: 'prev,next today',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
                 center: 'title',
             },
-            // firstDay: 1, //  1(Monday) this can be changed to 0(Sunday) for the USA system
+            buttonText: {
+                today: 'Hoy',
+                month: 'Mes',
+                week: 'Semana',
+                day: 'Día',
+                list: 'Lista'
+            },
             longPressDelay: 1,
             events: SITEURL + "/cal-appointment-show",
             // displayEventTime: true,
@@ -72,19 +104,19 @@
                         } else {
                             var t = 1;
                             var data = response.appointments;
-                            var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>Sr.No</th>';
+                            var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>No.</th>';
                             if (response.role == 'doctor') {
-                                list += '<th>Patient Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre del Paciente</th>';
+                                list += '<th>Teléfono del Paciente</th>';
                             } else if (response.role == 'patient') {
-                                list += '<th>Doctor Name</th>';
-                                list += '<th>Doctor Number</th>';
+                                list += '<th>Nombre del Doctor</th>';
+                                list += '<th>Teléfono del Doctor</th>';
                             } else {
-                                list += '<th>Patient Name</th><th>Doctor Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre del Paciente</th><th>Nombre del Doctor</th>';
+                                list += '<th>Teléfono del Paciente</th>';
                             }
 
-                            list += '<th>Time</th><th>Acción</th></tr></thead><tbody>';
+                            list += '<th>Hora</th><th>Acción</th></tr></thead><tbody>';
                             if (response.role == 'receptionist') {
 
                                 $.each(data, function (i, appointments) {
@@ -163,19 +195,19 @@
                         } else {
                             var t = 1;
                             var data = response.appointments;
-                            var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>Sr.No</th>';
+                            var list = '<table class="table table-bordered dt-responsive nowrap datatable" style="border-collapse: collapse; border-spacing: 0; width: 100%;"><thead class="thead-light"><tr><th>No.</th>';
                             if (response.role == 'doctor') {
-                                list += '<th>Patient Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre del Paciente</th>';
+                                list += '<th>Teléfono del Paciente</th>';
                             } else if (response.role == 'patient') {
-                                list += '<th>Doctor Name</th>';
-                                list += '<th>Doctor Number</th>';
+                                list += '<th>Nombre del Doctor</th>';
+                                list += '<th>Teléfono del Doctor</th>';
                             } else {
-                                list += '<th>Patient Name</th><th>Doctor Name</th>';
-                                list += '<th>Patient Number</th>';
+                                list += '<th>Nombre del Paciente</th><th>Nombre del Doctor</th>';
+                                list += '<th>Teléfono del Paciente</th>';
                             }
 
-                            list += '<th>Time</th><th>Acción</th></tr></thead><tbody>';
+                            list += '<th>Hora</th><th>Acción</th></tr></thead><tbody>';
                             if (response.role == 'receptionist') {
 
                                 $.each(data, function (i, appointments) {
@@ -245,9 +277,9 @@
                         var appEvents = [];
                         $(response.appointments).each(function (key, value) {
                             if (value.total_appointment == 1) {
-                                var badge = value.total_appointment + ' Appointment'
+                                var badge = value.total_appointment + ' Cita'
                             } else if (value.total_appointment > 1) {
-                                var badge = value.total_appointment + ' Appointments'
+                                var badge = value.total_appointment + ' Citas'
                             }
                             appEvents.push({
                                 title: badge,

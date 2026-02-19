@@ -35,7 +35,8 @@ class PatientController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -52,45 +53,42 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.list')) {
             $role = $user->roles[0]->slug;
-            
+
             // Load Datatables
             if ($request->ajax()) {
                 $patients = Patient::where('is_deleted', 0)->orderByDesc('id')->get();
                 return Datatables::of($patients)
                     ->addIndexColumn()
-                    ->addColumn('name', function($row){
-                        return $row->first_name.' '.$row->last_name;
-                    })
-                    ->addColumn('mobile', function($row){
-                        return $row->phone_primary ?? 'N/A';
-                    })
-                    ->addColumn('email', function($row){
-                        return $row->email ?? 'N/A';
-                    })
-                    ->addColumn('option', function($row){
-                        $option = '
-                            <a href="patient/'.$row->id.'">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Ver Perfil">
-                                    <i class="mdi mdi-eye"></i>
+                    ->addColumn('name', function ($row) {
+                    return $row->first_name . ' ' . $row->last_name;
+                })
+                    ->addColumn('mobile', function ($row) {
+                    return $row->phone_primary ?? 'N/A';
+                })
+                    ->addColumn('email', function ($row) {
+                    return $row->email ?? 'N/A';
+                })
+                    ->addColumn('option', function ($row) {
+                    $option = '
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="patient/' . $row->id . '" class="btn btn-sm btn-outline-primary waves-effect" title="Ver Perfil">
+                                    <i class="bx bx-show"></i>
+                                </a>
+                                <a href="patient/' . $row->id . '/edit" class="btn btn-sm btn-success waves-effect" title="Editar Perfil">
+                                    <i class="bx bx-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger waves-effect" title="Eliminar Paciente" data-id="' . $row->id . '" id="delete-patient">
+                                    <i class="bx bx-trash"></i>
                                 </button>
-                            </a>
-                            <a href="patient/'.$row->id.'/edit">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Editar Perfil">
-                                    <i class="mdi mdi-lead-pencil"></i>
-                                </button>
-                            </a>
-                            <a href="javascript:void(0)">
-                                <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Eliminar Perfil" data-id="'.$row->id.'" id="delete-patient">
-                                    <i class="mdi mdi-trash-can"></i>
-                                </button>
-                            </a>';
-                        return $option;
-                    })->rawColumns(['option'])->make(true);
+                            </div>';
+                    return $option;
+                })->rawColumns(['option'])->make(true);
             }
             // Para carga inicial (no AJAX), pasar datos vacíos
             $patients = collect();
             return view('patient.patients', compact('user', 'role', 'patients'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -109,7 +107,8 @@ class PatientController extends Controller
             $patient_info = null;
             $medical_info = null;
             return view('patient.patient-details', compact('user', 'role', 'patient', 'patient_info', 'medical_info'));
-        } else {
+        }
+        else {
             return view('error.403');
 
         }
@@ -135,7 +134,7 @@ class PatientController extends Controller
                 'gender' => 'required',
                 'photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
-            
+
             if ($request->photo != null) {
                 $file = $request->file('photo');
                 $extension = $file->getClientOriginalExtension();
@@ -143,11 +142,11 @@ class PatientController extends Controller
                 $file->move(public_path('storage/images/patients'), $imageName);
                 $validatedData['photo'] = $imageName;
             }
-            
+
             try {
                 // Crear paciente directamente sin crear usuario
                 $patient = Patient::create($validatedData);
-                
+
                 // Crear información médica si se proporciona
                 if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
                     MedicalInfo::create([
@@ -171,16 +170,19 @@ class PatientController extends Controller
                         $message->to($verify_mail);
                         $message->subject($app_name . ' - Nuevo paciente registrado');
                     });
-                } catch (\Exception $e) {
+                }
+                catch (\Exception $e) {
                     // Log email error pero continuar
                     \Log::error('Error sending patient welcome email: ' . $e->getMessage());
                 }
-                
+
                 return redirect('/patient')->with('success', '¡Paciente creado exitosamente!');
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('patient')->with('error', 'Algo salió mal: ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -197,46 +199,48 @@ class PatientController extends Controller
         if ($user->hasAccess('patient.view')) {
             $role = $user->roles[0]->slug;
             $patient = Patient::where('id', $id)->where('is_deleted', 0)->first();
-            
+
             if ($patient) {
                 $medical_Info = $patient->medicalInfo;
-                
+
                 // Buscar citas por patient_id (nuevas) O por appointment_for si existe un usuario con el mismo email
                 $appointmentQuery = Appointment::where('patient_id', $patient->id);
-                
+
                 // Para citas antiguas: buscar por appointment_for (user_id) del usuario con mismo email
                 $userWithSameEmail = User::where('email', $patient->email)->first();
                 if ($userWithSameEmail) {
                     $appointmentQuery->orWhere('appointment_for', $userWithSameEmail->id);
                 }
-                
+
                 $appointments = $appointmentQuery->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
-                
+
                 $prescriptions = $patient->prescriptions()->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
                 $invoices = $patient->invoices()->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
-                
+
                 // Contar todas las citas (nuevas + antiguas)
                 $tot_appointment = Appointment::where('patient_id', $patient->id);
                 if ($userWithSameEmail) {
                     $tot_appointment->orWhere('appointment_for', $userWithSameEmail->id);
                 }
                 $tot_appointment = $tot_appointment->count();
-                
+
                 $invoice = $patient->invoices()->where('is_deleted', 0)->pluck('id');
                 $revenue = InvoiceDetail::whereIn('invoice_id', $invoice)->sum('amount');
                 $pending_bill = $patient->invoices()->where('payment_status', 'Unpaid')->count();
-                
+
                 $data = [
                     'total_appointment' => $tot_appointment,
                     'revenue' => $revenue,
                     'pending_bill' => $pending_bill
                 ];
-                
+
                 return view('patient.patient-profile', compact('user', 'role', 'patient', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices'));
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Paciente no encontrado');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -251,16 +255,19 @@ class PatientController extends Controller
     {
         $user = Sentinel::getUser();
         $patient = Patient::where('id', $id)->where('is_deleted', 0)->first();
-        
+
         if ($patient) {
             if ($user->hasAccess('patient.update')) {
                 $role = $user->roles[0]->slug;
                 $medical_info = $patient->medicalInfo;
-                return view('patient.patient-details', compact('user', 'role', 'patient', 'medical_info'));
-            } else {
+                $patient_info = $patient;
+                return view('patient.patient-details', compact('user', 'role', 'patient', 'patient_info', 'medical_info'));
+            }
+            else {
                 return view('error.403');
             }
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'Paciente no encontrado');
         }
     }
@@ -278,52 +285,52 @@ class PatientController extends Controller
         }
 
         // Buscamos las citas del paciente
-    $appointments = $patient->appointments()->orderBy('appointment_date', 'desc')->get();
+        $appointments = $patient->appointments()->orderBy('appointment_date', 'desc')->get();
 
-    // Opción predeterminada y opción "Sin Cita"
-    $options = '<option value="" selected disabled>Seleccionar Cita</option>';
-    $options .= '<option value="0">⚠️ Sin Cita (Atención Inmediata)</option>';
-    
-    foreach ($appointments as $appointment) {
-        $options .= '<option value="' . $appointment->id . '">'
-            . \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') . ' ' . 
-            ($appointment->AvailableTime ? ' - ' . $appointment->AvailableTime->from . ' a ' . $appointment->AvailableTime->to : '') .
-            '</option>';
-    }
+        // Opción predeterminada y opción "Sin Cita"
+        $options = '<option value="" selected disabled>Seleccionar Cita</option>';
+        $options .= '<option value="0">⚠️ Sin Cita (Atención Inmediata)</option>';
 
-    $age = $patient->age; // Ahora disponible como accessor
+        foreach ($appointments as $appointment) {
+            $options .= '<option value="' . $appointment->id . '">'
+                . \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') . ' ' .
+                ($appointment->AvailableTime ? ' - ' . $appointment->AvailableTime->from . ' a ' . $appointment->AvailableTime->to : '') .
+                '</option>';
+        }
 
-    return response()->json([
-        'isSuccess' => true,
-        'options' => $options,
-        'patient' => [
-            'id' => $patient->id,
-            'name' => $patient->first_name . ' ' . $patient->last_name,
-            'info' => trim(
+        $age = $patient->age; // Ahora disponible como accessor
+
+        return response()->json([
+            'isSuccess' => true,
+            'options' => $options,
+            'patient' => [
+                'id' => $patient->id,
+                'name' => $patient->first_name . ' ' . $patient->last_name,
+                'info' => trim(
                 ($age ? $age . ' años · ' : '') .
                 ($patient->occupation ?? '') .
                 ($patient->address ? ' · ' . $patient->address : '')
             ),
-            // Datos adicionales para el Tab de Información General
-            'first_name' => $patient->first_name,
-            'last_name' => $patient->last_name,
-            'gender' => $patient->gender,
-            'dob' => $patient->birth_date, // Date of Birth
-            'age' => $age,
-            'mobile' => $patient->phone_primary,
-            'email' => $patient->email,
-            'blood_group' => $patient->medicalInfo->b_group ?? null,
-            'marital_status' => $patient->marital_status,
-            'address' => $patient->address,
-            'occupation' => $patient->occupation ?? 'No especificada',
-            'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
-            
-            // Antecedentes
-            'pathological_history' => $patient->pathological_history,
-            'non_pathological_history' => $patient->non_pathological_history,
-            'medications_allergies' => $patient->medications_allergies,
-        ]
-    ]);
+                // Datos adicionales para el Tab de Información General
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'gender' => $patient->gender,
+                'dob' => $patient->birth_date, // Date of Birth
+                'age' => $age,
+                'mobile' => $patient->phone_primary,
+                'email' => $patient->email,
+                'blood_group' => $patient->medicalInfo->b_group ?? null,
+                'marital_status' => $patient->marital_status,
+                'address' => $patient->address,
+                'occupation' => $patient->occupation ?? 'No especificada',
+                'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
+
+                // Antecedentes
+                'pathological_history' => $patient->pathological_history,
+                'non_pathological_history' => $patient->non_pathological_history,
+                'medications_allergies' => $patient->medications_allergies,
+            ]
+        ]);
     }
 
     public function patientByAppointment(Request $request)
@@ -357,7 +364,7 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.update')) {
             $patient = Patient::findOrFail($id);
-            
+
             $validatedData = $request->validate([
                 'first_name' => 'required|alpha',
                 'last_name' => 'required|alpha',
@@ -368,7 +375,7 @@ class PatientController extends Controller
                 'gender' => 'required',
                 'photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
-            
+
             try {
                 // Manejar foto
                 if ($request->hasFile('photo')) {
@@ -381,10 +388,10 @@ class PatientController extends Controller
                     $file->move(public_path('storage/images/patients'), $imageName);
                     $validatedData['photo'] = $imageName;
                 }
-                
+
                 // Actualizar paciente
                 $patient->update($validatedData);
-                
+
                 // Actualizar información médica
                 $medical_info = $patient->medicalInfo;
                 if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
@@ -398,25 +405,29 @@ class PatientController extends Controller
                         'allergy' => $request->allergy,
                         'diet' => $request->diet,
                     ];
-                    
+
                     if ($medical_info) {
                         $medical_info->update($medicalData);
-                    } else {
+                    }
+                    else {
                         $medicalData['patient_id'] = $patient->id;
                         MedicalInfo::create($medicalData);
                     }
                 }
-                
+
                 $role = $user->roles[0]->slug;
                 if ($role == 'patient') {
                     return redirect('/dashboard')->with('success', '¡Perfil actualizado exitosamente!');
-                } else {
+                }
+                else {
                     return redirect('patient')->with('success', '¡Perfil del paciente actualizado exitosamente!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('patient')->with('error', 'Algo salió mal: ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -431,34 +442,37 @@ class PatientController extends Controller
     {
         $user = Sentinel::getUser();
         $patient = Patient::where('id', $request->id)->where('is_deleted', 0)->first();
-        
+
         if ($patient) {
             if ($user->hasAccess('patient.delete')) {
                 try {
                     // Soft delete del paciente
                     $patient->is_deleted = 1;
                     $patient->save();
-                    
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Paciente eliminado exitosamente.',
                         'data' => $patient,
                     ], 200);
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Algo salió mal: ' . $e->getMessage(),
                         'data' => [],
                     ], 409);
                 }
-            } else {
+            }
+            else {
                 return response()->json([
                     'success' => false,
                     'message' => 'No tienes permiso para eliminar pacientes',
                     'data' => [],
                 ], 409);
             }
-        } else {
+        }
+        else {
             return response()->json([
                 'success' => false,
                 'message' => 'Paciente no encontrado',

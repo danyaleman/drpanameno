@@ -1,3 +1,16 @@
+<style>
+    /* Ocultar lineas sutiles que aparecen como border o box-shadow bajo el logo en el sidebar */
+    .navbar-brand-box {
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
+    .vertical-menu {
+        border-top: none !important;
+    }
+    #page-topbar {
+        border-bottom: none !important;
+    }
+</style>
 <!-- ========== Left Sidebar Start ========== -->
 <div class="vertical-menu">
 
@@ -7,9 +20,8 @@
         <div id="sidebar-menu">
             <!-- Left Menu Start -->
             <ul class="metismenu list-unstyled" id="side-menu">
-                <li class="menu-title" key="t-menu"></li>
-                <li class="menu-title" key="t-menu"></li>
-                <li>
+
+                <li style="margin-top: 40px;">
                     <a href="{{ url('/dashboard') }}" class="waves-effect">
                         <i class="bx bx-home-circle"></i>
                         <span>{{ __('translation.dashboards') }}</span>

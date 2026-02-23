@@ -20,7 +20,7 @@ class InvoiceController extends Controller
 {
     protected $invoice, $invoice_detail, $InvoiceDetail;
     public $limit;
-    
+
     /**
      * Create a new controller instance.
      *
@@ -33,7 +33,8 @@ class InvoiceController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -53,19 +54,24 @@ class InvoiceController extends Controller
             $role = $user->roles[0]->slug;
             if ($role == 'doctor') {
                 $doctor_id = Doctor::where('user_id', $user_id)->pluck('id')->first();
-                $invoices = Invoice::with('user')->where('doctor_id', $doctor_id)->orderBy('id', 'DESC')->paginate($this->limit);
-            } elseif ($role == 'accountant') {
-                $invoices = Invoice::with('user')->orderBy('id', 'DESC')->paginate($this->limit);
-            } elseif ($role == 'patient') {
+                $invoices = Invoice::with('patient')->where('doctor_id', $doctor_id)->orderBy('id', 'DESC')->paginate($this->limit);
+            }
+            elseif ($role == 'accountant') {
+                $invoices = Invoice::with('patient')->orderBy('id', 'DESC')->paginate($this->limit);
+            }
+            elseif ($role == 'patient') {
                 $invoices = Invoice::with('appointment', 'appointment.timeSlot')->where('patient_id', $user_id)->orderBy('id', 'DESC')->paginate($this->limit);
-            } elseif ($role = 'receptionist') {
+            }
+            elseif ($role == 'receptionist') {
                 $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $user_id)->pluck('doctor_id');
-                $invoices = Invoice::with('user', 'appointment', 'appointment.timeSlot')->where('created_by', $user_id)->orWhereIn('created_by', $receptionists_doctor_id)->orderBy('id', 'DESC')->paginate($this->limit);
-            } else {
-                $invoices = Invoice::with('user')->paginate($this->limit);
+                $invoices = Invoice::with('patient', 'appointment', 'appointment.timeSlot')->where('created_by', $user_id)->orWhereIn('created_by', $receptionists_doctor_id)->orderBy('id', 'DESC')->paginate($this->limit);
+            }
+            else {
+                $invoices = Invoice::with('patient')->paginate($this->limit);
             }
             return view('invoice.invoices', compact('user', 'role', 'invoices'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -84,7 +90,8 @@ class InvoiceController extends Controller
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctor = $doctor_role->users()->with('roles')->get();
             return view('invoice.invoice-details', compact('user', 'role', 'patients', 'doctor'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -109,7 +116,8 @@ class InvoiceController extends Controller
                 $user = Sentinel::getUser();
                 if ($request->invoices[0]['title'] == null && $request->invoices[0]['amount'] == null) {
                     return redirect()->back()->with('error', 'Add at least one Invoice title and amount to create invoice!!!');
-                } else {
+                }
+                else {
                     $appointment = Appointment::with('doctor', 'patient')->where('id', $request->appointment_id)->first();
                     if ($appointment->doctor->id == $request->doctor_id) {
                         $this->invoice->patient_id = $request->patient_id;
@@ -121,7 +129,8 @@ class InvoiceController extends Controller
                         }
                         if ($request->created_by == Null) {
                             $this->invoice->created_by = $request->created_by;
-                        } else {
+                        }
+                        else {
                             $this->invoice->created_by = $user->id;
                         }
                         $this->invoice->updated_by = $user->id;
@@ -142,14 +151,17 @@ class InvoiceController extends Controller
                         $notification->to_user = $this->invoice->patient_id;
                         $notification->save();
                         return redirect('invoice')->with('success', 'Invoice created successfully!');
-                    } else {
+                    }
+                    else {
                         return redirect()->back()->with('error', 'Something went wrong !! please try again');
                     }
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -169,7 +181,8 @@ class InvoiceController extends Controller
             $invoice_detail = Invoice::with('invoice_detail', 'patient', 'doctor', 'appointment', 'appointment.timeSlot', 'transaction')->where('id', $invoice->id)->first();
             // return $invoice_detail;
             return view('invoice.view-invoice', compact('user', 'role', 'invoice', 'invoice_detail'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -192,7 +205,8 @@ class InvoiceController extends Controller
             $appointment = Appointment::where('appointment_for', $patient_id)->where('is_deleted', 0)->get();
             // return $invoice_detail;
             return view('invoice.edit-invoice', compact('user', 'role', 'invoice_detail', 'patients', 'appointment'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -217,7 +231,8 @@ class InvoiceController extends Controller
             try {
                 if ($request->invoices[0]['title'] == null && $request->invoices[0]['amount'] == null) {
                     return redirect()->back()->with('error', 'Add at least one Invoice title and amount to create invoice!!!');
-                } else {
+                }
+                else {
                     $invoice = Invoice::find($id);
                     $invoice->patient_id = $request->patient_id;
                     $invoice->payment_mode = $request->payment_mode;
@@ -239,10 +254,12 @@ class InvoiceController extends Controller
                     }
                     return redirect('invoice')->with('success', 'Invoice updated successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -261,9 +278,9 @@ class InvoiceController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('invoice.create')) {
             if ($request->ajax()) {
-                $patient_id =  $request->patient_id;
+                $patient_id = $request->patient_id;
                 $user = Sentinel::getUser();
-                $doctors =  Sentinel::getUserRepository()->whereHas('roles', function ($q) {
+                $doctors = Sentinel::getUserRepository()->whereHas('roles', function ($q) {
                     $q->where('slug', 'doctor');
                 })->pluck('id');
                 $user_id = $user->id;
@@ -273,12 +290,14 @@ class InvoiceController extends Controller
                     $doctor_id = Doctor::where('user_id', $user_id)->pluck('id');
                     $appointment = Appointment::where('id', $user_id)->orWhere('appointment_for', $patient_id)->where('appointment_with', $doctor_id)->where('status', 1)
                         ->orderBy('id', 'DESC')->pluck("appointment_date", "id")->all();
-                } elseif ($role == 'accountant') {
+                }
+                elseif ($role == 'accountant') {
                     $appointment = Appointment::where('id', $user_id)->orWhere('appointment_for', $patient_id)->whereIN('appointment_with', $doctors)->where('status', 1)
                         ->orderBy('id', 'DESC')->pluck("appointment_date", "id")->all();
-                } elseif ($role == 'receptionist') {
+                }
+                elseif ($role == 'receptionist') {
                     $receptionists_doctor_id = ReceptionListDoctor::where('reception_id', $user_id)->pluck('doctor_id');
-                    $appointment  = Appointment::where('appointment_for', $patient_id)->whereIN('appointment_with', $receptionists_doctor_id)->where('status', 1)
+                    $appointment = Appointment::where('appointment_for', $patient_id)->whereIN('appointment_with', $receptionists_doctor_id)->where('status', 1)
                         ->orderBy('id', 'DESC')->pluck("appointment_date", "id")->all();
                 }
                 $data = view('appointment.ajax-select-appointment', compact('appointment'))->render();
@@ -288,7 +307,8 @@ class InvoiceController extends Controller
                     'options' => $data
                 ]);
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -298,7 +318,7 @@ class InvoiceController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('invoice.create')) {
             if ($request->ajax()) {
-                $appointment_id =  $request->appointment_id;
+                $appointment_id = $request->appointment_id;
                 $user = Sentinel::getUser();
                 $role = $user->roles[0]->slug;
                 $doctor_role = Sentinel::findRoleBySlug('doctor');
@@ -312,7 +332,8 @@ class InvoiceController extends Controller
                     'doctor_id' => $appointment
                 ]);
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -331,7 +352,8 @@ class InvoiceController extends Controller
         $invoice_detail = Invoice::with('invoice_detail', 'patient', 'doctor', 'appointment', 'appointment.timeSlot', 'transaction')->where('patient_id', $user->id)->where('id', $id)->first();
         if ($invoice_detail) {
             return view('patient.patient-invoice-view', compact('user', 'role', 'invoice_detail'));
-        } else {
+        }
+        else {
             return redirect()->back()->with('error', 'Invoice details not found');
         }
     }

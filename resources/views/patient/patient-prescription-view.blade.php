@@ -62,8 +62,8 @@
                         <div class="row">
                             <div class="col-5 mt-3 text-center">
                                 <address>
-                                    <strong>{{ __('Symptoms:') }}</strong><br>
-                                    {{ $user_details->symptoms }}
+                                    <strong>{{ __('Consulta por:') }}</strong><br>
+                                    {{ $user_details->consulta_por }}
                                 </address>
                             </div>
                             <div class="col-5 mt-3 text-center">

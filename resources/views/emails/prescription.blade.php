@@ -66,14 +66,14 @@
                                 <tbody >
                                     <tr style="background-color: rgba(47,117,208, 0.1); color: #2f75d0; overflow-x: hidden;">
                                         <td style="text-align: center; padding: 12px;margin-left:20px; border-top: 1px solid #dee2e6;font-size:20px; ">
-                                            <b>Symptoms
+                                            <b>Consulta por
                                             </b>
                                         </td>
                                         <td></td>
                                     </tr>
                                     <tr style=" overflow-x: hidden;">
                                         <td style="text-align: center; padding: 12px; border-top: 1px solid #dee2e6; ">
-                                            {{ $prescription->symptoms }}
+                                            {{ $prescription->consulta_por }}
                                         </td>
                                     </tr>
                                 </tbody>

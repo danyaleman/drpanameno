@@ -1,5 +1,5 @@
 @extends('layouts.master-layouts')
-@section('title') {{ __('Listado de Expedientes') }} @endsection
+@section('title') {{ __('Listado de Consultas') }} @endsection
 @section('css')
     <style>
         /* ─── Premium Table Styles ─── */
@@ -132,11 +132,11 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                <h4 class="mb-sm-0 font-size-18">Expedientes Clínicos</h4>
+                <h4 class="mb-sm-0 font-size-18">Consultas Clínicas</h4>
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="{{ url('/dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Expedientes</li>
+                        <li class="breadcrumb-item active">Consultas</li>
                     </ol>
                 </div>
             </div>
@@ -151,7 +151,7 @@
                 <div class="premium-header">
                     <div class="d-flex align-items-center">
                         <i class="bx bx-file-blank text-white font-size-22 me-2"></i>
-                        <h4>Listado de Recetas y Expedientes</h4>
+                        <h4>Listado de Recetas y Consultas</h4>
                     </div>
                     @if ($role == 'doctor')
                         <a href="{{ route('prescription.create') }}" class="btn btn-light btn-sm waves-effect waves-light text-primary fw-bold">
@@ -251,7 +251,7 @@
                                         {{-- Acciones --}}
                                         <td class="text-end">
                                             <a href="{{ url('prescription/' . $prescription->id) }}">
-                                                <button class="btn-action btn-view" title="Ver Expediente">
+                                                <button class="btn-action btn-view" title="Ver Consulta">
                                                     <i class="bx bx-show font-size-18"></i>
                                                 </button>
                                             </a>
@@ -279,7 +279,7 @@
                                         <td colspan="6" class="text-center py-5">
                                             <div class="empty-state">
                                                 <i class="bx bx-folder-open text-muted font-size-40 mb-3"></i>
-                                                <p class="text-muted mb-0">No se encontraron expedientes registrados.</p>
+                                                <p class="text-muted mb-0">No se encontraron consultas registradas.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -307,7 +307,7 @@
         // Delete
         $(document).on('click', '#delete-prescription', function() {
             var id = $(this).data('id');
-            if (confirm('¿Estás seguro de que deseas eliminar este expediente?')) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta consulta?')) {
                 $('#pageloader').fadeIn();
                 $.ajax({
                     type: "DELETE",
@@ -328,7 +328,7 @@
         // Email
         $('.send-mail').click(function() {
             var id = $(this).attr('data-id');
-            if (confirm('¿Enviar copia del expediente por correo?')) {
+            if (confirm('¿Enviar copia de la consulta por correo?')) {
                 $('#pageloader').fadeIn();
                 $.ajax({
                     type: "get",

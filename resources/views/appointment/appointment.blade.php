@@ -279,8 +279,8 @@
                                             </span>
                                             <div class="mt-1">
                                                 <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                   class="btn btn-sm btn-success waves-effect" title="Crear expediente">
-                                                    <i class="bx bx-plus me-1"></i>Expediente
+                                                   class="btn btn-sm btn-success waves-effect" title="Crear consulta">
+                                                    <i class="bx bx-plus me-1"></i>Consulta
                                                 </a>
                                             </div>
                                         </div>
@@ -310,8 +310,8 @@
                                             </span>
                                             <div class="mt-1">
                                                 <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                   class="btn btn-sm btn-success waves-effect" title="Crear expediente">
-                                                    <i class="bx bx-plus me-1"></i>Expediente
+                                                   class="btn btn-sm btn-success waves-effect" title="Crear consulta">
+                                                    <i class="bx bx-plus me-1"></i>Consulta
                                                 </a>
                                             </div>
                                         </div>
@@ -603,7 +603,7 @@
                             var timeText = (apt.time_slot ? apt.time_slot.from + ' - ' + apt.time_slot.to : '—');
                             var actionBtn = '';
                             if (role !== 'patient' && patientId) {
-                                actionBtn = '<a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect mt-1" title="Expediente"><i class="bx bx-plus me-1"></i>Expediente</a>';
+                                actionBtn = '<a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect mt-1" title="Consulta"><i class="bx bx-plus me-1"></i>Consulta</a>';
                             }
 
                             $container.append(

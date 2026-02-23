@@ -10,10 +10,10 @@
     @endphp
         <!-- start page title -->
         @component('components.breadcrumb')
-            @slot('title') Detalles de Expediente @endslot
+            @slot('title') Detalles de Consulta @endslot
             @slot('li_1') Dashboard @endslot
-            @slot('li_2') Listado de Expedientes @endslot
-            @slot('li_3') Detalles de Expediente @endslot
+            @slot('li_2') Listado de Consultas @endslot
+            @slot('li_3') Detalles de Consulta @endslot
         @endcomponent
         <!-- end page title -->
         <div class="row d-print-none">
@@ -21,7 +21,7 @@
                 <a href="{{ url('prescription') }}">
                     <button type="button" class="btn btn-primary waves-effect waves-light mb-4">
                         <i
-                            class="bx bx-arrow-back font-size-16 align-middle me-2"></i>{{ __('Regresar a Listado de Expedientes') }}
+                            class="bx bx-arrow-back font-size-16 align-middle me-2"></i>{{ __('Regresar a Listado de Consultas') }}
                     </button>
                 </a>
                 <a href="javascript:window.print()" class="btn btn-success waves-effect waves-light mb-4">
@@ -34,7 +34,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="invoice-title">
-                            <h4 class="float-end font-size-16">Expediente #{{ $prescription->id }}</h4>
+                            <h4 class="float-end font-size-16">Consulta #{{ $prescription->id }}</h4>
                             <div class="mb-4">
                                 <img src="{{ URL::asset('build/images/logo-dark.png') }}" alt="logo" height="20" />
                             </div>
@@ -67,8 +67,8 @@
                         <div class="row">
                             <div class="col-5 mt-3 text-center">
                                 <address>
-                                    <strong>{{ __('Sintomas:') }}</strong><br>
-                                    {{ $prescription->symptoms }}
+                                    <strong>{{ __('Consulta por:') }}</strong><br>
+                                    {{ $prescription->consulta_por }}
                                 </address>
                             </div>
                             <div class="col-5 mt-3 text-center">

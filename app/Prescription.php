@@ -7,11 +7,11 @@ use App\Signos;
 
 class Prescription extends Model
 {
-    protected $table = 'prescriptions'; 
+    protected $table = 'prescriptions';
 
     protected $fillable = [
         'patient_id',
-        'symptoms',
+        'consulta_por',
         'diagnosis',
         'prescription_date',
         'created_by',
@@ -24,7 +24,7 @@ class Prescription extends Model
      */
     public function doctor()
     {
-        return $this->hasOne(User::class, 'id', 'created_by');
+        return $this->hasOne(User::class , 'id', 'created_by');
     }
 
     /**
@@ -32,7 +32,7 @@ class Prescription extends Model
      */
     public function patient()
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class , 'patient_id', 'id');
     }
 
     /**
@@ -40,7 +40,7 @@ class Prescription extends Model
      */
     public function appointment()
     {
-        return $this->hasOne(Appointment::class, 'id', 'appointment_id');
+        return $this->hasOne(Appointment::class , 'id', 'appointment_id');
     }
 
     /**
@@ -48,7 +48,7 @@ class Prescription extends Model
      */
     public function signos()
     {
-        return $this->hasOne(Signos::class, 'prescription_id', 'id');
+        return $this->hasOne(Signos::class , 'prescription_id', 'id');
     }
 
     /**
@@ -56,7 +56,7 @@ class Prescription extends Model
      */
     public function archivos()
     {
-        return $this->hasMany(Archivo::class, 'prescription_id');
+        return $this->hasMany(Archivo::class , 'prescription_id');
     }
 
     /**
@@ -64,6 +64,6 @@ class Prescription extends Model
      */
     public function vacunas()
     {
-    return $this->hasMany(Vacuna::class, 'prescription_id');
+        return $this->hasMany(Vacuna::class , 'prescription_id');
     }
 }

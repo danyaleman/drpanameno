@@ -21,7 +21,12 @@
         </div>
     </div>
 
-    <button type="button" class="btn btn-primary btn-sm btn-add-item">
-        + Agregar medicamento
-    </button>
+    <div class="d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-primary btn-sm btn-add-item">
+            + Agregar medicamento
+        </button>
+        <button type="button" class="btn btn-success btn-sm ms-2" onclick="generarRecetaPDF()">
+            <i class="bx bx-printer"></i> Imprimir/PDF Receta
+        </button>
+    </div>
 </div>

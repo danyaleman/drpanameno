@@ -77,7 +77,7 @@
                                     <tr>
                                         <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
                                         @if ($role != 'patient')
-                                            <td>{{ $invoice->user->first_name }} {{ $invoice->user->last_name }}</td>
+                                            <td>{{ optional($invoice->patient)->first_name }} {{ optional($invoice->patient)->last_name }}</td>
                                         @endif
                                         <td>{{ $invoice->appointment->appointment_date }}</td>
                                         <td>{{ $invoice->appointment->timeSlot->from . ' to ' . $invoice->appointment->timeSlot->to }}

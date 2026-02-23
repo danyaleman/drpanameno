@@ -34,7 +34,8 @@ class PrescriptionController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -53,14 +54,17 @@ class PrescriptionController extends Controller
             $role = $user->roles[0]->slug;
             if ($role == 'doctor') {
                 $prescriptions = Prescription::with('patient', 'appointment', 'appointment.timeSlot')->where('created_by', '=', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
-            } elseif ($role == 'patient') {
+            }
+            elseif ($role == 'patient') {
                 // Para pacientes, devolver paginación vacía hasta vincular usuario con paciente
                 $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('id', -1)->paginate($this->limit);
-            } else {
+            }
+            else {
                 $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
             }
             return view('prescription.prescriptions', compact('user', 'role', 'prescriptions'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -76,33 +80,34 @@ class PrescriptionController extends Controller
         if ($user->hasAccess('prescription.create')) {
             $role = $user->roles[0]->slug;
             $patients = Patient::where('is_deleted', 0)->get();
-            
+
             // Obtener parámetros opcionales de la URL
             $preloadPatientId = $request->query('patient_id');
             $preloadAppointmentId = $request->query('appointment_id');
-            
+
             // Si vienen parámetros, obtener datos del paciente
             $preloadPatient = null;
             $preloadAppointment = null;
-            
+
             if ($preloadPatientId) {
                 $preloadPatient = Patient::find($preloadPatientId);
             }
-            
+
             if ($preloadAppointmentId) {
                 $preloadAppointment = Appointment::with('patient')->find($preloadAppointmentId);
             }
-            
+
             return view('prescription.prescription-details', compact(
-                'user', 
-                'role', 
-                'patients', 
-                'preloadPatientId', 
+                'user',
+                'role',
+                'patients',
+                'preloadPatientId',
                 'preloadAppointmentId',
                 'preloadPatient',
                 'preloadAppointment'
             ));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -125,7 +130,7 @@ class PrescriptionController extends Controller
             $request->validate([
                 'patient_id_hidden' => 'required',
                 'appointment_id' => 'required',
-                'symptoms' => 'required',
+                'consulta_por' => 'required',
                 'diagnostico' => 'required'
             ]);
 
@@ -134,15 +139,16 @@ class PrescriptionController extends Controller
                 // Verificamos si al menos el primer medicamento tiene nombre
                 if (empty($request->medicines[0]['name']) && empty($request->medicines[0]['notes'])) {
                     return redirect()->back()->with('error', 'Add at least one medicine to create prescription!!!');
-                } else {
+                }
+                else {
                     $this->prescription->patient_id = $request->patient_id_hidden;
                     $this->prescription->appointment_id = $request->appointment_id;
-                    $this->prescription->symptoms = $request->symptoms;
+                    $this->prescription->consulta_por = $request->consulta_por;
                     $this->prescription->diagnosis = $request->diagnostico;
                     $this->prescription->created_by = $request->created_by;
                     $this->prescription->updated_by = $user->id;
                     $this->prescription->save();
-                    
+
                     Signos::create([
                         'prescription_id' => $this->prescription->id,
                         'peso' => $request->peso,
@@ -209,10 +215,12 @@ class PrescriptionController extends Controller
 
                     return redirect('prescription')->with('success', 'Prescription created successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -234,11 +242,13 @@ class PrescriptionController extends Controller
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $signos = Signos::where('prescription_id', $prescription->id)->first();
-                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details','signos','vacunas'));
-            } else {
+                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas'));
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'prescription not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -254,7 +264,7 @@ class PrescriptionController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.update')) {
             $role = $user->roles[0]->slug;
-            $prescription = Prescription::with('patient','doctor','appointment','signos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
+            $prescription = Prescription::with('patient', 'doctor', 'appointment', 'signos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
 
             if ($prescription) {
                 $patients = Patient::where('is_deleted', 0)->get();
@@ -263,11 +273,13 @@ class PrescriptionController extends Controller
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $vacunas = Vacuna::where('prescription_id', $prescription->id)->get();
                 $signos = Signos::where('prescription_id', $prescription->id)->first();
-                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment','signos','vacunas'));
-            } else {
+                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas'));
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Prescription not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -286,47 +298,48 @@ class PrescriptionController extends Controller
             $request->validate([
                 'patient_id' => 'required',
                 'appointment_id' => 'required',
-                'symptoms' => 'required',
+                'consulta_por' => 'required',
                 'diagnosis' => 'required'
             ]);
             try {
                 if ($request->medicines[0]['medicine'] == null && $request->medicines[0]['notes'] == null) {
                     return redirect()->back()->with('error', 'Add at least one medicine to create prescription!!!');
-                } else {
+                }
+                else {
                     $prescription = Prescription::find($prescription->id);
                     $prescription->patient_id = $request->patient_id;
                     $prescription->appointment_id = $request->appointment_id;
-                    $prescription->symptoms = $request->symptoms;
+                    $prescription->consulta_por = $request->consulta_por;
                     $prescription->diagnosis = $request->diagnosis;
                     $prescription->updated_by = $user->id;
                     $prescription->save();
                     Vacuna::where('prescription_id', $prescription->id)->delete();
-                        if ($request->has('vacunas')) {
-                            foreach ($request->vacunas as $item) {
-                                if (!empty($item['tipo'])) {
-                                    Vacuna::create([
-                                        'prescription_id' => $prescription->id,
-                                        'tipo' => $item['tipo'],
-                                        'dosis' => $item['dosis'],
-                                    ]);
-                                }
+                    if ($request->has('vacunas')) {
+                        foreach ($request->vacunas as $item) {
+                            if (!empty($item['tipo'])) {
+                                Vacuna::create([
+                                    'prescription_id' => $prescription->id,
+                                    'tipo' => $item['tipo'],
+                                    'dosis' => $item['dosis'],
+                                ]);
                             }
                         }
+                    }
 
                     Signos::updateOrCreate(
-                        ['prescription_id' => $prescription->id],
-                        [
-                            'peso' => $request->peso,
-                            'talla' => $request->talla,
-                            'frec_respiratoria' => $request->frec_respiratoria,
-                            'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
-                            'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
-                            'temperatura' => $request->temperatura,
-                            'frec_cardiaca' => $request->frec_cardiaca,
-                            'spo' => $request->spo,
-                            'examen' => $request->examen,
-                            'observaciones_adicionales' => $request->observaciones_adicionales,
-                        ]
+                    ['prescription_id' => $prescription->id],
+                    [
+                        'peso' => $request->peso,
+                        'talla' => $request->talla,
+                        'frec_respiratoria' => $request->frec_respiratoria,
+                        'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
+                        'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
+                        'temperatura' => $request->temperatura,
+                        'frec_cardiaca' => $request->frec_cardiaca,
+                        'spo' => $request->spo,
+                        'examen' => $request->examen,
+                        'observaciones_adicionales' => $request->observaciones_adicionales,
+                    ]
                     );
                     $medicine = Medicine::where('prescription_id', $prescription->id)->update(['is_deleted' => 1]);
                     $test_report = TestReport::where('prescription_id', $prescription->id)->update(['is_deleted' => 1]);
@@ -366,10 +379,12 @@ class PrescriptionController extends Controller
 
                     return redirect('prescription')->with('success', 'Prescription Updated successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -394,26 +409,29 @@ class PrescriptionController extends Controller
                         'message' => 'prescription find successfully.',
                         'data' => $prescription,
                     ], 200);
-                } else {
+                }
+                else {
                     return response()->json([
                         'success' => false,
                         'message' => 'prescription not found.',
                         'data' => [],
                     ], 409);
                 }
-            } catch (Exception $e) {
-                return response()->json([
-                    'success' =>false,
-                    'message' => 'Something went wrong!!!'.$e->getMessage(),
-                    'data' =>[],
-                ],409);
             }
-        } else {
+            catch (Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong!!!' . $e->getMessage(),
+                    'data' => [],
+                ], 409);
+            }
+        }
+        else {
             return response()->json([
-                'success' =>false,
-                'message'=>'You have no permission to delete doctor',
-                'data'=>[],
-            ],409);
+                'success' => false,
+                'message' => 'You have no permission to delete doctor',
+                'data' => [],
+            ], 409);
         }
     }
     public function prescription_list()
@@ -422,22 +440,22 @@ class PrescriptionController extends Controller
         $role = $user->roles[0]->slug;
         // $prescriptions = Prescription::with(['doctor', 'appointment', 'appointment.timeSlot','appointment.invoice'])
         // ->where('patient_id', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
-        $prescription = Invoice::where('payment_status','Paid')
-        ->with('doctor', 'appointment','appointment.timeSlot','appointment.invoice','appointment.prescription')
-        ->where('patient_id', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')
-        ->paginate($this->limit);
+        $prescription = Invoice::where('payment_status', 'Paid')
+            ->with('doctor', 'appointment', 'appointment.timeSlot', 'appointment.invoice', 'appointment.prescription')
+            ->where('patient_id', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')
+            ->paginate($this->limit);
         $prescriptions = collect();
         foreach ($prescription as $key => $value) {
-            if($value['appointment']['prescription']){
+            if ($value['appointment']['prescription']) {
                 $prescriptions->push($value['id']);
             }
-            else{
+            else {
                 $pre = $prescriptions;
             }
         }
         // $prescriptions_details = Prescription::with('doctor','appointment','appointment.timeSlot','appointment.invoice')->where('patient_id',$user->id)->paginate($this->limit);
-        $prescriptions_details = Invoice::where('payment_status','Paid')->with('doctor','appointment', 'appointment.timeSlot','appointment.prescription')
-            ->WhereIn('id',$prescriptions)->orderBy('id', 'desc')
+        $prescriptions_details = Invoice::where('payment_status', 'Paid')->with('doctor', 'appointment', 'appointment.timeSlot', 'appointment.prescription')
+            ->WhereIn('id', $prescriptions)->orderBy('id', 'desc')
             ->paginate($this->limit);
         // return $prescriptions_details;
         return view('patient.patient-prescriptions', compact('user', 'role', 'prescriptions_details'));
@@ -446,21 +464,22 @@ class PrescriptionController extends Controller
     {
         $user = Sentinel::getUser();
         $role = $user->roles[0]->slug;
-        $user_details = Prescription::with(['patient', 'appointment', 'appointment.doctor','appointment.invoice'])->where('patient_id', $user->id)
-        ->where('id', $id)->where('is_deleted', 0)->first();
+        $user_details = Prescription::with(['patient', 'appointment', 'appointment.doctor', 'appointment.invoice'])->where('patient_id', $user->id)
+            ->where('id', $id)->where('is_deleted', 0)->first();
         // $user_details = Prescription::with('patient','appointment','appointment.timeSlot','appointment.invoice')
         // ->where('patient_id', $user->id)->orWhere('id', $id)->where('is_deleted', 0)->first();
         // return $user_details;
         if ($user_details) {
-            if($user_details->appointment->invoice){
+            if ($user_details->appointment->invoice) {
                 $medicines = Medicine::where('prescription_id', $id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $id)->where('is_deleted', 0)->get();
                 return view('patient.patient-prescription-view', compact('user', 'role', 'medicines', 'test_reports', 'user_details'));
             }
-            else{
+            else {
                 return redirect()->back()->with('error', 'Invoice details not found');
             }
-        } else {
+        }
+        else {
             return redirect()->back()->with('error', 'Prescription not found');
         }
     }

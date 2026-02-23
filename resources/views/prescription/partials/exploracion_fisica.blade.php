@@ -1,7 +1,10 @@
 <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label>Peso (lb)</label>
-                                <input type="number" step="0.01" name="peso" class="form-control">
+                                <div class="input-group">
+                                    <input type="number" step="0.01" name="peso" id="peso_lb" class="form-control">
+                                    <span class="input-group-text bg-light fw-bold text-primary" id="peso_kg_display">0.00 kg</span>
+                                </div>
                             </div>
 
                             <div class="col-md-3 mb-3">
@@ -53,3 +56,22 @@
                                 <textarea name="observaciones_adicionales" class="form-control"></textarea>
                             </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const pesoLbInput = document.getElementById('peso_lb');
+        const pesoKgDisplay = document.getElementById('peso_kg_display');
+
+        if (pesoLbInput) {
+            pesoLbInput.addEventListener('input', function () {
+                let lbs = parseFloat(this.value);
+                if (!isNaN(lbs) && lbs > 0) {
+                    let kgs = lbs / 2.20462;
+                    pesoKgDisplay.textContent = kgs.toFixed(2) + ' kg';
+                } else {
+                    pesoKgDisplay.textContent = '0.00 kg';
+                }
+            });
+        }
+    });
+</script>

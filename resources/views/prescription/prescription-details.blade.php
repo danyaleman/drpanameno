@@ -1,15 +1,9 @@
 @extends('layouts.master-layouts')
 
-@section('title', 'Crear Expediente')
+@section('title', 'Crear Consulta')
 
 @section('css')
 <link rel="stylesheet" href="{{ URL::asset('build/libs/select2/css/select2.min.css') }}">
-<style>
-    .sticky-right {
-        position: sticky;
-        top: 90px;
-    }
-</style>
 @endsection
 
 @section('content')
@@ -79,89 +73,181 @@
 <input type="hidden" name="created_by" value="{{ $user->id }}">
 <input type="hidden" name="patient_id_hidden" id="patient_id_hidden" value="{{ $preloadPatientId ?? '' }}">
 <input type="hidden" name="appointment_id" id="appointment_id_hidden" value="{{ $preloadAppointmentId ?? '' }}">
+<input type="hidden" id="info_dui_hidden" value="">
 
 <div class="row">
 
     {{-- ================= COLUMNA IZQUIERDA ================= --}}
     <div class="col-lg-8">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-body p-4">
+                {{-- TABS --}}
+                <ul class="nav nav-pills nav-justified bg-light rounded mb-4" role="tablist" style="padding: 6px;">
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-info-general" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-id-card font-size-18 d-block mb-1"></i> Info General
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-consulta" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-detail font-size-18 d-block mb-1"></i> Consulta
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-exploracion" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-body font-size-18 d-block mb-1"></i> Examen Físico
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-evaluacion" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-file font-size-18 d-block mb-1"></i> Evaluación
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-receta" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-plus-medical font-size-18 d-block mb-1"></i> Receta
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-vacunas" role="tab" style="font-weight: 600;">
+                            <i class="fas fa-syringe font-size-18 d-block mb-1"></i> Vacunas
+                        </a>
+                    </li>
+                    <li class="nav-item waves-effect waves-light">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-imagenes" role="tab" style="font-weight: 600;">
+                            <i class="bx bx-images font-size-18 d-block mb-1"></i> Imágenes
+                        </a>
+                    </li>
+                </ul>
 
-        {{-- TABS --}}
-        <ul class="nav nav-tabs nav-tabs-custom nav-justified mb-3" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-info-general"><i class="bx bx-id-card"></i> Info. General</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-consulta"><i class="bx bx-detail"></i> Consulta</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-exploracion"><i class="bx bx-body"></i> Exploración</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-evaluacion"><i class="bx bx-file"></i> Evaluación</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-receta"><i class="bx bx-plus-medical"></i> Receta</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-vacunas"><i class="bx bx-injection"></i> Vacunas</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-imagenes"><i class="bx bx-images"></i> Imágenes</a></li>
-        </ul>
-
-        <div class="tab-content text-muted">
+                <div class="tab-content text-muted">
 
             {{-- TAB: INFORMACIÓN GENERAL (SOLO LECTURA) --}}
             <div class="tab-pane fade show active" id="tab-info-general">
-                <div class="card border">
-                    <div class="card-body">
-                        <h4 class="card-title text-primary mb-4">Datos del Paciente</h4>
+                <div class="card border-0 shadow-sm mb-0" style="border-radius: 12px;">
+                    <div class="card-header bg-primary text-white" style="border-radius: 12px 12px 0 0; border: none; padding: 16px 20px;">
+                        <h5 class="mb-0 text-white font-size-16"><i class="bx bx-user-circle me-2 align-middle"></i><strong>Datos Demográficos y de Contacto</strong></h5>
+                    </div>
+                    <div class="card-body bg-light-subtle p-4" style="border-radius: 0 0 12px 12px;">
                         
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="fw-bold text-dark">Nombre Completo</label>
-                                <p class="form-control-plaintext border-bottom" id="info_full_name">-</p>
+                        <div class="row g-4">
+                            <!-- Col 1 -->
+                            <div class="col-md-6 col-xl-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-primary-subtle text-primary rounded-circle font-size-20">
+                                            <i class="bx bx-id-card"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Nombre Completo</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold" id="info_full_name">-</h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-primary-subtle text-primary rounded-circle font-size-20">
+                                            <i class="bx bx-calendar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Edad y Nacimiento</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold"><span id="info_age">-</span> <span class="text-muted font-size-13 fw-normal ms-1 border-start ps-2" id="info_dob">-</span></h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-primary-subtle text-primary rounded-circle font-size-20">
+                                            <i class="bx bx-male-female"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Género y Est. Civil</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold"><span id="info_gender">-</span> <span class="text-muted font-size-13 fw-normal ms-1 border-start ps-2" id="info_marital">-</span></h5>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-2">
-                                <label class="fw-bold text-dark">Edad</label>
-                                <p class="form-control-plaintext border-bottom" id="info_age">-</p>
+
+                            <!-- Col 2 -->
+                            <div class="col-md-6 col-xl-4 border-start border-light-subtle">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-success-subtle text-success rounded-circle font-size-20">
+                                            <i class="bx bx-phone-call"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Teléfono Móvil</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold" id="info_mobile">-</h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-info-subtle text-info rounded-circle font-size-20">
+                                            <i class="bx bx-envelope"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Email</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold" style="word-break: break-all;" id="info_email">-</h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-danger-subtle text-danger rounded-circle font-size-20">
+                                            <i class="bx bx-donate-blood"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Tipo Sangre</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold" id="info_blood">-</h5>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-3">
-                                <label class="fw-bold text-dark">Fecha Nacimiento</label>
-                                <p class="form-control-plaintext border-bottom" id="info_dob">-</p>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="fw-bold text-dark">Género</label>
-                                <p class="form-control-plaintext border-bottom" id="info_gender">-</p>
+
+                            <!-- Col 3 -->
+                            <div class="col-md-12 col-xl-4 border-start border-light-subtle">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-warning-subtle text-warning rounded-circle font-size-20">
+                                            <i class="bx bx-briefcase"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Profesión o Trabajo</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold"><span id="info_occupation">-</span> <span class="text-muted font-size-13 fw-normal ms-1 border-start ps-2" id="info_workplace" title="Lugar de Trabajo">-</span></h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-secondary text-white rounded-circle font-size-20">
+                                            <i class="bx bx-user-plus"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Referido por</p>
+                                        <h5 class="font-size-14 mb-0 text-dark fw-bold" id="info_referred_by">-</h5>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-start">
+                                    <div class="avatar-sm me-3">
+                                        <span class="avatar-title bg-primary-subtle text-primary rounded-circle font-size-20">
+                                            <i class="bx bx-map"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1 font-size-12 text-uppercase fw-semibold">Dirección</p>
+                                        <h5 class="font-size-13 mb-0 text-dark fw-bold" style="line-height:1.4;" id="info_address">-</h5>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="fw-bold text-dark">Teléfono</label>
-                                <p class="form-control-plaintext border-bottom" id="info_mobile">-</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="fw-bold text-dark">Email</label>
-                                <p class="form-control-plaintext border-bottom" id="info_email">-</p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="fw-bold text-dark">Ocupación</label>
-                                <p class="form-control-plaintext border-bottom" id="info_occupation">-</p>
-                            </div>
-                        </div>
-
-                         <div class="row mb-3">
-                            <div class="col-md-8">
-                                <label class="fw-bold text-dark">Dirección</label>
-                                <p class="form-control-plaintext border-bottom" id="info_address">-</p>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="fw-bold text-dark">Estado Civil</label>
-                                <p class="form-control-plaintext border-bottom" id="info_marital">-</p>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="fw-bold text-dark">Tipo Sangre</label>
-                                <p class="form-control-plaintext border-bottom" id="info_blood">-</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- CONSULTA --}}
             <div class="tab-pane fade" id="tab-consulta">
-                <div class="mb-3">
-                    <label>Síntomas</label>
-                    <textarea name="symptoms" class="form-control"></textarea>
-                </div>
                 <div class="mb-3">
                     <label>Consulta por</label>
                     <textarea name="consulta_por" class="form-control"></textarea>
@@ -204,30 +290,44 @@
                 @include('prescription.partials.archivos')
             </div>
 
-        </div>
+                </div> <!-- End tab-content -->
+            </div> <!-- End card-body -->
+        </div> <!-- End card -->
     </div>
 
-    {{-- ================= COLUMNA DERECHA FIJA ================= --}}
+    {{-- ================= COLUMNA DERECHA ================= --}}
     <div class="col-lg-4">
-        <div class="card sticky-right">
-            <div class="card-header"><strong>Antecedentes y Alergias</strong></div>
-            <div class="card-body">
-                <label>Patológicos</label>
-                <textarea id="patologicos" name="pathological_history" class="form-control mb-3"></textarea>
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-header bg-primary text-white" style="border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16"><i class="bx bx-history me-2"></i><strong>Antecedentes y Alergias</strong></h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Patológicos</label>
+                    <textarea id="patologicos" name="pathological_history" class="form-control" rows="3" placeholder="Antecedentes médicos, cirugías, etc."></textarea>
+                </div>
 
-                <label>Familiares</label>
-                <textarea id="familiares" name="non_pathological_history" class="form-control mb-3"></textarea>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Familiares</label>
+                    <textarea id="familiares" name="non_pathological_history" class="form-control" rows="3" placeholder="Enfermedades hereditarias, hábitos..."></textarea>
+                </div>
 
-                <label>Alergias</label>
-                <textarea id="alergias" name="medications_allergies" class="form-control"></textarea>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-danger"><i class="bx bx-error-circle"></i> Alergias</label>
+                    <textarea id="alergias" name="medications_allergies" class="form-control border-danger" rows="3" placeholder="Medicamentos, alimentos, etc."></textarea>
+                </div>
+
+                <hr class="text-muted mb-4">
+
+                <div class="d-grid mt-2">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 8px; font-weight: bold;">
+                        <i class="bx bx-save me-1 font-size-18 align-middle"></i> Crear Consulta
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-</div>
-
-<div class="mt-3">
-    <button class="btn btn-primary">Crear Expediente</button>
 </div>
 
 </form>
@@ -299,6 +399,7 @@ $(document).ready(function () {
 
                     // Llenar Tab Información General
                     $('#info_full_name').text(res.patient.name);
+                    $('#info_dui_hidden').val(res.patient.dui ?? '');
                     $('#info_age').text(res.patient.age ? res.patient.age + ' años' : '-');
                     $('#info_dob').text(res.patient.dob ?? '-');
                     $('#info_gender').text(res.patient.gender ?? '-');
@@ -308,6 +409,8 @@ $(document).ready(function () {
                     $('#info_address').text(res.patient.address ?? '-');
                     $('#info_marital').text(res.patient.marital_status ?? '-');
                     $('#info_blood').text(res.patient.blood_group ?? '-');
+                    $('#info_workplace').text(res.patient.workplace ?? '-');
+                    $('#info_referred_by').text(res.patient.referred_by ?? '-');
 
                     // Antecedentes (Sidebar)
                     $('#patologicos').val(res.patient.pathological_history ?? '');
@@ -406,6 +509,208 @@ $(document).ready(function () {
             alert('Debe quedar al menos un registro.');
         }
     });
+
+    window.generarRecetaPDF = function() {
+        let pName = $('#info_full_name').text();
+        let pDui = $('#info_dui_hidden').val() || '-';
+        
+        let dateObj = new Date();
+        let today = dateObj.toLocaleDateString('es-ES');
+
+        let medicinesHtml = '';
+        $('.repeater-wrapper[data-type="medicines"] .repeater-item').each(function() {
+            let medName = $(this).find('input[name^="medicines["][name$="[name]"]').val();
+            let medNotes = $(this).find('textarea[name^="medicines["][name$="[notes]"]').val();
+            
+            if(medName || medNotes) {
+                medicinesHtml += `
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: bold; font-size: 13px; text-transform: uppercase;">- ${medName}</div>
+                    <div style="font-size: 12px; margin-left: 10px; color: #111;">${medNotes.replace(/\n/g, '<br>')}</div>
+                </div>`;
+            }
+        });
+
+        if (medicinesHtml === '') {
+            alert('Por favor, agregue al menos un medicamento a la receta para poder imprimir/generar el PDF.');
+            return;
+        }
+
+        let logoUrl = "{{ asset('build/images/logo-dark2.png') }}";
+
+        let printWindow = window.open('', '_blank');
+        let htmlContent = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Orden Médica - ${pName}</title>
+            <style>
+                /* Forzamos el tamaño físico del papel en el navegador (Medio Carta / Statement) */
+                @page { 
+                    size: 5.5in 8.5in; /* equivale a 13.97cm de ancho x 21.59cm de alto */
+                    margin: 0; 
+                }
+                html, body {
+                    width: 13.97cm;
+                    height: 21.59cm;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background-color: #fff;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    color: #000;
+                    -webkit-print-color-adjust: exact;
+                }
+                .recipe-container {
+                    width: 100%;
+                    height: 100%;
+                    padding: 0.8cm 1cm; /* Margen interno para que no pegue a la orilla del papel */
+                    box-sizing: border-box;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    background-color: #fff;
+                }
+                .header-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .header-table td {
+                    vertical-align: middle;
+                }
+                .doctor-info {
+                    text-align: center;
+                }
+                .doctor-name {
+                    font-size: 22px;
+                    font-weight: normal;
+                    margin-bottom: 8px;
+                    color: #000;
+                    letter-spacing: -0.3px;
+                }
+                .doctor-spec {
+                    font-size: 12px;
+                    color: #111;
+                    line-height: 1.3;
+                }
+                .title-receta {
+                    text-align: center;
+                    font-size: 16px;
+                    margin-top: 15px;
+                    margin-bottom: 15px;
+                }
+                .patient-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                    background-color: #fff;
+                }
+                .patient-table td {
+                    border: 1px solid #555;
+                    padding: 6px 8px;
+                    font-size: 12px;
+                }
+                .patient-table .label-td {
+                    font-weight: normal;
+                    width: 60px;
+                }
+                .patient-table .val-td {
+                    width: 55%;
+                }
+                .patient-table .empty-td {
+                    width: auto;
+                }
+                .meds-box {
+                    border: 1px solid #555;
+                    flex-grow: 1;
+                    padding: 15px;
+                    margin-bottom: 15px;
+                    background-color: #fff;
+                }
+                .footer-box {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 15px;
+                    background-color: #fff;
+                }
+                .footer-box td {
+                    border: 1px solid #555;
+                    text-align: center;
+                    font-size: 11px;
+                    padding: 6px;
+                }
+                .address {
+                    text-align: center;
+                    font-size: 10px;
+                    color: #111;
+                    margin-bottom: 5px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="recipe-container">
+                <table class="header-table">
+                    <tr>
+                        <td style="width: 25%; text-align: center;">
+                            <img src="${logoUrl}" style="max-width: 80px;" alt="Logo">
+                        </td>
+                        <td style="width: 75%;" class="doctor-info">
+                            <div class="doctor-name">Dr. Jorge Panameño MSc.</div>
+                            <div class="doctor-spec">Medicina Interna – Medicina Tropical<br>Enfermedades Infecciosas y Parasitarias</div>
+                            <div class="doctor-spec" style="font-size:10px; margin-top:3px;">Miembro de IDSA, Sociedad Americana de Enfermedades Infecciosas</div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div class="title-receta">Orden Médica</div>
+                
+                <table class="patient-table">
+                    <tr>
+                        <td class="label-td">Fecha:</td>
+                        <td class="val-td">${today}</td>
+                        <td rowspan="3" class="empty-td">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="label-td">Nombre:</td>
+                        <td class="val-td">${pName}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-td">No. Id:</td>
+                        <td class="val-td">${pDui}</td>
+                    </tr>
+                </table>
+                
+                <div class="meds-box">
+                    ${medicinesHtml}
+                </div>
+                
+                <table class="footer-box">
+                    <tr><td>Receta Exclusiva. Cada caso es diferente, no se automedique</td></tr>
+                    <tr><td>Enviar resultados vía WhatsApp al +503 7989-2046</td></tr>
+                </table>
+                
+                <div class="address">
+                    81 Av Sur Cl Juan J Cañas Edif 2 Nivel 2 Local 6 Centro Médico Escalón, SS. Telf.: 2264-6691
+                </div>
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 500);
+                };
+            <\/script>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+    };
 
 });
 </script>

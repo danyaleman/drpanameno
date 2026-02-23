@@ -315,6 +315,7 @@ class PatientController extends Controller
                 'first_name' => $patient->first_name,
                 'last_name' => $patient->last_name,
                 'gender' => $patient->gender,
+                'dui' => $patient->dui,
                 'dob' => $patient->birth_date, // Date of Birth
                 'age' => $age,
                 'mobile' => $patient->phone_primary,
@@ -323,6 +324,8 @@ class PatientController extends Controller
                 'marital_status' => $patient->marital_status,
                 'address' => $patient->address,
                 'occupation' => $patient->occupation ?? 'No especificada',
+                'workplace' => $patient->workplace ?? 'No especificado',
+                'referred_by' => $patient->referred_by ?? 'Ninguno',
                 'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
 
                 // Antecedentes

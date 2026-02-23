@@ -12,12 +12,12 @@
             <div class="col-12">
                 <div class="page-title-box d-flex align-items-center justify-content-between">
                     <h4 class="mb-0 font-size-18">
-                        {{ __('Editar Expediente') }}
+                        {{ __('Editar Consulta') }}
                     </h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
                             <li class="breadcrumb-item"><a href="{{ url('/dashboard') }}">{{ __('Dashboard') }}</a></li>
-                            <li class="breadcrumb-item"><a href="{{ url('prescription') }}">{{ __('Expediente') }}</a>
+                            <li class="breadcrumb-item"><a href="{{ url('prescription') }}">{{ __('Consulta') }}</a>
                             </li>
                             <li class="breadcrumb-item active">
                                 {{ __('Update prescription') }}
@@ -32,7 +32,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        <blockquote>{{ __('Detalles de Expediente') }}</blockquote>
+                        <blockquote>{{ __('Detalles de Consulta') }}</blockquote>
                         <form class="outer-repeater" action="{{ url('prescription/' . '' . $prescription->id) }}"
                             method="post" enctype="multipart/form-data">
                             @csrf
@@ -82,12 +82,12 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">{{ __('Sintomas ') }}<span
+                                    <label class="form-label">{{ __('Consulta por ') }}<span
                                             class="text-danger">*</span></label>
-                                    <textarea class="form-control @error('symptoms') is-invalid @enderror" name="symptoms"
-                                        id="symptoms" placeholder="{{ __('Add Symptoms') }}"
-                                        rows="3">@if (old('symptoms')){{ old('symptoms') }}@endif {{ $prescription->symptoms }}</textarea>
-                                    @error('symptoms')
+                                    <textarea class="form-control @error('consulta_por') is-invalid @enderror" name="consulta_por"
+                                        id="consulta_por" placeholder="{{ __('Add reason for consultation') }}"
+                                        rows="3">@if (old('consulta_por')){{ old('consulta_por') }}@endif {{ $prescription->consulta_por }}</textarea>
+                                    @error('consulta_por')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
@@ -110,8 +110,11 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Peso (lb)</label>
-                                    <input type="text" name="peso" class="form-control"
-                                        value="{{ old('peso', optional($signos)->peso) }}">
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" name="peso" id="peso_lb" class="form-control"
+                                            value="{{ old('peso', optional($signos)->peso) }}">
+                                        <span class="input-group-text bg-light fw-bold text-primary" id="peso_kg_display">0.00 kg</span>
+                                    </div>
                                 </div>
 
                                 <div class="col-md-3 mb-3">
@@ -373,7 +376,7 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <button type="submit" class="btn btn-primary">
-                                        {{ __('Actualizar Expediente') }}
+                                        {{ __('Actualizar Consulta') }}
                                     </button>
                                 </div>
                             </div>
@@ -413,5 +416,21 @@
                     }
                 });
             });
+
+            // Conversion Peso LB -> KG
+            function updatePesoKg() {
+                var lbs = parseFloat($('#peso_lb').val());
+                if (!isNaN(lbs) && lbs > 0) {
+                    var kgs = lbs / 2.20462;
+                    $('#peso_kg_display').text(kgs.toFixed(2) + ' kg');
+                } else {
+                    $('#peso_kg_display').text('0.00 kg');
+                }
+            }
+
+            $('#peso_lb').on('input', updatePesoKg);
+
+            // Execute on load in case there's an existing value
+            updatePesoKg();
         </script>
     @endsection

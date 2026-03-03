@@ -332,6 +332,40 @@ class PatientController extends Controller
                 'pathological_history' => $patient->pathological_history,
                 'non_pathological_history' => $patient->non_pathological_history,
                 'medications_allergies' => $patient->medications_allergies,
+
+                // Signos vitales más recientes
+                'signos' => $patient->signos ? [
+                    'peso' => $patient->signos->peso,
+                    'talla' => $patient->signos->talla,
+                    'frec_respiratoria' => $patient->signos->frec_respiratoria,
+                    'temperatura' => $patient->signos->temperatura,
+                    'presion_arterial_sistolica' => $patient->signos->presion_arterial_sistolica,
+                    'presion_arterial_diastolica' => $patient->signos->presion_arterial_diastolica,
+                    'frec_cardiaca' => $patient->signos->frec_cardiaca,
+                    'spo' => $patient->signos->spo,
+                    'examen' => $patient->signos->examen,
+                    'observaciones_adicionales' => $patient->signos->observaciones_adicionales,
+                ] : null,
+
+                // Historia Clínica (Últimas 10 consultas)
+                'historial' => Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos'])
+                ->where('patient_id', $patient->id)
+                ->where('is_deleted', 0)
+                ->orderBy('id', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($presc) {
+            return [
+                        'id' => $presc->id,
+                        'date' => $presc->created_at->format('d/m/Y h:i A'),
+                        'consulta_por' => $presc->consulta_por,
+                        'diagnostico' => $presc->diagnosis,
+                        'evaluacion' => $presc->evaluacion,
+                        'vacunas' => $presc->vacunas,
+                        'archivos' => $presc->archivos,
+                        'medicinas' => $presc->medicines
+                    ];
+        })
             ]
         ]);
     }

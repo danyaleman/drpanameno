@@ -57,7 +57,7 @@ class Patient extends Model
      */
     public function appointments()
     {
-        return $this->hasMany(Appointment::class, 'patient_id', 'id');
+        return $this->hasMany(Appointment::class , 'patient_id', 'id');
     }
 
     /**
@@ -65,7 +65,15 @@ class Patient extends Model
      */
     public function medicalInfo()
     {
-        return $this->hasOne(MedicalInfo::class, 'patient_id', 'id');
+        return $this->hasOne(MedicalInfo::class , 'patient_id', 'id');
+    }
+
+    /**
+     * Signos vitales del paciente
+     */
+    public function signos()
+    {
+        return $this->hasOne(Signos::class , 'patient_id', 'id');
     }
 
     /**
@@ -73,7 +81,7 @@ class Patient extends Model
      */
     public function prescriptions()
     {
-        return $this->hasMany(Prescription::class, 'patient_id', 'id');
+        return $this->hasMany(Prescription::class , 'patient_id', 'id');
     }
 
     /**
@@ -81,7 +89,7 @@ class Patient extends Model
      */
     public function invoices()
     {
-        return $this->hasMany(Invoice::class, 'patient_id', 'id');
+        return $this->hasMany(Invoice::class , 'patient_id', 'id');
     }
 
     /**
@@ -89,7 +97,7 @@ class Patient extends Model
      */
     public function vaccineRecords()
     {
-        return $this->hasMany(VaccineRecord::class, 'patient_id', 'id');
+        return $this->hasMany(VaccineRecord::class , 'patient_id', 'id');
     }
 
     /**
@@ -97,9 +105,9 @@ class Patient extends Model
      */
     public function pendingVaccines()
     {
-        return $this->hasMany(VaccineRecord::class, 'patient_id', 'id')
-                    ->where('status', 'pending')
-                    ->orderBy('scheduled_date');
+        return $this->hasMany(VaccineRecord::class , 'patient_id', 'id')
+            ->where('status', 'pending')
+            ->orderBy('scheduled_date');
     }
 
     /* =====================
@@ -112,7 +120,7 @@ class Patient extends Model
     public function getAgeAttribute()
     {
         return $this->birth_date
-            ? Carbon::parse($this->birth_date)->age
+            ?Carbon::parse($this->birth_date)->age
             : null;
     }
 

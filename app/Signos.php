@@ -10,7 +10,7 @@ class Signos extends Model
     protected $table = 'signos';
 
     protected $fillable = [
-        'prescription_id',
+        'patient_id',
         'peso',
         'talla',
         'frec_respiratoria',
@@ -23,8 +23,8 @@ class Signos extends Model
         'observaciones_adicionales',
     ];
 
-    public function prescription()
+    public function patient()
     {
-        return $this->belongsTo(Prescription::class);
+        return $this->belongsTo(Patient::class);
     }
 }

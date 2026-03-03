@@ -47,21 +47,34 @@ class PrescriptionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.list')) {
             $role = $user->roles[0]->slug;
-            if ($role == 'doctor') {
-                $prescriptions = Prescription::with('patient', 'appointment', 'appointment.timeSlot')->where('created_by', '=', $user->id)->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
+
+            $query = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('is_deleted', 0);
+
+            if ($role == 'patient') {
+                // Si es paciente solo ve lo suyo, asumimos se vincula por patient_id o sigue en -1 hasta que se configure bien.
+                $query->where('patient_id', $user->id);
             }
-            elseif ($role == 'patient') {
-                // Para pacientes, devolver paginación vacía hasta vincular usuario con paciente
-                $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('id', -1)->paginate($this->limit);
+
+            // Aplicar Filtros
+            if ($request->has('patient_name') && $request->patient_name != '') {
+                $query->whereHas('patient', function ($q) use ($request) {
+                    $q->where('first_name', 'like', '%' . $request->patient_name . '%')
+                        ->orWhere('last_name', 'like', '%' . $request->patient_name . '%');
+                });
             }
-            else {
-                $prescriptions = Prescription::with('patient', 'doctor', 'appointment', 'appointment.timeSlot')->where('is_deleted', 0)->orderBy('id', 'desc')->paginate($this->limit);
+
+            if ($request->has('prescription_date') && $request->prescription_date != '') {
+                $query->whereDate('created_at', $request->prescription_date);
             }
+
+            $prescriptions = $query->orderBy('id', 'desc')->paginate($this->limit);
+            $prescriptions->appends($request->all());
+
             return view('prescription.prescriptions', compact('user', 'role', 'prescriptions'));
         }
         else {
@@ -136,33 +149,40 @@ class PrescriptionController extends Controller
 
             try {
                 $user = Sentinel::getUser();
-                // Verificamos si al menos el primer medicamento tiene nombre
-                if (empty($request->medicines[0]['name']) && empty($request->medicines[0]['notes'])) {
-                    return redirect()->back()->with('error', 'Add at least one medicine to create prescription!!!');
-                }
-                else {
-                    $this->prescription->patient_id = $request->patient_id_hidden;
-                    $this->prescription->appointment_id = $request->appointment_id;
-                    $this->prescription->consulta_por = $request->consulta_por;
-                    $this->prescription->diagnosis = $request->diagnostico;
-                    $this->prescription->created_by = $request->created_by;
-                    $this->prescription->updated_by = $user->id;
-                    $this->prescription->save();
 
-                    Signos::create([
-                        'prescription_id' => $this->prescription->id,
-                        'peso' => $request->peso,
-                        'talla' => $request->talla,
-                        'frec_respiratoria' => $request->frec_respiratoria,
-                        'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
-                        'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
-                        'temperatura' => $request->temperatura,
-                        'frec_cardiaca' => $request->frec_cardiaca,
-                        'spo' => $request->spo,
-                        'examen' => $request->examen,
-                        'observaciones_adicionales' => $request->observaciones_adicionales,
-                    ]);
+                $this->prescription->patient_id = $request->patient_id_hidden;
+                $this->prescription->appointment_id = $request->appointment_id;
+                $this->prescription->consulta_por = $request->consulta_por;
+                $this->prescription->diagnosis = $request->diagnostico;
+                $this->prescription->created_by = $request->created_by;
+                $this->prescription->updated_by = $user->id;
+                $this->prescription->save();
 
+                Signos::updateOrCreate(
+                ['patient_id' => $request->patient_id_hidden],
+                [
+                    'peso' => $request->peso,
+                    'talla' => $request->talla,
+                    'frec_respiratoria' => $request->frec_respiratoria,
+                    'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
+                    'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
+                    'temperatura' => $request->temperatura,
+                    'frec_cardiaca' => $request->frec_cardiaca,
+                    'spo' => $request->spo,
+                    'examen' => $request->examen,
+                    'observaciones_adicionales' => $request->observaciones_adicionales,
+                ]
+                );
+
+                // Crear Evaluación Mapeando al schema Evaluacion.php y DB
+                \App\Evaluacion::create([
+                    'prescription_id' => $this->prescription->id,
+                    'diagnostico' => $request->diagnostico,
+                    'estudios_laboratorios' => $request->estudios_laboratorios,
+                    'medicamentos' => $request->tratamiento // Se guarda la receta texto completo
+                ]);
+
+                if ($request->has('medicines') && is_array($request->medicines)) {
                     foreach ($request->medicines as $item) {
                         if (!empty($item['name'])) {
                             $medicine = new Medicine();
@@ -172,49 +192,49 @@ class PrescriptionController extends Controller
                             $medicine->save();
                         }
                     }
+                }
 
-                    if ($request->has('test_reports') && $request->test_reports[0]['test_report'] != null) {
-                        foreach ($request->test_reports as $item) {
-                            $test_report = new TestReport();
-                            $test_report->prescription_id = $this->prescription->id;
-                            $test_report->name = $item['test_report'];
-                            $test_report->notes = $item['notes'];
-                            $test_report->save();
-                        }
+                if ($request->has('test_reports') && $request->test_reports[0]['test_report'] != null) {
+                    foreach ($request->test_reports as $item) {
+                        $test_report = new TestReport();
+                        $test_report->prescription_id = $this->prescription->id;
+                        $test_report->name = $item['test_report'];
+                        $test_report->notes = $item['notes'];
+                        $test_report->save();
                     }
+                }
 
-                    if ($request->has('archivos')) {
-                        foreach ($request->archivos as $archivo) {
-                            if (!isset($archivo['file'])) {
-                                continue;
-                            }
-                            $file = $archivo['file'];
-                            if (!$file instanceof \Illuminate\Http\UploadedFile) {
-                                continue;
-                            }
-                            $path = $file->store('clinical_files', 'public');
-                            Archivo::create([
+                if ($request->has('archivos')) {
+                    foreach ($request->archivos as $archivo) {
+                        if (!isset($archivo['file'])) {
+                            continue;
+                        }
+                        $file = $archivo['file'];
+                        if (!$file instanceof \Illuminate\Http\UploadedFile) {
+                            continue;
+                        }
+                        $path = $file->store('clinical_files', 'public');
+                        Archivo::create([
+                            'prescription_id' => $this->prescription->id,
+                            'url_file' => $path,
+                            'observaciones' => $archivo['observaciones'] ?? null,
+                        ]);
+                    }
+                }
+
+                if ($request->has('vacunas')) {
+                    foreach ($request->vacunas as $item) {
+                        if (!empty($item['tipo'])) {
+                            Vacuna::create([
                                 'prescription_id' => $this->prescription->id,
-                                'url_file' => $path,
-                                'observaciones' => $archivo['observaciones'] ?? null,
+                                'tipo' => $item['tipo'],
+                                'dosis' => $item['dosis'],
                             ]);
                         }
                     }
-
-                    if ($request->has('vacunas')) {
-                        foreach ($request->vacunas as $item) {
-                            if (!empty($item['tipo'])) {
-                                Vacuna::create([
-                                    'prescription_id' => $this->prescription->id,
-                                    'tipo' => $item['tipo'],
-                                    'dosis' => $item['dosis'],
-                                ]);
-                            }
-                        }
-                    }
-
-                    return redirect('prescription')->with('success', 'Prescription created successfully!');
                 }
+
+                return redirect('prescription')->with('success', 'Prescription created successfully!');
             }
             catch (Exception $e) {
                 return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
@@ -241,7 +261,7 @@ class PrescriptionController extends Controller
             if ($user_details) {
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
-                $signos = Signos::where('prescription_id', $prescription->id)->first();
+                $signos = Signos::where('patient_id', $prescription->patient_id)->first();
                 return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas'));
             }
             else {
@@ -272,7 +292,7 @@ class PrescriptionController extends Controller
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $vacunas = Vacuna::where('prescription_id', $prescription->id)->get();
-                $signos = Signos::where('prescription_id', $prescription->id)->first();
+                $signos = Signos::where('patient_id', $prescription->patient_id)->first();
                 return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas'));
             }
             else {
@@ -327,7 +347,7 @@ class PrescriptionController extends Controller
                     }
 
                     Signos::updateOrCreate(
-                    ['prescription_id' => $prescription->id],
+                    ['patient_id' => $request->patient_id],
                     [
                         'peso' => $request->peso,
                         'talla' => $request->talla,

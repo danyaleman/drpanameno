@@ -100,12 +100,7 @@
                     </li>
                     <li class="nav-item waves-effect waves-light">
                         <a class="nav-link" data-bs-toggle="tab" href="#tab-evaluacion" role="tab" style="font-weight: 600;">
-                            <i class="bx bx-file font-size-18 d-block mb-1"></i> Evaluación
-                        </a>
-                    </li>
-                    <li class="nav-item waves-effect waves-light">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab-receta" role="tab" style="font-weight: 600;">
-                            <i class="bx bx-plus-medical font-size-18 d-block mb-1"></i> Receta
+                            <i class="bx bx-file font-size-18 d-block mb-1"></i> Evaluación y Receta
                         </a>
                     </li>
                     <li class="nav-item waves-effect waves-light">
@@ -259,25 +254,29 @@
                 @include('prescription.partials.exploracion_fisica')
             </div>
 
-            {{-- EVALUACIÓN --}}
+            {{-- EVALUACIÓN Y RECETA (MERGED) --}}
             <div class="tab-pane fade" id="tab-evaluacion">
-                <div class="mb-3">
-                    <label>Diagnóstico</label>
-                    <textarea name="diagnostico" class="form-control"></textarea>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="fw-bold">Diagnóstico (Evaluación)</label>
+                        <textarea name="diagnostico" class="form-control" rows="3" placeholder="Describa el diagnóstico..."></textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="fw-bold">Estudios de Laboratorio</label>
+                        <textarea name="estudios_laboratorios" class="form-control" rows="3" placeholder="Exámenes a realizar..."></textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="fw-bold">Tratamiento / Receta Médica</label>
+                        <textarea name="tratamiento" id="tratamiento_texto" class="form-control" rows="6" placeholder="Escriba aquí todo el tratamiento, medicamentos, indicaciones y dosis recomendadas..."></textarea>
+                        
+                        <div class="mt-3 text-end">
+                            <button type="button" class="btn btn-success fw-bold shadow-sm" style="border-radius: 6px;" onclick="generarRecetaPDF()">
+                                <i class="bx bx-printer align-middle me-1 font-size-16"></i> Imprimir Receta / Generar PDF
+                            </button>
+                            <small class="text-muted d-block mt-1">Imprimirá el contenido del campo "Tratamiento / Receta Médica".</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label>Estudios de laboratorio</label>
-                    <textarea name="estudios_laboratorios" class="form-control"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label>Tratamiento</label>
-                    <textarea name="tratamiento" class="form-control"></textarea>
-                </div>
-            </div>
-
-            {{-- RECETA --}}
-            <div class="tab-pane fade" id="tab-receta">
-                @include('prescription.partials.medicamentos')
             </div>
 
             {{-- VACUNAS --}}
@@ -331,6 +330,26 @@
 </div>
 
 </form>
+
+{{-- ================= HISTORIA CLÍNICA (CONSULTAS PREVIAS) ================= --}}
+<div class="row mt-4" id="clinical-history-section" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-header bg-dark text-white" style="border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16"><i class="bx bx-list-ul me-2"></i><strong>Historia Clínica (Últimas Consultas)</strong></h5>
+            </div>
+            <div class="card-body bg-light-subtle p-4" style="border-radius: 0 0 10px 10px;">
+                <div class="accordion accordion-flush" id="historyAccordion">
+                    <!-- Se llenará vía AJAX -->
+                </div>
+                <div id="no-history-msg" class="text-center text-muted" style="display: none;">
+                    <i class="bx bx-info-circle font-size-24 mb-2"></i>
+                    <p>No se encontraron consultas previas para este paciente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
@@ -417,9 +436,86 @@ $(document).ready(function () {
                     $('#familiares').val(res.patient.non_pathological_history ?? '');
                     $('#alergias').val(res.patient.medications_allergies ?? '');
 
+                    // Signos Vitales (Examen Físico)
+                    if (res.patient.signos) {
+                        $('input[name="peso"]').val(res.patient.signos.peso ?? '').trigger('input'); // Trigger input for kg calculation
+                        $('input[name="talla"]').val(res.patient.signos.talla ?? '');
+                        $('input[name="frec_respiratoria"]').val(res.patient.signos.frec_respiratoria ?? '');
+                        $('input[name="temperatura"]').val(res.patient.signos.temperatura ?? '');
+                        $('input[name="presion_arterial_sistolica"]').val(res.patient.signos.presion_arterial_sistolica ?? '');
+                        $('input[name="presion_arterial_diastolica"]').val(res.patient.signos.presion_arterial_diastolica ?? '');
+                        $('input[name="frec_cardiaca"]').val(res.patient.signos.frec_cardiaca ?? '');
+                        $('input[name="spo"]').val(res.patient.signos.spo ?? '');
+                        $('textarea[name="examen"]').val(res.patient.signos.examen ?? '');
+                        $('textarea[name="observaciones_adicionales"]').val(res.patient.signos.observaciones_adicionales ?? '');
+                    } else {
+                        // Limpiar si no hay previos
+                        $('#tab-exploracion input, #tab-exploracion textarea').val('');
+                        $('#peso_kg_display').text('0.00 kg');
+                    }
+
                     // Mostrar formulario y header
                     $('#patient-header-card').slideDown();
                     $('#prescription-form').slideDown();
+
+                    // Cargar Historia Clínica
+                    if (res.patient.historial && res.patient.historial.length > 0) {
+                        let html = '';
+                        res.patient.historial.forEach(function(item, index) {
+                            let vacunasHtml = '';
+                            if (item.vacunas && item.vacunas.length > 0) {
+                                vacunasHtml = '<div class="mt-2 text-primary"><strong>Vacunas:</strong><ul class="mb-0 ps-3">';
+                                item.vacunas.forEach(function(v) { vacunasHtml += `<li>${v.name || 'N/A'}</li>`; });
+                                vacunasHtml += '</ul></div>';
+                            }
+
+                            let examenesHtml = '';
+                            if (item.evaluacion && item.evaluacion.estudios_laboratorios) {
+                                examenesHtml = `<div class="mt-2 text-info"><strong>Laboratorios recomendados:</strong> <p class="mb-0">${item.evaluacion.estudios_laboratorios}</p></div>`;
+                            }
+
+                            let archivosHtml = '';
+                            if (item.archivos && item.archivos.length > 0) {
+                                archivosHtml = '<div class="mt-2 text-secondary"><strong>Imágenes o Archivos:</strong><ul class="mb-0 ps-3">';
+                                item.archivos.forEach(function(a) { 
+                                    archivosHtml += `<li><i class="bx bx-image"></i> ${a.titulo || 'Archivo Adjunto'}</li>`; 
+                                });
+                                archivosHtml += '</ul></div>';
+                            }
+
+                            html += `
+                            <div class="accordion-item shadow-sm border mb-2" style="border-radius: 8px; overflow: hidden;">
+                                <h2 class="accordion-header" id="heading-${index}">
+                                    <button class="accordion-button fw-bold text-dark bg-white ${index !== 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse-${index}">
+                                        <i class="bx bx-calendar-event text-primary me-2"></i> Consulta del ${item.date} 
+                                        <span class="badge bg-primary-subtle text-primary ms-auto" style="font-size: 11px;">#${item.id}</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse-${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading-${index}" data-bs-parent="#historyAccordion">
+                                    <div class="accordion-body bg-light-subtle row p-4">
+                                        <div class="col-md-6 border-end">
+                                            <strong class="text-muted text-uppercase font-size-11"><i class="bx bx-message-rounded-dots"></i> Consulta Por:</strong>
+                                            <p class="mt-1">${item.consulta_por || 'No especificado'}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong class="text-muted text-uppercase font-size-11"><i class="bx bx-file"></i> Evaluación / Diagnóstico:</strong>
+                                            <p class="mt-1 mb-0">${item.diagnostico || 'No especificado'}</p>
+                                            ${examenesHtml}
+                                            ${vacunasHtml}
+                                            ${archivosHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                        $('#historyAccordion').html(html).show();
+                        $('#no-history-msg').hide();
+                        $('#clinical-history-section').slideDown();
+                    } else {
+                        $('#historyAccordion').hide();
+                        $('#no-history-msg').show();
+                        $('#clinical-history-section').slideDown();
+                    }
 
                     // Actualizar campos hidden
                     $('#patient_id_hidden').val(patientId);
@@ -517,22 +613,16 @@ $(document).ready(function () {
         let dateObj = new Date();
         let today = dateObj.toLocaleDateString('es-ES');
 
+        let medsText = $('#tratamiento_texto').val();
         let medicinesHtml = '';
-        $('.repeater-wrapper[data-type="medicines"] .repeater-item').each(function() {
-            let medName = $(this).find('input[name^="medicines["][name$="[name]"]').val();
-            let medNotes = $(this).find('textarea[name^="medicines["][name$="[notes]"]').val();
-            
-            if(medName || medNotes) {
-                medicinesHtml += `
-                <div style="margin-bottom: 12px;">
-                    <div style="font-weight: bold; font-size: 13px; text-transform: uppercase;">- ${medName}</div>
-                    <div style="font-size: 12px; margin-left: 10px; color: #111;">${medNotes.replace(/\n/g, '<br>')}</div>
-                </div>`;
-            }
-        });
+        
+        if (medsText && medsText.trim() !== '') {
+            medicinesHtml = `
+            <div style="margin-bottom: 12px; font-size: 13px; color: #111; white-space: pre-wrap; line-height: 1.6;">${medsText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+        }
 
         if (medicinesHtml === '') {
-            alert('Por favor, agregue al menos un medicamento a la receta para poder imprimir/generar el PDF.');
+            alert('Por favor, escriba el tratamiento/receta médida en la pestaña "Evaluación y Receta" para poder imprimir o generar el PDF.');
             return;
         }
 

@@ -48,7 +48,7 @@ class Prescription extends Model
      */
     public function signos()
     {
-        return $this->hasOne(Signos::class , 'prescription_id', 'id');
+        return $this->hasOne(Signos::class , 'patient_id', 'patient_id');
     }
 
     /**
@@ -65,5 +65,20 @@ class Prescription extends Model
     public function vacunas()
     {
         return $this->hasMany(Vacuna::class , 'prescription_id');
+    }
+
+    public function evaluacion()
+    {
+        return $this->hasOne(Evaluacion::class , 'prescription_id');
+    }
+
+    public function medicines()
+    {
+        return $this->hasMany(Medicine::class , 'prescription_id');
+    }
+
+    public function testReports()
+    {
+        return $this->hasMany(TestReport::class , 'prescription_id');
     }
 }

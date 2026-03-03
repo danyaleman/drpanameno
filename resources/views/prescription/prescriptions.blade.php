@@ -147,17 +147,27 @@
         <div class="col-12">
             <div class="card premium-card">
                 
-                {{-- Header + Botón Crear --}}
-                <div class="premium-header">
-                    <div class="d-flex align-items-center">
+                {{-- Header + Filtros --}}
+                <div class="premium-header flex-wrap" style="gap: 15px;">
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
                         <i class="bx bx-file-blank text-white font-size-22 me-2"></i>
                         <h4>Listado de Recetas y Consultas</h4>
                     </div>
-                    @if ($role == 'doctor')
-                        <a href="{{ route('prescription.create') }}" class="btn btn-light btn-sm waves-effect waves-light text-primary fw-bold">
-                            <i class="bx bx-plus font-size-14 align-middle me-1"></i> Nueva Receta
-                        </a>
-                    @endif
+                    
+                    <form action="{{ route('prescription.index') }}" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="input-group input-group-sm bg-white rounded" style="width: auto;">
+                            <span class="input-group-text border-0 bg-transparent"><i class="bx bx-search text-muted"></i></span>
+                            <input type="text" name="patient_name" class="form-control border-0 shadow-none" placeholder="Buscar por paciente..." value="{{ request('patient_name') }}">
+                        </div>
+                        <div class="input-group input-group-sm bg-white rounded" style="width: auto;">
+                            <span class="input-group-text border-0 bg-transparent"><i class="bx bx-calendar text-muted"></i></span>
+                            <input type="date" name="prescription_date" class="form-control border-0 shadow-none" value="{{ request('prescription_date') }}">
+                        </div>
+                        <button type="submit" class="btn btn-light btn-sm text-primary fw-bold waves-effect waves-light">
+                            <i class="bx bx-filter-alt"></i> Filtrar
+                        </button>
+                        <a href="{{ route('prescription.index') }}" class="btn btn-outline-light btn-sm waves-effect">Limpiar</a>
+                    </form>
                 </div>
 
                 <div class="card-body p-0">
@@ -232,20 +242,16 @@
                                         <td>
                                             <div class="d-flex align-items-center text-dark">
                                                 <i class="bx bx-calendar text-primary me-2 font-size-16"></i>
-                                                {{ $prescription->appointment->appointment_date ?? 'N/A' }}
+                                                {{ $prescription->created_at->format('Y-m-d') }}
                                             </div>
                                         </td>
 
                                         {{-- Hora --}}
                                         <td>
-                                            @if($prescription->appointment && $prescription->appointment->timeSlot)
-                                                <span class="badge bg-light text-dark border">
-                                                    <i class="bx bx-time me-1"></i>
-                                                    {{ $prescription->appointment->timeSlot->from }} - {{ $prescription->appointment->timeSlot->to }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="bx bx-time me-1"></i>
+                                                {{ $prescription->created_at->format('h:i A') }}
+                                            </span>
                                         </td>
 
                                         {{-- Acciones --}}

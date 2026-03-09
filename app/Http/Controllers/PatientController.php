@@ -144,11 +144,19 @@ class PatientController extends Controller
             }
 
             try {
+                // Obtener los datos no requeridos en la validación
+                $additionalData = $request->only([
+                    'marital_status', 'phone_secondary', 'occupation', 'workplace', 'referred_by',
+                    'pathological_history', 'non_pathological_history', 'medications_allergies',
+                    'emergency_contact_name', 'emergency_contact_phone'
+                ]);
+                $dataToSave = array_merge($validatedData, $additionalData);
+
                 // Crear paciente directamente sin crear usuario
-                $patient = Patient::create($validatedData);
+                $patient = Patient::create($dataToSave);
 
                 // Crear información médica si se proporciona
-                if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
+                if ($request->height || $request->weight || $request->b_group || $request->b_pressure || $request->pulse || $request->respiration || $request->allergy || $request->diet) {
                     MedicalInfo::create([
                         'patient_id' => $patient->id,
                         'height' => $request->height,
@@ -426,12 +434,20 @@ class PatientController extends Controller
                     $validatedData['photo'] = $imageName;
                 }
 
+                // Obtener los datos no requeridos en la validación
+                $additionalData = $request->only([
+                    'marital_status', 'phone_secondary', 'occupation', 'workplace', 'referred_by',
+                    'pathological_history', 'non_pathological_history', 'medications_allergies',
+                    'emergency_contact_name', 'emergency_contact_phone'
+                ]);
+                $dataToSave = array_merge($validatedData, $additionalData);
+
                 // Actualizar paciente
-                $patient->update($validatedData);
+                $patient->update($dataToSave);
 
                 // Actualizar información médica
                 $medical_info = $patient->medicalInfo;
-                if ($request->has(['height', 'weight', 'b_group', 'b_pressure', 'pulse', 'respiration', 'allergy', 'diet'])) {
+                if ($request->height || $request->weight || $request->b_group || $request->b_pressure || $request->pulse || $request->respiration || $request->allergy || $request->diet) {
                     $medicalData = [
                         'height' => $request->height,
                         'weight' => $request->weight,

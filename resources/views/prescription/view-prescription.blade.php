@@ -101,7 +101,7 @@
                             $imc = null;
                             $imcClass = '';
 
-                            if ($signos->peso && $signos->talla) {
+                            if ($signos->peso && $signos->talla > 0) {
 
                                 // convertir libras a kilogramos
                                 $pesoKg = $signos->peso * 0.453592;

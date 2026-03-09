@@ -29,9 +29,9 @@ class DepartmentController extends Controller
                 return DataTables::of($departments)
                     ->addIndexColumn()
                     ->addColumn('option', function ($row) use ($role) {
-                        if ($role != 'patient') {
-                            if ($role == 'admin') {
-                                $option = '<a href="department/' . $row->id . '/edit">
+                    if ($role != 'patient') {
+                        if ($role == 'admin') {
+                            $option = '<a href="department/' . $row->id . '/edit">
                                     <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Update Profile">
                                         <i class="mdi mdi-lead-pencil"></i>
                                     </button>
@@ -40,16 +40,18 @@ class DepartmentController extends Controller
                                 <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Deactivate Department" data-id="' . $row->id . '" id="delete-department">
                                     <i class="mdi mdi-trash-can"></i>
                                 </button>';
-                            }
-                        } else {
-                            $option = '';
                         }
-                        return $option;
-                    })->rawColumns(['option'])->make(true);
+                    }
+                    else {
+                        $option = '';
+                    }
+                    return $option;
+                })->rawColumns(['option'])->make(true);
             }
             // End
             return view('department.department', compact('user', 'role'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -66,7 +68,8 @@ class DepartmentController extends Controller
             $role = $user->roles[0]->slug;
             $department = null;
             return view('department.department-details', compact('user', 'role', 'department'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -82,7 +85,7 @@ class DepartmentController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('department.create')) {
             $validatedData = $request->validate([
-                'name' => 'required|alpha|max:250',
+                'name' => 'required|string|max:250',
                 'description' => 'required|regex:/^[a-zA-Z\s]+$/|max:250',
             ]);
             try {
@@ -91,10 +94,12 @@ class DepartmentController extends Controller
 
                 //Attach the user to the role
                 return redirect('department')->with('success', 'Department created successfully!');
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('department')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -107,7 +112,7 @@ class DepartmentController extends Controller
      */
     public function show($id)
     {
-        //
+    //
     }
 
     /**
@@ -123,10 +128,12 @@ class DepartmentController extends Controller
             if ($user->hasAccess('department.update')) {
                 $role = $user->roles[0]->slug;
                 return view('department.department-details', compact('user', 'role', 'department'));
-            } else {
+            }
+            else {
                 return view('error.403');
             }
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'Department not found');
         }
     }
@@ -143,7 +150,7 @@ class DepartmentController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('department.update')) {
             $validatedData = $request->validate([
-                'name' => 'required|alpha|max:250',
+                'name' => 'required|string|max:250',
                 'description' => 'required|regex:/^[a-zA-Z\s]+$/|max:250',
             ]);
             try {
@@ -152,10 +159,12 @@ class DepartmentController extends Controller
                 $department->save();
 
                 return redirect('department')->with('success', 'Department updated successfully!');
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('accountant')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -180,21 +189,24 @@ class DepartmentController extends Controller
                         'message' => 'Department deleted successfully.',
                         'data' => $department,
                     ], 200);
-                } else {
+                }
+                else {
                     return response()->json([
                         'isSuccess' => false,
                         'message' => 'Department not found.',
                         'data' => [],
                     ], 409);
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return response()->json([
                     'isSuccess' => false,
                     'message' => 'Something went wrong!!!' . $e->getMessage(),
                     'data' => [],
                 ], 409);
             }
-        } else {
+        }
+        else {
             return response()->json([
                 'isSuccess' => false,
                 'message' => 'You have no permission to delete Accountant',

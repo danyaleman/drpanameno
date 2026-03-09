@@ -29,7 +29,8 @@ class ReceptionistController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -50,7 +51,8 @@ class ReceptionistController extends Controller
         if ($role == 'doctor') {
             $receptionist_doctor = ReceptionListDoctor::where('doctor_id', $user->id)->pluck('reception_id');
             $receptionists = User::with('roles')->whereIn('id', $receptionist_doctor)->get();
-        } else {
+        }
+        else {
             $receptionists = $receptionist_role->users()->with('roles')->where('is_deleted', 0)->orderByDesc('id')->get();
         }
 
@@ -59,12 +61,12 @@ class ReceptionistController extends Controller
             return Datatables::of($receptionists)
                 ->addIndexColumn()
                 ->addColumn('name', function ($row) {
-                    $name = $row->first_name . ' ' . $row->last_name;
-                    return $name;
-                })
+                $name = $row->first_name . ' ' . $row->last_name;
+                return $name;
+            })
                 ->addColumn('option', function ($row) use ($role) {
-                    if ($role == 'admin') {
-                        $option = '
+                if ($role == 'admin') {
+                    $option = '
                             <a href="receptionist/' . $row->id . '">
                                 <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                     <i class="mdi mdi-eye"></i>
@@ -80,16 +82,17 @@ class ReceptionistController extends Controller
                                     <i class="mdi mdi-trash-can"></i>
                                 </button>
                             </a>';
-                    } elseif ($role == 'doctor') {
-                        $option = '
+                }
+                elseif ($role == 'doctor') {
+                    $option = '
                             <a href="receptionist-view/' . $row->id . '">
                                 <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                     <i class="mdi mdi-eye"></i>
                                 </button>
                             </a>';
-                    }
-                    return $option;
-                })->rawColumns(['option'])->make(true);
+                }
+                return $option;
+            })->rawColumns(['option'])->make(true);
         }
         // End
         return view('receptionist.receptionists', compact('user', 'role', 'receptionists'));
@@ -109,7 +112,8 @@ class ReceptionistController extends Controller
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with(['roles', 'doctor'])->where('is_deleted', 0)->get();
             return view('receptionist.receptionist-details', compact('user', 'role', 'receptionist', 'doctors'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -124,10 +128,10 @@ class ReceptionistController extends Controller
     {
         $user = Sentinel::getUser();
         if ($user->hasAccess('receptionist.create')) {
-            $doctor_id =  $request->doctor;
+            $doctor_id = $request->doctor;
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'doctor' => 'required',
@@ -156,16 +160,18 @@ class ReceptionistController extends Controller
                 $role->users()
                     ->attach($receptionist);
                 foreach ($doctor_id as $item) {
-                    $receptionistDoctor  = new ReceptionListDoctor();
+                    $receptionistDoctor = new ReceptionListDoctor();
                     $receptionistDoctor->doctor_id = $item;
                     $receptionistDoctor->reception_id = $receptionist->id;
                     $receptionistDoctor->save();
                 }
                 return redirect('receptionist')->with('success', 'Receptionist created successfully!');
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('receptionist')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -196,9 +202,9 @@ class ReceptionistController extends Controller
                 $revenue = DB::select('SELECT SUM(amount) AS total FROM invoice_details, invoices WHERE invoices.id = invoice_details.invoice_id AND created_by = ?', [$receptionist->id]);
                 $pending_bill = Invoice::where(['payment_status' => 'Unpaid'])
                     ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                        $re->whereIN('doctor_id', $receptionists_doctor_id);
-                        $re->orWhere('created_by', $user_id);
-                    })->count();
+                    $re->whereIN('doctor_id', $receptionists_doctor_id);
+                    $re->orWhere('created_by', $user_id);
+                })->count();
                 $data = [
                     'total_appointment' => $tot_appointment->count(),
                     'revenue' => $revenue[0]->total,
@@ -211,18 +217,20 @@ class ReceptionistController extends Controller
                 })->orderBy('id', 'DESC')->paginate($this->limit, '*', 'appointments');
                 $invoices = Invoice::with('user')
                     ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                        $re->whereIN('doctor_id', $receptionists_doctor_id);
-                        $re->orWhere('created_by', $user_id);
-                    })->paginate($this->limit, '*', 'invoice');
+                    $re->whereIN('doctor_id', $receptionists_doctor_id);
+                    $re->orWhere('created_by', $user_id);
+                })->paginate($this->limit, '*', 'invoice');
                 $doctor_role = Sentinel::findRoleBySlug('doctor');
                 $doctors = $doctor_role->users()->with(['roles', 'doctor'])->where('is_deleted', 0)->get();
                 $receptionist_doctor = ReceptionListDoctor::where('reception_id', $receptionist->id)->where('is_deleted', 0)->pluck('doctor_id');
                 $doctor_user = User::whereIn('id', $receptionist_doctor)->get();
                 return view('receptionist.receptionist-profile', compact('user', 'role', 'receptionist', 'data', 'appointments', 'invoices', 'doctor_user'));
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Receptionist not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -249,10 +257,12 @@ class ReceptionistController extends Controller
                 $receptionist_doctor = ReceptionListDoctor::where('reception_id', $receptionist->id)->where('is_deleted', 0)->pluck('doctor_id');
                 $doctor_user = User::whereIn('id', $receptionist_doctor)->pluck('id')->toArray();
                 return view('receptionist.receptionist-edit', compact('user', 'role', 'receptionist', 'doctors', 'doctor_user'));
-            } else {
+            }
+            else {
                 return view('error.403');
             }
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'Receptionist not found');
         }
     }
@@ -269,8 +279,8 @@ class ReceptionistController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('receptionist.update')) {
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'doctor' => 'required',
@@ -316,10 +326,12 @@ class ReceptionistController extends Controller
                             $receptionistDoctor->save();
                         }
                     }
-                } elseif ($differenceArray1) {
+                }
+                elseif ($differenceArray1) {
                     // only remove Doctor
                     $receptionistDoctor = ReceptionListDoctor::whereIn('doctor_id', $differenceArray1)->delete();
-                } elseif ($differenceArray2) {
+                }
+                elseif ($differenceArray2) {
                     // only add doctor
                     foreach ($differenceArray2 as $item) {
                         $receptionistDoctor = new ReceptionListDoctor();
@@ -331,13 +343,16 @@ class ReceptionistController extends Controller
                 $receptionist->save();
                 if ($role == 'receptionist') {
                     return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                } else {
+                }
+                else {
                     return redirect('receptionist')->with('success', 'Receptionist Profile updated successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('receptionist')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -362,21 +377,24 @@ class ReceptionistController extends Controller
                         'message' => 'Receptionist deleted successfully.',
                         'data' => $receptionist,
                     ], 200);
-                } else {
+                }
+                else {
                     return response()->json([
                         'isSuccess' => false,
                         'message' => 'Receptionist not found.',
                         'data' => [],
                     ], 409);
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return response()->json([
                     'isSuccess' => false,
                     'message' => 'Something went wrong!!!' . $e->getMessage(),
                     'data' => [],
                 ], 409);
             }
-        } else {
+        }
+        else {
             return response()->json([
                 'isSuccess' => false,
                 'message' => 'You have no permission to delete Receptionist',
@@ -401,9 +419,9 @@ class ReceptionistController extends Controller
             $revenue = DB::select('SELECT SUM(amount) AS total FROM invoice_details, invoices WHERE invoices.id = invoice_details.invoice_id AND created_by = ?', [$receptionist->id]);
             $pending_bill = Invoice::where(['payment_status' => 'Unpaid'])
                 ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                    $re->whereIN('doctor_id', $receptionists_doctor_id);
-                    $re->orWhere('created_by', $user_id);
-                })->count();
+                $re->whereIN('doctor_id', $receptionists_doctor_id);
+                $re->orWhere('created_by', $user_id);
+            })->count();
             $data = [
                 'total_appointment' => $tot_appointment->count(),
                 'revenue' => $revenue[0]->total,
@@ -416,15 +434,16 @@ class ReceptionistController extends Controller
             })->orderBy('id', 'DESC')->paginate($this->limit, '*', 'appointments');
             $invoices = Invoice::with('user')
                 ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                    $re->whereIN('doctor_id', $receptionists_doctor_id);
-                    $re->orWhere('created_by', $user_id);
-                })->paginate($this->limit, '*', 'invoice');
+                $re->whereIN('doctor_id', $receptionists_doctor_id);
+                $re->orWhere('created_by', $user_id);
+            })->paginate($this->limit, '*', 'invoice');
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with(['roles', 'doctor'])->where('is_deleted', 0)->get();
             $receptionist_doctor = ReceptionListDoctor::where('reception_id', $receptionist->id)->where('is_deleted', 0)->pluck('doctor_id');
             $doctor_user = User::whereIn('id', $receptionist_doctor)->get();
             return view('receptionist.receptionist-profile', compact('user', 'role', 'receptionist', 'data', 'appointments', 'invoices', 'doctor_user'));
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'receptionist not found');
         }
     }

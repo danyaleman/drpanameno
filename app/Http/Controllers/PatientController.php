@@ -125,8 +125,8 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.create')) {
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'phone_primary' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
@@ -403,8 +403,8 @@ class PatientController extends Controller
             $patient = Patient::findOrFail($id);
 
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'phone_primary' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',

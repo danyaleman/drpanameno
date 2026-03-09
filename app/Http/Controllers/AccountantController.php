@@ -20,7 +20,8 @@ class AccountantController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -44,12 +45,12 @@ class AccountantController extends Controller
             return DataTables::of($accountants)
                 ->addIndexColumn()
                 ->addColumn('name', function ($row) {
-                    $name = $row->first_name . ' ' . $row->last_name;
-                    return $name;
-                })
+                $name = $row->first_name . ' ' . $row->last_name;
+                return $name;
+            })
                 ->addColumn('option', function ($row) use ($role) {
-                    if ($role == 'admin') {
-                        $option = '
+                if ($role == 'admin') {
+                    $option = '
                             <a href="accountant/' . $row->id . '">
                                 <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                     <i class="mdi mdi-eye"></i>
@@ -65,16 +66,17 @@ class AccountantController extends Controller
                                     <i class="mdi mdi-trash-can"></i>
                                 </button>
                             </a>';
-                    } elseif ($role == 'doctor') {
-                        $option = '
+                }
+                elseif ($role == 'doctor') {
+                    $option = '
                             <a href="accountant/' . $row->id . '">
                                 <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                     <i class="mdi mdi-eye"></i>
                                 </button>
                             </a>';
-                    }
-                    return $option;
-                })->rawColumns(['option'])->make(true);
+                }
+                return $option;
+            })->rawColumns(['option'])->make(true);
         }
         // End
 
@@ -93,7 +95,8 @@ class AccountantController extends Controller
             $role = $user->roles[0]->slug;
             $accountant = null;
             return view('accountant.accountant-details', compact('user', 'role', 'accountant'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -109,8 +112,8 @@ class AccountantController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('accountant.create')) {
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
@@ -137,10 +140,12 @@ class AccountantController extends Controller
                 $role = Sentinel::findRoleBySlug('accountant');
                 $role->users()->attach($accountant);
                 return redirect('accountant')->with('success', 'Accountant created successfully!');
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('accountant')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -177,10 +182,12 @@ class AccountantController extends Controller
                     ->sum('invoice_details.amount');
 
                 return view('accountant.accountant-profile', compact('user', 'role', 'accountant', 'payment', 'invoices', 'unpaid_invoices', 'doctors'));
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Receptionist not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -202,10 +209,12 @@ class AccountantController extends Controller
             if ($user->hasAccess('accountant.update')) {
                 $role = $user->roles[0]->slug;
                 return view('accountant.accountant-edit', compact('user', 'role', 'accountant'));
-            } else {
+            }
+            else {
                 return view('error.403');
             }
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'Accountant not found');
         }
     }
@@ -222,8 +231,8 @@ class AccountantController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('accountant.update')) {
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
@@ -250,13 +259,16 @@ class AccountantController extends Controller
                 $accountant->save();
                 if ($role == 'accountant') {
                     return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                } else {
+                }
+                else {
                     return redirect('accountant')->with('success', 'Accountant Profile updated successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('accountant')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -281,21 +293,24 @@ class AccountantController extends Controller
                         'message' => 'Accountant deleted successfully.',
                         'data' => $accountant,
                     ], 200);
-                } else {
+                }
+                else {
                     return response()->json([
                         'isSuccess' => false,
                         'message' => 'Accountant not found.',
                         'data' => [],
                     ], 409);
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return response()->json([
                     'isSuccess' => false,
                     'message' => 'Something went wrong!!!' . $e->getMessage(),
                     'data' => [],
                 ], 409);
             }
-        } else {
+        }
+        else {
             return response()->json([
                 'isSuccess' => false,
                 'message' => 'You have no permission to delete Accountant',

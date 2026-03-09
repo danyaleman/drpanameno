@@ -38,7 +38,8 @@ class UserController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -64,7 +65,8 @@ class UserController extends Controller
     {
         if (Sentinel::check()) {
             return redirect('/dashboard');
-        } else {
+        }
+        else {
             return view('profile-details');
         }
     }
@@ -132,7 +134,8 @@ class UserController extends Controller
             $medical_info->diet = $request->diet;
             $medical_info->save();
             return redirect('/dashboard')->with('success', 'Register Successfully');
-        } catch (Exception $e) {
+        }
+        catch (Exception $e) {
             return redirect()->back()->with('error', 'Something went wrong!!! ' . $e->getMessage());
         }
     }
@@ -161,7 +164,8 @@ class UserController extends Controller
             $role = $user->roles[0]->slug;
             if ($role == 'admin') {
                 return view('admin.admin-edit', compact('user', 'role'));
-            } elseif ($role == 'doctor') {
+            }
+            elseif ($role == 'doctor') {
                 $doctor = Sentinel::getUser();
                 $departments = Departments::get();
                 $doctor_info = Doctor::where('user_id', '=', $doctor->id)->first();
@@ -169,10 +173,12 @@ class UserController extends Controller
                     $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                     $availableTime = DoctorAvailableTime::where('doctor_id', $doctor->id)->get();
                     return view('doctor.doctor-profile-edit', compact('user', 'role', 'doctor', 'doctor_info', 'availableDay', 'availableTime', 'departments'));
-                } else {
+                }
+                else {
                     return redirect('/dashboard')->with('error', 'Doctor details not found');
                 }
-            } elseif ($role == 'receptionist') {
+            }
+            elseif ($role == 'receptionist') {
                 $receptionist = Sentinel::getUser();
                 $role = $user->roles[0]->slug;
                 $doctor_role = Sentinel::findRoleBySlug('doctor');
@@ -180,15 +186,18 @@ class UserController extends Controller
                 $receptionist_doctor = ReceptionListDoctor::where('reception_id', $receptionist->id)->where('is_deleted', 0)->pluck('doctor_id');
                 $doctor_user = User::whereIn('id', $receptionist_doctor)->pluck('id')->toArray();
                 return view('receptionist.receptionist-profile-edit', compact('user', 'role', 'receptionist', 'doctors', 'doctor_user'));
-            } elseif ($role == 'accountant') {
+            }
+            elseif ($role == 'accountant') {
                 $accountant = Sentinel::getUser();
                 $role = $user->roles[0]->slug;
                 return view('accountant.accountant-profile-edit', compact('user', 'role', 'accountant'));
-            } elseif ($role == 'patient') {
+            }
+            elseif ($role == 'patient') {
                 // Los pacientes ya no son usuarios, esta ruta no debería ser accesible
                 return redirect('/dashboard')->with('error', 'Acceso denegado');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -207,8 +216,8 @@ class UserController extends Controller
             $role = $user->roles[0]->slug;
             if ($role == 'admin') {
                 $validatedData = $request->validate([
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
+                    'first_name' => 'required|string|max:50',
+                    'last_name' => 'required|string|max:50',
                     'mobile' => 'required|numeric|digits_between:8,20',
                     'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                     'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500',
@@ -234,15 +243,17 @@ class UserController extends Controller
                     $user->updated_by = $userId;
                     $user->save();
                     return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return redirect('/dashboard')->with('error', 'Something went wrong!!! ' . $e->getMessage());
                 }
-            } elseif ($role == 'doctor') {
+            }
+            elseif ($role == 'doctor') {
                 $doctor = Sentinel::getUser();
                 $user = Sentinel::getUser();
                 $validatedData = $request->validate([
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
+                    'first_name' => 'required|string|max:50',
+                    'last_name' => 'required|string|max:50',
                     'mobile' => 'required|numeric|digits_between:8,20',
                     'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                     'title' => 'required|regex:/^[a-zA-Z ]+$/',
@@ -281,12 +292,12 @@ class UserController extends Controller
                     $doctor->save();
                     Doctor::where('user_id', $doctor->id)
                         ->update([
-                            'title' => $validatedData['title'],
-                            'degree' => $validatedData['degree'],
-                            'department_id' => $validatedData['department'],
-                            'experience' => $validatedData['experience'],
-                            'fees' => $validatedData['fees'],
-                        ]);
+                        'title' => $validatedData['title'],
+                        'degree' => $validatedData['degree'],
+                        'department_id' => $validatedData['department'],
+                        'experience' => $validatedData['experience'],
+                        'fees' => $validatedData['fees'],
+                    ]);
                     $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                     $availableDay->doctor_id = $doctor->id;
                     if ($availableDay->mon = $request->mon !== Null) {
@@ -313,17 +324,20 @@ class UserController extends Controller
                     $availableDay->save();
                     if ($role == 'doctor') {
                         return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                    } else {
+                    }
+                    else {
                         return redirect('doctor')->with('success', 'Profile updated successfully!');
                     }
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return redirect('doctor')->with('error', 'Something went wrong!!! ' . $e->getMessage());
                 }
-            } elseif ($role == 'receptionist') {
+            }
+            elseif ($role == 'receptionist') {
                 $receptionist = Sentinel::getUser();
                 $validatedData = $request->validate([
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
+                    'first_name' => 'required|string|max:50',
+                    'last_name' => 'required|string|max:50',
                     'mobile' => 'required|numeric|digits_between:8,20',
                     'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                     'doctor' => 'required',
@@ -370,10 +384,12 @@ class UserController extends Controller
                                 $receptionistDoctor->save();
                             }
                         }
-                    } elseif ($differenceArray1) {
+                    }
+                    elseif ($differenceArray1) {
                         // only remove doctor
                         $receptionistDoctor = ReceptionListDoctor::whereIn('doctor_id', $differenceArray1)->delete();
-                    } elseif ($differenceArray2) {
+                    }
+                    elseif ($differenceArray2) {
                         // only add doctor
                         foreach ($differenceArray2 as $item) {
                             $receptionistDoctor = new ReceptionListDoctor();
@@ -385,17 +401,20 @@ class UserController extends Controller
                     $receptionist->save();
                     if ($role == 'receptionist') {
                         return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                    } else {
+                    }
+                    else {
                         return redirect('receptionist')->with('success', 'Profile updated successfully!');
                     }
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return redirect('receptionist')->with('error', 'Something went wrong!!! ' . $e->getMessage());
                 }
-            } elseif ($role == 'accountant') {
+            }
+            elseif ($role == 'accountant') {
                 $accountant = Sentinel::getUser();
                 $data = $request->validate([
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
+                    'first_name' => 'required|string|max:50',
+                    'last_name' => 'required|string|max:50',
                     'mobile' => 'required|numeric|digits_between:8,20',
                     'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                     'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
@@ -423,17 +442,20 @@ class UserController extends Controller
 
                     if ($role == 'accountant') {
                         return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                    } else {
+                    }
+                    else {
                         return redirect('accountant')->with('success', 'Profile updated successfully!');
                     }
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return redirect('accountant')->with('error', 'Something went wrong!!! ' . $e->getMessage());
                 }
-            } elseif ($role == 'patient') {
+            }
+            elseif ($role == 'patient') {
                 $patient = Sentinel::getUser();
                 $validatedData = $request->validate([
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
+                    'first_name' => 'required|string|max:50',
+                    'last_name' => 'required|string|max:50',
                     'mobile' => 'required|numeric|digits_between:8,20',
                     'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                     'age' => 'required|numeric',
@@ -473,14 +495,17 @@ class UserController extends Controller
                     // Los pacientes se crean directamente a través de PatientController
                     if ($role == 'patient') {
                         return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                    } else {
+                    }
+                    else {
                         return redirect('patient')->with('success', 'Profile updated successfully!');
                     }
-                } catch (Exception $e) {
+                }
+                catch (Exception $e) {
                     return redirect('patient')->with('error', 'Something went wrong!!! ' . $e->getMessage());
                 }
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -498,12 +523,13 @@ class UserController extends Controller
     {
         $user = Sentinel::getUser();
         $role = $user->roles[0]->slug;
-        
+
         if ($role == 'patient') {
             // Los pacientes ya no son usuarios, están separados
             // Redirigir a la vista de perfil del paciente
             return redirect('/patient-profile');
-        } elseif ($role == 'doctor') {
+        }
+        elseif ($role == 'doctor') {
             $doctor = Sentinel::getUser();
             $doctor_id = $doctor->id;
             $role = $user->roles[0]->slug;
@@ -536,10 +562,12 @@ class UserController extends Controller
                 $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                 $availableTime = DoctorAvailableTime::where('doctor_id', $doctor->id)->where('is_deleted', 0)->get();
                 return view('doctor.doctor-profile-view', compact('user', 'role', 'doctor', 'doctor_info', 'data', 'appointments', 'availableTime', 'prescriptions', 'invoices', 'availableDay'));
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Doctors details not found');
             }
-        } elseif ($role == 'receptionist') {
+        }
+        elseif ($role == 'receptionist') {
             $receptionist = Sentinel::getUser();
             $user_id = $receptionist->id;
             $role = $user->roles[0]->slug;
@@ -560,9 +588,9 @@ class UserController extends Controller
 
             $pending_bill = Invoice::where(['payment_status' => 'Unpaid'])
                 ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                    $re->whereIN('doctor_id', $receptionists_doctor_id);
-                    $re->orWhere('created_by', $user_id);
-                })->count();
+                $re->whereIN('doctor_id', $receptionists_doctor_id);
+                $re->orWhere('created_by', $user_id);
+            })->count();
             $data = [
                 'total_appointment' => $tot_appointment->count(),
                 'revenue' => $revenue,
@@ -575,15 +603,16 @@ class UserController extends Controller
             })->orderBy('id', 'DESC')->paginate($this->limit, '*', 'appointments');
             $invoices = Invoice::with('user')
                 ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
-                    $re->whereIN('doctor_id', $receptionists_doctor_id);
-                    $re->orWhere('created_by', $user_id);
-                })->paginate($this->limit, '*', 'invoice');
+                $re->whereIN('doctor_id', $receptionists_doctor_id);
+                $re->orWhere('created_by', $user_id);
+            })->paginate($this->limit, '*', 'invoice');
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with(['roles', 'doctor'])->where('is_deleted', 0)->get();
             $receptionist_doctor = ReceptionListDoctor::where('reception_id', $receptionist->id)->where('is_deleted', 0)->pluck('doctor_id');
             $doctor_user = User::whereIn('id', $receptionist_doctor)->get();
             return view('receptionist.receptionist-profile-view', compact('user', 'role', 'receptionist', 'data', 'appointments', 'invoices', 'doctor_user'));
-        } elseif ($role == 'accountant') {
+        }
+        elseif ($role == 'accountant') {
             $receptionist = Sentinel::getUser();
             $role = $user->roles[0]->slug;
 
@@ -603,7 +632,8 @@ class UserController extends Controller
                 ->sum('invoice_details.amount');
 
             return view('accountant.accountant-profile-view', compact('user', 'role', 'accountant', 'doctors', 'payment', 'invoices', 'payment_due'));
-        } else {
+        }
+        else {
             return redirect('/dashboard')->with('error', 'role not found');
         }
     }

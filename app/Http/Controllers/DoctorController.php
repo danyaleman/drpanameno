@@ -26,7 +26,7 @@ class DoctorController extends Controller
 {
     protected $doctor_details;
     public $limit;
-    
+
     /**
      * Create a new controller instance.
      *
@@ -39,7 +39,8 @@ class DoctorController extends Controller
         $this->middleware(function ($request, $next) {
             if (session()->has('page_limit')) {
                 $this->limit = session()->get('page_limit');
-            } else {
+            }
+            else {
                 $this->limit = Config::get('app.page_limit');
             }
             return $next($request);
@@ -64,12 +65,12 @@ class DoctorController extends Controller
                 $prescriptions_doctor = ReceptionListDoctor::where('reception_id', $user_id)->pluck('doctor_id');
                 //$doctors = User::whereIN('id', $prescriptions_doctor)->where('is_deleted', 0)->get();
                 $doctors = $doctor_role->users()->with(['roles', 'doctor', 'doctor.department'])->whereIN('id', $prescriptions_doctor)->where('is_deleted', 0)->get();
-            } else {
+            }
+            else {
                 $doctors = $doctor_role->users()->with(['roles', 'doctor', 'doctor.department'])->where('is_deleted', 0)->orderByDesc('id')->get();
             }
-            
-            foreach ($doctors as $key => $value)
-            {
+
+            foreach ($doctors as $key => $value) {
                 $doctor_id = Doctor::where('user_id', $value->id)->pluck('id');
                 $pending_appointment = Appointment::where('appointment_with', $doctor_id)->where('status', 0)->count();
                 $doctors[$key]['pending_appointment'] = $pending_appointment;
@@ -77,90 +78,98 @@ class DoctorController extends Controller
                 $completed_appointment = Appointment::where('appointment_with', $doctor_id)->where('status', 1)->count();
                 $doctors[$key]['completed_appointment'] = $completed_appointment;
             }
-            
+
             // Load Datatables
             if ($request->ajax()) {
                 return Datatables::of($doctors)
                     ->addIndexColumn()
-                    ->addColumn('name', function($row){
-                        $name = $row->first_name.' '.$row->last_name;
-                        return $name;
-                    })
-                    ->addColumn('pending_appointment', function($row) use ($role){
-                        if ($role != 'patient') {
-                            if ($row->pending_appointment != 0) {
-                               $pending_appointment = $row->pending_appointment;
-                            } else {
-                                $pending_appointment = $row->pending_appointment;
-                            }
-                            
-                        } else {
-                           $pending_appointment = ''; 
+                    ->addColumn('name', function ($row) {
+                    $name = $row->first_name . ' ' . $row->last_name;
+                    return $name;
+                })
+                    ->addColumn('pending_appointment', function ($row) use ($role) {
+                    if ($role != 'patient') {
+                        if ($row->pending_appointment != 0) {
+                            $pending_appointment = $row->pending_appointment;
                         }
-                        return $pending_appointment;
-                    })
-                    ->addColumn('completed_appointment', function($row) use ($role){
-                        if ($role != 'patient') {
-                            if ($row->completed_appointment != 0) {
-                               $completed_appointment = $row->completed_appointment;
-                            } else {
-                                $completed_appointment = $row->completed_appointment;
-                            }
-                            
-                        } else {
-                           $completed_appointment = ''; 
+                        else {
+                            $pending_appointment = $row->pending_appointment;
                         }
-                        return $completed_appointment;
-                    })
-                    ->addColumn('option', function($row) use ($role){
-                        if ($role != 'patient') {
-                            if ($role == 'admin') {
-                                $option = '
-                                    <a href="doctor/'.$row->id.'">
+
+                    }
+                    else {
+                        $pending_appointment = '';
+                    }
+                    return $pending_appointment;
+                })
+                    ->addColumn('completed_appointment', function ($row) use ($role) {
+                    if ($role != 'patient') {
+                        if ($row->completed_appointment != 0) {
+                            $completed_appointment = $row->completed_appointment;
+                        }
+                        else {
+                            $completed_appointment = $row->completed_appointment;
+                        }
+
+                    }
+                    else {
+                        $completed_appointment = '';
+                    }
+                    return $completed_appointment;
+                })
+                    ->addColumn('option', function ($row) use ($role) {
+                    if ($role != 'patient') {
+                        if ($role == 'admin') {
+                            $option = '
+                                    <a href="doctor/' . $row->id . '">
                                         <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                             <i class="mdi mdi-eye"></i>
                                         </button>
                                     </a>
                                 ';
-                            } elseif ($role == 'receptionist') {
-                                $option = '
-                                    <a href="doctor-view/'.$row->id.'">
+                        }
+                        elseif ($role == 'receptionist') {
+                            $option = '
+                                    <a href="doctor-view/' . $row->id . '">
                                         <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="View Profile">
                                             <i class="mdi mdi-eye"></i>
                                         </button>
                                     </a>
                                 ';
-                            } else if($role == 'accountant') {
-                                $option = '
+                        }
+                        else if ($role == 'accountant') {
+                            $option = '
                                     <a href="javascript:void(0)" class="text-muted">
                                         Not Allowed
                                     </a>
                                 ';
-                            }
+                        }
 
-                            if ($role != 'receptionist' && $role != 'accountant') {
-                                $option = '
-                                    <a href="doctor/'.$row->id.'/edit">
+                        if ($role != 'receptionist' && $role != 'accountant') {
+                            $option = '
+                                    <a href="doctor/' . $row->id . '/edit">
                                         <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Update Profile">
                                             <i class="mdi mdi-lead-pencil"></i>
                                         </button>
                                     </a>
                                     <a href=" javascript:void(0) ">
-                                        <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Deactivate Profile" data-id="'.$row->id.'" id="delete-doctor">
+                                        <button type="button" class="btn btn-primary btn-sm btn-rounded waves-effect waves-light mb-2 mb-md-0" title="Deactivate Profile" data-id="' . $row->id . '" id="delete-doctor">
                                             <i class="mdi mdi-trash-can"></i>
                                         </button>
                                     </a>
                                 ';
-                            }
-                        } else {
-                           $option = ''; 
                         }
-                        return $option;
-                    })->rawColumns(['option'])->make(true);
+                    }
+                    else {
+                        $option = '';
+                    }
+                    return $option;
+                })->rawColumns(['option'])->make(true);
             }
             // End
             return view('doctor.doctors', compact('user', 'role', 'doctors'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -179,7 +188,8 @@ class DoctorController extends Controller
             $doctor_info = null;
             $departments = Departments::get();
             return view('doctor.doctor-details', compact('user', 'role', 'doctor', 'doctor_info', 'departments'));
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -196,28 +206,28 @@ class DoctorController extends Controller
         if ($user->hasAccess('doctor.create')) {
             $slot_time = $request->slot_time;
             $validatedData = $request->validate(
-                [
-                    'first_name' => 'required|alpha',
-                    'last_name' => 'required|alpha',
-                    'mobile' => 'required|numeric|digits_between:8,20',
-                    'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
-                    'title' => 'required|regex:/^[a-zA-Z ]+$/',
-                    'department' => "required|numeric",
-                    'fees' => 'required|numeric',
-                    'degree' => 'required',
-                    'experience' => 'required|numeric',
-                    'slot_time' => 'required',
-                    'mon' => 'required_without_all:tue,wen,thu,fri,sat,sun',
-                    'tue' => 'required_without_all:mon,wen,thu,fri,sat,sun',
-                    'wen' => 'required_without_all:mon,tue,thu,fri,sat,sun',
-                    'thu' => 'required_without_all:mon,wen,tue,fri,sat,sun',
-                    'fri' => 'required_without_all:wen,tue,mon,thu,sat,sun',
-                    'sat' => 'required_without_all:wen,tue,mon,thu,fri,sun',
-                    'sun' => 'required_without_all:wen,tue,mon,thu,fri,sat',
-                    'TimeSlot.*.from' => 'required',
-                    'TimeSlot.*.to' => 'required',
-                    'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
-                ],
+            [
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
+                'mobile' => 'required|numeric|digits_between:8,20',
+                'email' => 'required|email|unique:users|regex:/(.+)@(.+)\.(.+)/i|max:50',
+                'title' => 'required|regex:/^[a-zA-Z ]+$/',
+                'department' => "required|numeric",
+                'fees' => 'required|numeric',
+                'degree' => 'required',
+                'experience' => 'required|numeric',
+                'slot_time' => 'required',
+                'mon' => 'required_without_all:tue,wen,thu,fri,sat,sun',
+                'tue' => 'required_without_all:mon,wen,thu,fri,sat,sun',
+                'wen' => 'required_without_all:mon,tue,thu,fri,sat,sun',
+                'thu' => 'required_without_all:mon,wen,tue,fri,sat,sun',
+                'fri' => 'required_without_all:wen,tue,mon,thu,sat,sun',
+                'sat' => 'required_without_all:wen,tue,mon,thu,fri,sun',
+                'sun' => 'required_without_all:wen,tue,mon,thu,fri,sat',
+                'TimeSlot.*.from' => 'required',
+                'TimeSlot.*.to' => 'required',
+                'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
+            ],
             );
 
             if ($request->profile_photo != null) {
@@ -227,14 +237,15 @@ class DoctorController extends Controller
                 $file = $request->file('profile_photo');
                 $extention = $file->getClientOriginalExtension();
                 $validatedData['profile_photo'] = time() . '.' . $extention;
-                $file->move(public_path('storage/images/users'), $ $validatedData['profile_photo']);
-                $validatedData['profile_photo']= $ $validatedData['profile_photo'];
+                $file->move(public_path('storage/images/users'), $$validatedData['profile_photo']);
+                $validatedData['profile_photo'] = $$validatedData['profile_photo'];
             }
             try {
                 $user = Sentinel::getUser();
                 if ($request->TimeSlot[0]['from'] == null && $request->TimeSlot[0]['to'] == null) {
                     return redirect()->back()->with('error', 'Add available time');
-                } else {
+                }
+                else {
                     $validatedData['password'] = Config::get('app.DEFAULT_PASSWORD');
                     $validatedData['created_by'] = $user->id;
                     $validatedData['updated_by'] = $user->id;
@@ -256,12 +267,12 @@ class DoctorController extends Controller
                     $availableDay = new DoctorAvailableDay();
                     $availableDay->doctor_id = $doctor->id;
                     $availableDay->mon = $request->has('mon') ? 1 : 0;
-                        $availableDay->tue = $request->has('tue') ? 1 : 0;
-                        $availableDay->wen = $request->has('wen') ? 1 : 0;
-                        $availableDay->thu = $request->has('thu') ? 1 : 0;
-                        $availableDay->fri = $request->has('fri') ? 1 : 0;
-                        $availableDay->sat = $request->has('sat') ? 1 : 0;
-                        $availableDay->sun = $request->has('sun') ? 1 : 0;
+                    $availableDay->tue = $request->has('tue') ? 1 : 0;
+                    $availableDay->wen = $request->has('wen') ? 1 : 0;
+                    $availableDay->thu = $request->has('thu') ? 1 : 0;
+                    $availableDay->fri = $request->has('fri') ? 1 : 0;
+                    $availableDay->sat = $request->has('sat') ? 1 : 0;
+                    $availableDay->sun = $request->has('sun') ? 1 : 0;
                     $availableDay->save();
                     foreach ($request->TimeSlot as $key => $item) {
                         $availableTime = new DoctorAvailableTime();
@@ -292,7 +303,7 @@ class DoctorController extends Controller
                             }
                         }
                     }
-                    $app_name =  AppSetting('title');
+                    $app_name = AppSetting('title');
                     $verify_mail = trim($request->email);
                     Mail::send('emails.WelcomeEmail', ['user' => $doctor, 'email' => $verify_mail], function ($message) use ($verify_mail, $app_name) {
                         $message->to($verify_mail);
@@ -300,10 +311,12 @@ class DoctorController extends Controller
                     });
                     return redirect('doctor')->with('success', 'Doctor created successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('doctor')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -345,13 +358,16 @@ class DoctorController extends Controller
                     $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                     $availableTime = DoctorAvailableTime::where('doctor_id', $doctor->id)->where('is_deleted', 0)->get();
                     return view('doctor.doctor-profile', compact('user', 'role', 'doctor', 'doctor_info', 'data', 'appointments', 'availableTime', 'prescriptions', 'invoices', 'availableDay'));
-                } else {
+                }
+                else {
                     return redirect('/dashboard')->with('error', 'Doctors details not found');
                 }
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Doctors details not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -365,10 +381,10 @@ class DoctorController extends Controller
     {
         $user = Sentinel::getUser();
         $doctor_id = $doctor->id;
-        $doctor = $user::whereHas('roles',function($rq){
-            $rq->where('slug','doctor');
+        $doctor = $user::whereHas('roles', function ($rq) {
+            $rq->where('slug', 'doctor');
         })->where('id', $doctor_id)->where('is_deleted', 0)->first();
-        if($doctor){
+        if ($doctor) {
             if ($user->hasAccess('doctor.update')) {
                 $role = $user->roles[0]->slug;
                 $doctor_info = Doctor::where('user_id', '=', $doctor->id)->first();
@@ -377,13 +393,16 @@ class DoctorController extends Controller
                     $availableTime = DoctorAvailableTime::where('doctor_id', $doctor->id)->get();
                     $departments = Departments::get();
                     return view('doctor.doctor-edit', compact('user', 'role', 'doctor', 'doctor_info', 'availableDay', 'availableTime', 'departments'));
-                } else {
+                }
+                else {
                     return redirect('/dashboard')->with('error', 'Doctor details not found');
                 }
-            } else {
+            }
+            else {
                 return view('error.403');
             }
-        }else{
+        }
+        else {
             return redirect('/dashboard')->with('error', 'Doctors details not found');
         }
     }
@@ -399,8 +418,8 @@ class DoctorController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('doctor.update')) {
             $validatedData = $request->validate([
-                'first_name' => 'required|alpha',
-                'last_name' => 'required|alpha',
+                'first_name' => 'required|string|max:50',
+                'last_name' => 'required|string|max:50',
                 'mobile' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'title' => 'required|regex:/^[a-zA-Z ]+$/',
@@ -415,7 +434,7 @@ class DoctorController extends Controller
                 'fri' => 'required_without_all:wen,tue,mon,thu,sat,sun',
                 'sat' => 'required_without_all:wen,tue,mon,thu,fri,sun',
                 'sun' => 'required_without_all:wen,tue,mon,thu,fri,sat',
-                'profile_photo' =>'image|mimes:jpg,png,jpeg,gif,svg|max:500'
+                'profile_photo' => 'image|mimes:jpg,png,jpeg,gif,svg|max:500'
             ]);
             try {
                 $user = Sentinel::getUser();
@@ -431,7 +450,7 @@ class DoctorController extends Controller
                     $file->move(public_path('storage/images/users'), $imageName);
                     $doctor->profile_photo = $imageName;
 
-                    
+
                 }
                 $doctor->first_name = $validatedData['first_name'];
                 $doctor->last_name = $validatedData['last_name'];
@@ -441,32 +460,35 @@ class DoctorController extends Controller
                 $doctor->save();
                 Doctor::where('user_id', $doctor->id)
                     ->update([
-                        'title' => $validatedData['title'],
-                        'department_id' => $validatedData['department'],
-                        'degree' => $validatedData['degree'],
-                        'experience' => $validatedData['experience'],
-                        'fees' => $validatedData['fees'],
-                    ]);
+                    'title' => $validatedData['title'],
+                    'department_id' => $validatedData['department'],
+                    'degree' => $validatedData['degree'],
+                    'experience' => $validatedData['experience'],
+                    'fees' => $validatedData['fees'],
+                ]);
                 $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                 $availableDay->doctor_id = $doctor->id;
                 $availableDay->mon = $request->has('mon') ? 1 : 0;
-                    $availableDay->tue = $request->has('tue') ? 1 : 0;
-                    $availableDay->wen = $request->has('wen') ? 1 : 0;
-                    $availableDay->thu = $request->has('thu') ? 1 : 0;
-                    $availableDay->fri = $request->has('fri') ? 1 : 0;
-                    $availableDay->sat = $request->has('sat') ? 1 : 0;
-                    $availableDay->sun = $request->has('sun') ? 1 : 0;
+                $availableDay->tue = $request->has('tue') ? 1 : 0;
+                $availableDay->wen = $request->has('wen') ? 1 : 0;
+                $availableDay->thu = $request->has('thu') ? 1 : 0;
+                $availableDay->fri = $request->has('fri') ? 1 : 0;
+                $availableDay->sat = $request->has('sat') ? 1 : 0;
+                $availableDay->sun = $request->has('sun') ? 1 : 0;
 
                 $availableDay->save();
                 if ($role == 'doctor') {
                     return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-                } else {
+                }
+                else {
                     return redirect('doctor')->with('success', 'Doctor Profile updated successfully!');
                 }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 return redirect('doctor')->with('error', 'Something went wrong!!! ' . $e->getMessage());
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -481,8 +503,8 @@ class DoctorController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('doctor.delete')) {
             try {
-                $doctor = User::where('id',$request->id)->first();
-                if ($doctor !=null) {
+                $doctor = User::where('id', $request->id)->first();
+                if ($doctor != null) {
                     $doctor->is_deleted = 1;
                     $doctor->save();
                     return response()->json([
@@ -490,26 +512,29 @@ class DoctorController extends Controller
                         'message' => 'Doctor deleted successfully.',
                         'data' => $doctor,
                     ], 200);
-                } else {
+                }
+                else {
                     return response()->json([
                         'success' => false,
                         'message' => 'Doctor not found.',
                         'data' => [],
                     ], 409);
                 }
-            } catch (Exception $e) {
-                return response()->json([
-                    'success' =>false,
-                    'message' => 'Something went wrong!!!'.$e->getMessage(),
-                    'data' =>[],
-                ],409);
             }
-        } else {
+            catch (Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong!!!' . $e->getMessage(),
+                    'data' => [],
+                ], 409);
+            }
+        }
+        else {
             return response()->json([
-                'success' =>false,
-                'message'=>'You have no permission to delete doctor',
-                'data'=>[],
-            ],409);
+                'success' => false,
+                'message' => 'You have no permission to delete doctor',
+                'data' => [],
+            ], 409);
         }
     }
 
@@ -524,10 +549,12 @@ class DoctorController extends Controller
                 $availableDay = DoctorAvailableDay::where('doctor_id', $id)->first();
                 $availableTime = DoctorAvailableTime::where('doctor_id', $id)->get();
                 return view('doctor.doctor_time_edit', compact('user', 'role', 'doctor', 'doctor_info', 'availableDay', 'availableTime'));
-            } else {
+            }
+            else {
                 return redirect('/dashboard')->with('error', 'Doctor details not found');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -581,10 +608,12 @@ class DoctorController extends Controller
             }
             if ($role == 'doctor') {
                 return redirect('/dashboard')->with('success', 'Profile updated successfully!');
-            } else {
+            }
+            else {
                 return redirect('doctor')->with('success', 'Doctor Profile updated successfully!');
             }
-        } else {
+        }
+        else {
             return view('error.403');
         }
     }
@@ -603,14 +632,14 @@ class DoctorController extends Controller
             'Message' => "Doctor availableTime not found",
         ]);
     }
-    public function doctor_view($id){
-        {
+    public function doctor_view($id)
+    { {
             $user = Sentinel::getUser();
             if ($user->hasAccess('doctor.view')) {
                 $doctor_id = $id;
                 $role = $user->roles[0]->slug;
-                $receptionist_doctor = ReceptionListDoctor::where('reception_id',$user->id)->pluck('doctor_id');
-                $doctor = $user::where('id', $doctor_id)->whereIn('id',$receptionist_doctor)->where('is_deleted', 0)->first();
+                $receptionist_doctor = ReceptionListDoctor::where('reception_id', $user->id)->pluck('doctor_id');
+                $doctor = $user::where('id', $doctor_id)->whereIn('id', $receptionist_doctor)->where('is_deleted', 0)->first();
                 if ($doctor) {
                     $doctor_info = Doctor::where('user_id', '=', $doctor->id)->orWhere('is_deleted', 0)->first();
                     if ($doctor_info) {
@@ -637,36 +666,39 @@ class DoctorController extends Controller
                         $availableDay = DoctorAvailableDay::where('doctor_id', $doctor->id)->first();
                         $availableTime = DoctorAvailableTime::where('doctor_id', $doctor->id)->where('is_deleted', 0)->get();
                         return view('doctor.doctor-profile', compact('user', 'role', 'doctor', 'doctor_info', 'data', 'appointments', 'availableTime', 'prescriptions', 'invoices', 'availableDay'));
-                    } else {
+                    }
+                    else {
                         return redirect('/dashboard')->with('error', 'Doctors details not found');
                     }
-                } else {
+                }
+                else {
                     return redirect('/dashboard')->with('error', 'Doctors details not found');
                 }
-            } else {
+            }
+            else {
                 return view('error.403');
             }
         }
     }
 
     public function availableDays($doctor_id)
-        {
-            $availableDay = DoctorAvailableDay::where('doctor_id', $doctor_id)->first();
+    {
+        $availableDay = DoctorAvailableDay::where('doctor_id', $doctor_id)->first();
 
-            if (!$availableDay) {
-                return response()->json([]);
-            }
-
-            return response()->json([
-                0 => (int) $availableDay->sun,
-                1 => (int) $availableDay->mon,
-                2 => (int) $availableDay->tue,
-                3 => (int) $availableDay->wen,
-                4 => (int) $availableDay->thu,
-                5 => (int) $availableDay->fri,
-                6 => (int) $availableDay->sat,
-            ]);
+        if (!$availableDay) {
+            return response()->json([]);
         }
+
+        return response()->json([
+            0 => (int)$availableDay->sun,
+            1 => (int)$availableDay->mon,
+            2 => (int)$availableDay->tue,
+            3 => (int)$availableDay->wen,
+            4 => (int)$availableDay->thu,
+            5 => (int)$availableDay->fri,
+            6 => (int)$availableDay->sat,
+        ]);
+    }
 
 
 }

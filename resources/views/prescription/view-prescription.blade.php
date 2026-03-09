@@ -2,10 +2,12 @@
 @section('title') {{ __('Prescription Details') }} @endsection
     @section('content')
     @php
-    function rango($valor, $min, $max) {
-        if ($valor === null) return '';
-        if ($valor < $min || $valor > $max) return 'text-danger fw-bold';
-        return 'text-success';
+    if (!function_exists('rango')) {
+        function rango($valor, $min, $max) {
+            if ($valor === null) return '';
+            if ($valor < $min || $valor > $max) return 'text-danger fw-bold';
+            return 'text-success';
+        }
     }
     @endphp
         <!-- start page title -->

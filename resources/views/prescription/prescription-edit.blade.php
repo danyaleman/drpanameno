@@ -1,51 +1,14 @@
 @extends('layouts.master-layouts')
 
 @section('title', 'Editar Consulta')
-
 @section('css')
 <link rel="stylesheet" href="{{ URL::asset('build/libs/select2/css/select2.min.css') }}">
 @endsection
 
 @section('content')
 
-{{-- CARD DE SELECCIÓN DE PACIENTE Y CITA --}}
-<div class="card mb-3" id="selection-card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bx bx-user-plus"></i> Seleccionar Paciente y Cita</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="fw-bold">Paciente <span class="text-danger">*</span></label>
-                <select class="form-control select2 sel_patient" name="patient_id" required>
-                    <option value="" selected disabled>Seleccionar paciente...</option>
-                    @foreach($patients as $patient)
-                        <option value="{{ $patient->id }}" 
-                            {{ (isset($preloadPatientId) && $preloadPatientId == $patient->id) ? 'selected' : '' }}>
-                            {{ $patient->first_name }} {{ $patient->last_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="fw-bold">Cita <span class="text-danger">*</span></label>
-                <select class="form-control select2 sel_appointment" name="appointment_id" required>
-                    @if(isset($preloadAppointmentId) && $preloadAppointment)
-                        <option value="{{ $preloadAppointmentId }}" selected>
-                            Cita del {{ $preloadAppointment->appointment_date }}
-                        </option>
-                    @else
-                        <option value="" selected disabled>Primero seleccione un paciente...</option>
-                    @endif
-                </select>
-            </div>
-        </div>
-    </div>
-</div>
-
 {{-- ENCABEZADO DINÁMICO DEL PACIENTE --}}
-<div class="card mb-3 shadow-lg" id="patient-header-card" style="{{ isset($preloadPatientId) ? '' : 'display: none;' }}; background: linear-gradient(135deg, #556ee6 0%, #34469d 100%); color: white; border-radius: 10px;">
+<div class="card mb-3 shadow-lg" id="patient-header-card" style="background: linear-gradient(135deg, #556ee6 0%, #34469d 100%); color: white; border-radius: 10px;">
     <div class="card-body">
         <div class="d-flex align-items-center">
             <div class="avatar-lg me-3">
@@ -68,7 +31,7 @@
     </div>
 </div>
 
-<form action="{{ url('prescription/' . $prescription->id) }}" method="POST" enctype="multipart/form-data" id="prescription-form" style="{{ isset($preloadPatientId) ? '' : 'display: none;' }}">
+<form action="{{ url('prescription/' . $prescription->id) }}" method="POST" enctype="multipart/form-data" id="prescription-form" style="">
 @csrf
 <input type="hidden" name="_method" value="PATCH" />
 <input type="hidden" name="id" value="{{ $prescription->id }}" id="form_id" />
@@ -424,16 +387,11 @@ $(document).ready(function () {
                 console.log('RESPUESTA BACKEND:', res);
 
                 if (res.isSuccess) {
-                    // Citas: Actualizar si es selección manual O si no hay cita precargada
-                    if (isManualSelection || !preloadAppointmentId) {
-                        $('.sel_appointment').html(res.options);
-                        $('.sel_appointment').val('').trigger('change'); // Resetear selección
-                    }
-
+                    // Citas: (Removidos en edición)
                     // Si hay una cita precargada y NO es selección manual, seleccionarla
-                    if (!isManualSelection && preloadAppointmentId) {
-                         $('.sel_appointment').val(preloadAppointmentId).trigger('change');
-                    }
+                    // if (!isManualSelection && preloadAppointmentId) {
+                    //      $('.sel_appointment').val(preloadAppointmentId).trigger('change');
+                    // }
 
                     // Encabezado
                     $('#patient_name').text(res.patient.name);
@@ -577,19 +535,11 @@ $(document).ready(function () {
         // Limpiar campos visualmente
         $('#patient_name').text('Cargando...');
         $('#patient_info').text('Obteniendo datos...');
-        $('.sel_appointment').empty().append('<option value="" selected disabled>Cargando citas...</option>');
 
         // Pequeño delay para asegurar que el DOM y variables internas de Select2 se asienten
         setTimeout(function() {
             loadPatientInfo(patientId, true);
         }, 50);
-    });
-
-    // Evento al cambiar la cita seleccionada
-    $('.sel_appointment').on('change', function() {
-        let appointmentId = $(this).val();
-        $('#appointment_id_hidden').val(appointmentId);
-        console.log('Cita seleccionada ID:', appointmentId);
     });
 
     /* =========================================================

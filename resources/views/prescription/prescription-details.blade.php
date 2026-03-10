@@ -409,11 +409,11 @@ $(document).ready(function () {
                     
                     if (res.patient.profile_photo_url) {
                         $('#patient_img').attr('src', res.patient.profile_photo_url).show();
-                        $('#patient_initials').hide();
+                        $('#patient_initials').removeClass('d-flex').hide();
                     } else {
                         $('#patient_img').hide();
                         var initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-                        $('#patient_initials').text(initials).show();
+                        $('#patient_initials').text(initials).addClass('d-flex').show();
                     }
 
                     // Llenar Tab Información General

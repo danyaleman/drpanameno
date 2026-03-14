@@ -257,12 +257,13 @@ class PrescriptionController extends Controller
         if ($user->hasAccess('prescription.show')) {
             $role = $user->roles[0]->slug;
             $vacunas = Vacuna::where('prescription_id', $prescription->id)->get();
-            $user_details = Prescription::with('patient', 'appointment', 'appointment.doctor.user')->where('id', $prescription->id)->where('is_deleted', 0)->first();
+            $user_details = Prescription::with('patient', 'appointment', 'appointment.doctor.user', 'evaluacion', 'archivos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
             if ($user_details) {
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $signos = Signos::where('patient_id', $prescription->patient_id)->first();
-                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas'));
+                $evaluacion = $user_details->evaluacion;
+                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas', 'evaluacion'));
             }
             else {
                 return redirect('/dashboard')->with('error', 'prescription not found');

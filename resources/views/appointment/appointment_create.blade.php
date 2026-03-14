@@ -893,38 +893,37 @@
                     loadDayAppointments(dateStr, displayDate);
                 },
                 events: function(start, end, timezone, callback) {
-                    // Load events for the visible range
-                    var events = [];
-                    var current = start.clone();
-                    var requests = [];
-
-                    // Only load for the current month to avoid too many requests
-                    while (current.isBefore(end)) {
-                        (function(d) {
-                            requests.push(
-                                $.ajax({
-                                    type: 'GET',
-                                    url: aplist_url,
-                                    data: { date: d.format('YYYY/MM/DD') },
-                                    success: function(response) {
-                                        if (response.appointments && response.appointments.length > 0) {
-                                            events.push({
-                                                title: response.appointments.length + ' cita(s)',
-                                                start: d.format('YYYY-MM-DD'),
-                                                allDay: true,
-                                                color: response.appointments.length > 2 ? '#dc3545' : '#1a73e8',
-                                                textColor: '#fff'
-                                            });
-                                        }
-                                    }
-                                })
-                            );
-                        })(current.clone());
-                        current.add(1, 'days');
-                    }
-
-                    $.when.apply($, requests).then(function() {
-                        callback(events);
+                    // Una sola petición eficiente con el rango completo del mes visible
+                    $.ajax({
+                        type: 'GET',
+                        url: '/cal-appointment-show',
+                        data: {
+                            start: start.format('YYYY-MM-DD'),
+                            end: end.format('YYYY-MM-DD'),
+                            title: 'appointment'
+                        },
+                        success: function(response) {
+                            var appEvents = [];
+                            if (response.appointments) {
+                                $(response.appointments).each(function(key, value) {
+                                    var badge = value.total_appointment == 1
+                                        ? value.total_appointment + ' Cita'
+                                        : value.total_appointment + ' Citas';
+                                    appEvents.push({
+                                        title: badge,
+                                        start: value.appointment_date,
+                                        end: value.appointment_date,
+                                        color: value.total_appointment > 2 ? '#dc3545' : '#1a73e8',
+                                        textColor: '#fff'
+                                    });
+                                });
+                            }
+                            callback(appEvents);
+                        },
+                        error: function(response) {
+                            console.log('Error cargando citas del calendario:', response);
+                            callback([]);
+                        }
                     });
                 }
             });

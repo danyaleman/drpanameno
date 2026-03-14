@@ -256,7 +256,7 @@
                 <div class="card-body p-0" id="appointment_list">
                     @php $i = 1; @endphp
                     @if ($appointments->count() > 0)
-                        @if ($role == 'receptionist')
+                        @if ($role != 'patient')
                             @foreach ($appointments as $appointment)
                                 <div class="apt-list-item">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -277,43 +277,14 @@
                                             <span class="badge bg-primary-subtle text-primary rounded-pill px-3" style="font-size:0.85rem;">
                                                 <i class="bx bx-time me-1"></i>{{ $appointment->timeSlot->from }} - {{ $appointment->timeSlot->to }}
                                             </span>
+                                            @if ($role != 'receptionist')
                                             <div class="mt-1">
                                                 <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
                                                    class="btn btn-sm btn-success waves-effect" title="Crear consulta">
                                                     <i class="bx bx-plus me-1"></i>Consulta
                                                 </a>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @elseif ($role == 'doctor')
-                            @foreach ($appointments as $appointment)
-                                <div class="apt-list-item">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <div class="apt-avatar me-3" style="background:rgba(40,167,69,.1);color:#28a745;">
-                                                {{ strtoupper(substr($appointment->patient->first_name ?? 'P', 0, 1)) }}{{ strtoupper(substr($appointment->patient->last_name ?? '', 0, 1)) }}
-                                            </div>
-                                            <div>
-                                                <p class="mb-0 fw-semibold text-dark" style="font-size:0.9rem;">
-                                                    {{ $appointment->patient->first_name }} {{ $appointment->patient->last_name }}
-                                                </p>
-                                                <span class="text-muted" style="font-size:0.8rem;">
-                                                    <i class="bx bx-phone me-1"></i>{{ $appointment->patient->mobile ?? $appointment->patient->phone_primary ?? 'N/A' }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-success-subtle text-success rounded-pill px-3" style="font-size:0.85rem;">
-                                                <i class="bx bx-time me-1"></i>{{ $appointment->timeSlot->from }} - {{ $appointment->timeSlot->to }}
-                                            </span>
-                                            <div class="mt-1">
-                                                <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                   class="btn btn-sm btn-success waves-effect" title="Crear consulta">
-                                                    <i class="bx bx-plus me-1"></i>Consulta
-                                                </a>
-                                            </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -586,12 +557,8 @@
                                 name = (apt.doctor && apt.doctor.user ? 'Dr. ' + apt.doctor.user.first_name + ' ' + apt.doctor.user.last_name : '—');
                                 phone = (apt.doctor && apt.doctor.user ? apt.doctor.user.mobile || 'N/A' : 'N/A');
                                 initials = name.replace('Dr. ', '').split(' ').map(function(n){return n.charAt(0)}).join('').toUpperCase().substring(0,2);
-                            } else if (role == 'doctor') {
-                                name = (apt.patient ? apt.patient.first_name + ' ' + apt.patient.last_name : '—');
-                                phone = (apt.patient ? apt.patient.mobile || apt.patient.phone_primary || 'N/A' : 'N/A');
-                                initials = name.split(' ').map(function(n){return n.charAt(0)}).join('').toUpperCase().substring(0,2);
-                                patientId = apt.patient_id;
                             } else {
+                                // Admin, Doctor, Receptionist ven el nombre del paciente y del doctor asignado
                                 name = (apt.patient ? apt.patient.first_name + ' ' + apt.patient.last_name : '—');
                                 doctorName = (apt.doctor && apt.doctor.user ? 'Dr. ' + apt.doctor.user.first_name + ' ' + apt.doctor.user.last_name : '');
                                 phone = (apt.patient ? apt.patient.mobile || apt.patient.phone_primary || 'N/A' : 'N/A');
@@ -602,8 +569,8 @@
 
                             var timeText = (apt.time_slot ? apt.time_slot.from + ' - ' + apt.time_slot.to : '—');
                             var actionBtn = '';
-                            if (role !== 'patient' && patientId) {
-                                actionBtn = '<a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect mt-1" title="Consulta"><i class="bx bx-plus me-1"></i>Consulta</a>';
+                            if (role !== 'patient' && role !== 'receptionist' && patientId) {
+                                actionBtn = '<div class="mt-1"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect" title="Consulta"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
                             }
 
                             $container.append(

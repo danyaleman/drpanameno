@@ -82,7 +82,7 @@
                                                 <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                                 <td>
-                                                    @if ($role == 'doctor' || $role == 'receptionist')
+                                                    @if ($role != 'patient')
                                                         <button type="button" class="btn btn-success complete"
                                                             data-id="{{ $item->id }}">Completar</button>
                                                     @endif

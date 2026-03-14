@@ -141,6 +141,13 @@ class PatientController extends Controller
                 $imageName = time() . '.' . $extension;
                 $file->move(public_path('storage/images/patients'), $imageName);
                 $validatedData['photo'] = $imageName;
+            } elseif ($request->webcam_photo != null) {
+                $img = $request->webcam_photo;
+                $img = str_replace('data:image/jpeg;base64,', '', $img);
+                $img = str_replace(' ', '+', $img);
+                $imageName = time() . '.' . 'jpg';
+                File::put(public_path('storage/images/patients') . '/' . $imageName, base64_decode($img));
+                $validatedData['photo'] = $imageName;
             }
 
             try {
@@ -206,8 +213,7 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.view')) {
             $role = $user->roles[0]->slug;
-            $patient = Patient::where('id', $id)->where('is_deleted', 0)->first();
-
+            $patient = Patient::with('signos')->where('id', $id)->where('is_deleted', 0)->first();
             if ($patient) {
                 $medical_Info = $patient->medicalInfo;
 
@@ -220,10 +226,16 @@ class PatientController extends Controller
                     $appointmentQuery->orWhere('appointment_for', $userWithSameEmail->id);
                 }
 
-                $appointments = $appointmentQuery->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
+                $appointments = $appointmentQuery->with('doctor', 'timeSlot')->orderBy('id', 'desc')->paginate($this->limit, '*', 'appointment');
 
-                $prescriptions = $patient->prescriptions()->with('doctor')->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
+                $prescriptions = $patient->prescriptions()->with('doctor', 'evaluacion', 'archivos', 'vacunas')->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
                 $invoices = $patient->invoices()->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
+
+                // Signos vitales
+                $signos = $patient->signos;
+
+                // Vacunas registradas en el módulo de vacunación
+                $vaccineRecords = \App\VaccineRecord::where('patient_id', $patient->id)->with('vaccine')->orderBy('id', 'desc')->take(20)->get();
 
                 // Contar todas las citas (nuevas + antiguas)
                 $tot_appointment = Appointment::where('patient_id', $patient->id);
@@ -238,11 +250,12 @@ class PatientController extends Controller
 
                 $data = [
                     'total_appointment' => $tot_appointment,
+                    'total_prescriptions' => $patient->prescriptions()->count(),
                     'revenue' => $revenue,
                     'pending_bill' => $pending_bill
                 ];
 
-                return view('patient.patient-profile', compact('user', 'role', 'patient', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices'));
+                return view('patient.patient-profile', compact('user', 'role', 'patient', 'medical_Info', 'data', 'appointments', 'prescriptions', 'invoices', 'signos', 'vaccineRecords'));
             }
             else {
                 return redirect('/dashboard')->with('error', 'Paciente no encontrado');
@@ -431,6 +444,16 @@ class PatientController extends Controller
                     $extension = $file->getClientOriginalExtension();
                     $imageName = time() . '.' . $extension;
                     $file->move(public_path('storage/images/patients'), $imageName);
+                    $validatedData['photo'] = $imageName;
+                } elseif ($request->webcam_photo != null) {
+                    if ($patient->photo && File::exists(public_path('storage/images/patients/' . $patient->photo))) {
+                        File::delete(public_path('storage/images/patients/' . $patient->photo));
+                    }
+                    $img = $request->webcam_photo;
+                    $img = str_replace('data:image/jpeg;base64,', '', $img);
+                    $img = str_replace(' ', '+', $img);
+                    $imageName = time() . '.' . 'jpg';
+                    File::put(public_path('storage/images/patients') . '/' . $imageName, base64_decode($img));
                     $validatedData['photo'] = $imageName;
                 }
 

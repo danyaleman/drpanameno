@@ -522,6 +522,30 @@
                     </div>
                     <input type="file" class="form-control d-none" name="photo" id="profile_photo"
                            accept="image/*" onchange="displayProfile(this)">
+                    <input type="hidden" name="webcam_photo" id="webcam_photo">
+                    
+                    <div class="mt-3 text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="startWebcamBtn" onclick="initWebcam()">
+                            <i class="bx bx-video me-1"></i> Tomar con Webcam
+                        </button>
+                    </div>
+
+                    <!-- Webcam UI -->
+                    <div id="webcam-container" class="mt-3 d-none text-center">
+                        <div class="position-relative d-inline-block">
+                            <video id="webcam-video" width="100%" autoplay playsinline style="border-radius: 8px; border: 2px solid #ddd; max-height: 200px;"></video>
+                            <canvas id="webcam-canvas" class="d-none"></canvas>
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-success btn-sm me-2" onclick="takeSnapshot()">
+                                <i class="bx bx-camera"></i> Capturar
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="stopWebcam()">
+                                <i class="bx bx-x"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+
                     @error('photo')
                         <span class="invalid-feedback d-block mt-2"><strong>{{ $message }}</strong></span>
                     @enderror
@@ -592,7 +616,56 @@
                     document.querySelector('#profile_display').setAttribute('src', e.target.result);
                 }
                 reader.readAsDataURL(e.files[0]);
+                document.getElementById('webcam_photo').value = ''; // Limpiar la foto de la webcam
             }
+        }
+
+        // Webcam functions
+        let video = document.getElementById('webcam-video');
+        let canvas = document.getElementById('webcam-canvas');
+        let stream = null;
+
+        function initWebcam() {
+            document.getElementById('webcam-container').classList.remove('d-none');
+            document.getElementById('startWebcamBtn').classList.add('d-none');
+            
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(s) {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                    alert("No se pudo acceder a la cámara web. Asegúrese de otorgar los permisos necesarios o conectar una cámara.");
+                    stopWebcam();
+                });
+        }
+
+        function stopWebcam() {
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            document.getElementById('webcam-container').classList.add('d-none');
+            document.getElementById('startWebcamBtn').classList.remove('d-none');
+        }
+
+        function takeSnapshot() {
+            let context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            let dataUrl = canvas.toDataURL('image/jpeg');
+            document.getElementById('profile_display').setAttribute('src', dataUrl);
+            document.getElementById('webcam_photo').value = dataUrl;
+            
+            // Limpiar el input file si había algo
+            document.getElementById('profile_photo').value = '';
+            
+            stopWebcam();
         }
     </script>
 @endsection

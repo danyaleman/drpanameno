@@ -186,6 +186,8 @@
                         <ul class="sub-menu" aria-expanded="true">
                             <li><a href="{{ route('vaccines.records.index') }}">Registros de Vacunación</a></li>
                             <li><a href="{{ route('vaccines.records.create') }}">Registrar Vacuna</a></li>
+                            <li><a href="{{ route('vaccines.catalog.index') }}">Catálogo de Vacunas</a></li>
+                            <li><a href="{{ route('vaccines.catalog.create') }}">Nueva Vacuna</a></li>
                         </ul>
                     </li>
 
@@ -215,12 +217,7 @@
                             <span>{{ __('translation.appointment-list') }}</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ url('doctor') }}" class="waves-effect">
-                            <i class='bx bx-plus-medical'></i>
-                            <span>{{ __('translation.doctors') }}</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a href="javascript: void(0);" class="has-arrow waves-effect">
                             <i class='bx bxs-user-detail'></i>
@@ -238,19 +235,23 @@
                             <span>{{ __('translation.prescription') }}</span>
                         </a>
                     </li>
-                    <li class="menu-title" key="t-menu">{{ __('Billing') }}</li>
+                    
+                    <li class="menu-title" key="t-menu">💉 Inmunización</li>
                     <li>
                         <a href="javascript: void(0);" class="has-arrow waves-effect">
-                            <i class="bx bx-receipt"></i>
-                            <span>{{ __('translation.invoice') }}</span>
+                            <i class='bx bx-injection'></i>
+                            <span>Vacunas</span>
                         </a>
                         <ul class="sub-menu" aria-expanded="true">
-                            <li><a href="{{ url('invoice') }}">{{ __('translation.list-of-invoice') }}</a></li>
-                            <li><a href="{{ route('invoice.create') }}">{{ __('translation.create-invoice') }}</a>
-                            </li>
+                            <li><a href="{{ route('vaccines.records.index') }}">Registros de Vacunación</a></li>
+                            <li><a href="{{ route('vaccines.records.create') }}">Registrar Vacuna</a></li>
+                            <li><a href="{{ route('vaccines.catalog.index') }}">Catálogo de Vacunas</a></li>
+                            <li><a href="{{ route('vaccines.catalog.create') }}">Nueva Vacuna</a></li>
                         </ul>
                     </li>
-                    
+
+
+
                 @elseif ($role == 'patient')
                     <li>
                         <a href="{{ route('appointment.create') }}" class="waves-effect">

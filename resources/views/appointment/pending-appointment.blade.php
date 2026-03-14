@@ -147,7 +147,7 @@
                         {{-- Acciones --}}
                         <td class="py-3 text-center">
                             <div class="d-flex gap-1 justify-content-center">
-                                @if ($role == 'doctor' || $role == 'receptionist')
+                                @if ($role != 'patient')
                                     <button type="button" class="btn btn-sm btn-success waves-effect complete"
                                             data-id="{{ $item->id }}" title="Completar cita">
                                         <i class="bx bx-check"></i>

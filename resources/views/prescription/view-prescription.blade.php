@@ -406,7 +406,12 @@
                     </div>
                     <div class="card-body p-4">
                         <div style="background:#f8f9fa; border-radius:8px; padding:16px; border-left:4px solid #20c997;">
-                            <p class="mb-0" style="font-size:14px; line-height:1.8; color:#343a40; white-space:pre-wrap;">{{ $evaluacion->medicamentos }}</p>
+                            <p class="mb-0" style="font-size:14px; line-height:1.8; color:#343a40; white-space:pre-wrap;" id="receta_text_view">{{ $evaluacion->medicamentos }}</p>
+                        </div>
+                        <div class="mt-3 text-end d-print-none">
+                            <button type="button" class="btn btn-success fw-bold shadow-sm" style="border-radius: 6px;" onclick="generarRecetaPDF()">
+                                <i class="bx bx-printer align-middle me-1 font-size-16"></i> Imprimir Receta / Generar PDF
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -669,4 +674,87 @@
     </div>{{-- end col-lg-4 --}}
 
 </div>{{-- end row --}}
+@endsection
+@section('script')
+<script>
+    window.generarRecetaPDF = function() {
+        let pName = '{{ addslashes($patientName) }}';
+        let pDui = '{{ $patient->dui ?? "-" }}';
+        let actDate = '{{ addslashes(\Carbon\Carbon::parse($prescription->created_at)->format('d/m/Y')) }}';
+        
+        let medsDiv = document.getElementById('receta_text_view');
+        
+        if(!medsDiv || medsDiv.innerText.trim() === '') {
+            alert('No hay texto de receta / tratamiento en esta consulta.');
+            return;
+        }
+        
+        let medsText = medsDiv.innerText;
+        let medicinesHtml = `
+            <div style="margin-bottom: 12px; font-size: 13px; color: #111; white-space: pre-wrap; line-height: 1.6;">${medsText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+            
+        let logoUrl = "{{ asset('build/images/logo-dark2.png') }}";
+        
+        let htmlContent = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Orden Médica - ${pName}</title>
+            <style>
+                @page { size: 5.5in 8.5in; margin: 0; }
+                html, body { width: 13.97cm; height: 21.59cm; margin: 0 !important; padding: 0 !important; background-color: #fff; }
+                body { font-family: Arial, sans-serif; color: #000; -webkit-print-color-adjust: exact; }
+                .recipe-container { width: 100%; height: 100%; padding: 0.8cm 1cm; box-sizing: border-box; margin: 0; display: flex; flex-direction: column; background-color: #fff; }
+                .header-table { width: 100%; border-collapse: collapse; }
+                .header-table td { vertical-align: middle; }
+                .doctor-info { text-align: center; }
+                .doctor-name { font-size: 22px; font-weight: normal; margin-bottom: 8px; color: #000; letter-spacing: -0.3px; }
+                .doctor-spec { font-size: 12px; color: #111; line-height: 1.3; }
+                .title-receta { text-align: center; font-size: 16px; margin-top: 15px; margin-bottom: 15px; }
+                .patient-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background-color: #fff; }
+                .patient-table td { border: 1px solid #555; padding: 6px 8px; font-size: 12px; }
+                .patient-table .label-td { font-weight: normal; width: 60px; }
+                .patient-table .val-td { width: 55%; }
+                .patient-table .empty-td { width: auto; }
+                .meds-box { border: 1px solid #555; flex-grow: 1; padding: 15px; margin-bottom: 15px; background-color: #fff; }
+                .footer-box { width: 100%; border-collapse: collapse; margin-bottom: 15px; background-color: #fff; }
+                .footer-box td { border: 1px solid #555; text-align: center; font-size: 11px; padding: 6px; }
+                .address { text-align: center; font-size: 10px; color: #111; margin-bottom: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="recipe-container">
+                <table class="header-table">
+                    <tr>
+                        <td style="width: 25%; text-align: center;"><img src="${logoUrl}" style="max-width: 80px;" alt="Logo"></td>
+                        <td style="width: 75%;" class="doctor-info">
+                            <div class="doctor-name">Dr. Jorge Panameño MSc.</div>
+                            <div class="doctor-spec">Medicina Interna – Medicina Tropical<br>Enfermedades Infecciosas y Parasitarias</div>
+                            <div class="doctor-spec" style="font-size:10px; margin-top:3px;">Miembro de IDSA, Sociedad Americana de Enfermedades Infecciosas</div>
+                        </td>
+                    </tr>
+                </table>
+                <div class="title-receta">Orden Médica</div>
+                <table class="patient-table">
+                    <tr><td class="label-td">Fecha:</td><td class="val-td">${actDate}</td><td rowspan="3" class="empty-td">&nbsp;</td></tr>
+                    <tr><td class="label-td">Nombre:</td><td class="val-td">${pName}</td></tr>
+                    <tr><td class="label-td">No. Id:</td><td class="val-td">${pDui}</td></tr>
+                </table>
+                <div class="meds-box">${medicinesHtml}</div>
+                <table class="footer-box">
+                    <tr><td>Receta Exclusiva. Cada caso es diferente, no se automedique</td></tr>
+                    <tr><td>Enviar resultados vía WhatsApp al +503 7989-2046</td></tr>
+                </table>
+                <div class="address">81 Av Sur Cl Juan J Cañas Edif 2 Nivel 2 Local 6 Centro Médico Escalón, SS. Telf.: 2264-6691</div>
+            </div>
+            <script>window.onload=function(){setTimeout(function(){window.print();window.close();},500);};<\/script>
+        </body>
+        </html>`;
+        
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+    };
+</script>
 @endsection

@@ -139,6 +139,61 @@
     </div>
 </div>
 
+{{-- Buscador y filtros avanzados --}}
+<div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body p-3">
+        <div class="row align-items-end g-2">
+            <div class="col-md-2">
+                <label for="filterAgeMin" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÍN (AÑOS)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-down-arrow-alt"></i></span>
+                    <input type="number" id="filterAgeMin" class="form-control border-start-0 ps-0" placeholder="Ej: 18" min="0">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="filterAgeMax" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÁX (AÑOS)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-up-arrow-alt"></i></span>
+                    <input type="number" id="filterAgeMax" class="form-control border-start-0 ps-0" placeholder="Ej: 60" min="0">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="filterDepto" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DEPARTAMENTO</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-map"></i></span>
+                    <select id="filterDepto" class="form-select border-start-0 ps-0">
+                        <option value="">Cualquier ubicación</option>
+                        <option value="Ahuachapán">Ahuachapán</option>
+                        <option value="Cabañas">Cabañas</option>
+                        <option value="Chalatenango">Chalatenango</option>
+                        <option value="Cuscatlán">Cuscatlán</option>
+                        <option value="La Libertad">La Libertad</option>
+                        <option value="La Paz">La Paz</option>
+                        <option value="La Unión">La Unión</option>
+                        <option value="Morazán">Morazán</option>
+                        <option value="San Miguel">San Miguel</option>
+                        <option value="San Salvador">San Salvador</option>
+                        <option value="San Vicente">San Vicente</option>
+                        <option value="Santa Ana">Santa Ana</option>
+                        <option value="Sonsonate">Sonsonate</option>
+                        <option value="Usulután">Usulután</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" id="btnFilter" class="btn btn-primary w-100 shadow-sm font-size-13 fw-bold">
+                    <i class="bx bx-filter-alt me-1"></i> Filtrar
+                </button>
+            </div>
+            <div class="col-md-3 text-end">
+                <div class="bg-primary-subtle text-primary rounded px-3 py-2 d-inline-block fw-semibold" id="filterResultLabel" style="font-size:13px; min-width:180px;">
+                    <i class="bx bx-select-multiple me-1 align-middle font-size-16"></i> <span id="lblCount">—</span> registros
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Tabla de pacientes --}}
 <div class="card border-0 shadow-sm">
     <div class="card-header d-flex align-items-center justify-content-between py-3"
@@ -156,6 +211,8 @@
             <thead>
                 <tr>
                     <th>PACIENTE</th>
+                    <th>EDAD</th>
+                    <th>DIRECCIÓN</th>
                     <th>TELÉFONO</th>
                     <th>CORREO ELECTRÓNICO</th>
                     <th class="text-center">ACCIONES</th>
@@ -182,6 +239,38 @@
     <!-- Init js-->
     <script src="{{ URL::asset('build/js/pages/notification.init.js') }}"></script>
     <script>
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData, counter) {
+            if (settings.nTable.id !== 'patientList') return true;
+
+            var minAgeStr = $('#filterAgeMin').val();
+            var maxAgeStr = $('#filterAgeMax').val();
+            var minAge = parseInt(minAgeStr, 10);
+            var maxAge = parseInt(maxAgeStr, 10);
+            var deptoStr = $('#filterDepto').val().toLowerCase();
+
+            var ageStr = rowData.age || '';
+            var ageMatch = ageStr.match(/\d+/);
+            var age = ageMatch ? parseInt(ageMatch[0], 10) : null;
+            var addStr = (rowData.address || '').toLowerCase();
+
+            // Filtro por dirección depto
+            if (deptoStr !== '' && addStr.indexOf(deptoStr) === -1) {
+                return false;
+            }
+
+            // Filtro de edad mínima
+            if (!isNaN(minAge) && minAgeStr !== "") {
+                if (age === null || age < minAge) return false;
+            }
+
+            // Filtro de edad máxima
+            if (!isNaN(maxAge) && maxAgeStr !== "") {
+                if (age === null || age > maxAge) return false;
+            }
+
+            return true;
+        });
+
         $(document).ready(function() {
             var table = $('#patientList').DataTable({
                 processing: true,
@@ -225,6 +314,20 @@
                                     '<p class="mb-0 fw-semibold text-dark">' + fullName + '</p>' +
                                 '</div>' +
                             '</div>';
+                        }
+                    },
+                    {
+                        data: 'age',
+                        name: 'age',
+                        render: function(data) {
+                            return '<span class="text-muted">' + (data || 'N/A') + '</span>';
+                        }
+                    },
+                    {
+                        data: 'address',
+                        name: 'address',
+                        render: function(data) {
+                            return '<span class="text-muted">' + (data || 'N/A') + '</span>';
                         }
                     },
                     {
@@ -273,8 +376,14 @@
                     // Actualizar stats
                     var info = this.api().page.info();
                     $('#stat-total').text(info.recordsTotal);
+                    $('#lblCount').text(info.recordsDisplay);
                 }
             });
+
+            // Enlazamos filtros a la tabla
+            $('#filterAgeMin, #filterAgeMax').on('keyup', function() { table.draw(); });
+            $('#filterDepto').on('change', function() { table.draw(); });
+            $('#btnFilter').on('click', function() { table.draw(); });
 
             // Calcular pacientes nuevos este mes via los datos cargados
             table.on('xhr', function() {

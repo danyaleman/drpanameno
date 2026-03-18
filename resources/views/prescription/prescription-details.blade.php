@@ -504,6 +504,11 @@ $(document).ready(function () {
                                             ${vacunasHtml}
                                             ${archivosHtml}
                                         </div>
+                                        <div class="col-md-12 mt-3 pt-3 border-top text-end">
+                                            <a href="{{ url('prescription') }}/${item.id}" target="_blank" class="btn btn-sm btn-primary fw-bold shadow-sm" style="border-radius: 6px;">
+                                                <i class="bx bx-link-external me-1"></i> Más Detalle
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>`;

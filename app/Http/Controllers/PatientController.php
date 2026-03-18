@@ -62,6 +62,15 @@ class PatientController extends Controller
                     ->addColumn('name', function ($row) {
                     return $row->first_name . ' ' . $row->last_name;
                 })
+                    ->addColumn('age', function ($row) {
+                    if ($row->birth_date) {
+                        return \Carbon\Carbon::parse($row->birth_date)->age . ' años';
+                    }
+                    return 'N/A';
+                })
+                    ->addColumn('address', function ($row) {
+                    return $row->address ?? 'N/A';
+                })
                     ->addColumn('mobile', function ($row) {
                     return $row->phone_primary ?? 'N/A';
                 })

@@ -12,7 +12,7 @@ class DailyService
 
     public function __construct()
     {
-        $this->apiKey = env('DAILY_API_KEY');
+        $this->apiKey = config('services.daily.api_key');
     }
 
     /**

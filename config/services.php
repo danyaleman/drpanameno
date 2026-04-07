@@ -34,4 +34,8 @@ return [
         'secret' => env('STRIPE_SECRET'),
    ],
 
+    'daily' => [
+        'api_key' => env('DAILY_API_KEY'),
+    ],
+
 ];

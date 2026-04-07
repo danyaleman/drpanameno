@@ -100,6 +100,14 @@
                         </a>
                     </li>
 
+                    <li class="menu-title" key="t-menu">💻 Telemedicina</li>
+                    <li>
+                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                            <i class="bx bx-laptop"></i>
+                            <span>Mis Teleconsultas</span>
+                        </a>
+                    </li>
+
                     <li class="menu-title" key="t-menu">💉 Inmunización</li>
                     <li>
                         <a href="javascript: void(0);" class="has-arrow waves-effect">
@@ -147,6 +155,14 @@
                         <a href="{{ url('pending-appointment') }}" class="waves-effect">
                             <i class="bx bx-list-ul"></i>
                             <span>{{ __('translation.appointment-list') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-title" key="t-menu">💻 Telemedicina</li>
+                    <li>
+                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                            <i class="bx bx-laptop"></i>
+                            <span>Mis Teleconsultas</span>
                         </a>
                     </li>
 
@@ -263,6 +279,14 @@
                         <a href="{{ url('patient-appointment') }}" class="waves-effect">
                             <i class="bx bx-list-ul"></i>
                             <span>{{ __('translation.appointment-list') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-title" key="t-menu">💻 Telemedicina</li>
+                    <li>
+                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                            <i class="bx bx-laptop"></i>
+                            <span>Mis Teleconsultas</span>
                         </a>
                     </li>
                     <li>

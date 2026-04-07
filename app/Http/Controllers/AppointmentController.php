@@ -11,6 +11,8 @@ use App\DoctorAvailableTime;
 use App\Notification;
 use App\ReceptionListDoctor;
 use App\User;
+use App\Teleconsultation;
+use App\Services\DailyService;
 use Illuminate\Support\Facades\Mail;
 use Cartalyst\Sentinel\Laravel\Facades\Sentinel;
 use Illuminate\Http\Request;
@@ -585,6 +587,7 @@ class AppointmentController extends Controller
                         $appointment->available_time = $request->available_time;
                         $appointment->available_slot = $slotId;
                         $appointment->booked_by = $user->id;
+                        $appointment->is_telemedicine = $request->is_telemedicine ?? 0;
                         $appointment->save();
 
                         if ($firstAppointment === null) {
@@ -601,6 +604,21 @@ class AppointmentController extends Controller
                     $lastSlot = \App\DoctorAvailableSlot::find($lastSlotId);
 
                     $appointment = $firstAppointment; // Para notificaciones usamos la primera como base
+
+                    if ($request->is_telemedicine) {
+                        $dailyService = new DailyService();
+                        $roomName = 'teleconsulta-' . $appointment->id . '-' . time();
+                        $dailyRoom = $dailyService->createRoom($roomName);
+
+                        if ($dailyRoom) {
+                            Teleconsultation::create([
+                                'appointment_id' => $appointment->id,
+                                'daily_room_url' => $dailyRoom['url'],
+                                'daily_room_name' => $dailyRoom['name'],
+                                'status' => 'pending'
+                            ]);
+                        }
+                    }
 
                     // appointment create notification send and mail send
                     // Find Mail

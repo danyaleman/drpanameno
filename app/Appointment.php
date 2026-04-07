@@ -16,6 +16,7 @@ class Appointment extends Model
         'appointment_time',
         'booked_by',
         'status',
+        'is_telemedicine',
         'is_deleted',
     ];
 
@@ -61,5 +62,10 @@ class Appointment extends Model
     public function prescription()
     {
         return $this->hasOne(Prescription::class)->where('is_deleted', 0);
+    }
+
+    public function teleconsultation()
+    {
+        return $this->hasOne(Teleconsultation::class, 'appointment_id', 'id');
     }
 }

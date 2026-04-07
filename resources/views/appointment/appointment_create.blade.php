@@ -326,6 +326,21 @@
                 <form action="{{ url('appointment-store') }}" method="POST">
                     @csrf
 
+                    {{-- Tipo de Cita --}}
+                    <div class="mb-4">
+                        <label class="form-label-premium">
+                            <i class="bx bx-laptop text-primary me-1"></i>Tipo de Cita
+                            <span class="required-star">*</span>
+                        </label>
+                        <select class="form-select" name="is_telemedicine" id="is_telemedicine">
+                            <option value="0" {{ old('is_telemedicine') == '0' ? 'selected' : '' }}>Presencial</option>
+                            <option value="1" {{ old('is_telemedicine') == '1' ? 'selected' : '' }}>Telemedicina (Videollamada)</option>
+                        </select>
+                        @error('is_telemedicine')
+                            <span class="invalid-feedback d-block"><strong>{{ $message }}</strong></span>
+                        @enderror
+                    </div>
+
                     {{-- Paciente --}}
                     @if ($role != 'Nombre de Paciente')
                         <div class="mb-4">

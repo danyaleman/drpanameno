@@ -160,4 +160,8 @@ Route::middleware('sentinel.auth')->group(function () {
     // AJAX: esquema de dosis de una vacuna
     Route::get('vaccines/schedule/{vaccineId}',     'VaccineController@getSchedule')->name('vaccines.schedule');
     // ─────────────────────────────────────────────────────────────────────────
+    // ─── Módulo de Telemedicina ───────────────────────────────────────────────
+    Route::get('telemedicine', 'TelemedicineController@index')->name('telemedicine.index');
+    Route::get('telemedicine/room/{id}', 'TelemedicineController@room')->name('telemedicine.room');
+    // ─────────────────────────────────────────────────────────────────────────
 });

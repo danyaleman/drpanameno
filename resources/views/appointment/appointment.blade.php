@@ -277,7 +277,7 @@
                                             <span class="badge bg-primary-subtle text-primary rounded-pill px-3" style="font-size:0.85rem;">
                                                 <i class="bx bx-time me-1"></i>{{ $appointment->timeSlot->from }} - {{ $appointment->timeSlot->to }}
                                             </span>
-                                            @if ($role != 'receptionist')
+                                            @if ($role != 'patient')
                                             <div class="mt-1">
                                                 <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
                                                    class="btn btn-sm btn-success waves-effect" title="Crear consulta">
@@ -569,7 +569,7 @@
 
                             var timeText = (apt.time_slot ? apt.time_slot.from + ' - ' + apt.time_slot.to : '—');
                             var actionBtn = '';
-                            if (role !== 'patient' && role !== 'receptionist' && patientId) {
+                            if (role !== 'patient' && patientId) {
                                 actionBtn = '<div class="mt-1"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect" title="Consulta"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
                             }
 

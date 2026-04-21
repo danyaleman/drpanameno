@@ -502,8 +502,7 @@ class AppointmentController extends Controller
             $doctor_available_time = '';
             $role = $user->roles[0]->slug;
             $patients = Patient::where('is_deleted', 0)->get();
-            $doctor_role = Sentinel::findRoleBySlug('doctor');
-            $doctors = $doctor_role->users()->with('roles')->where('is_deleted', 0)->get();
+            $doctors = Doctor::with('user')->where('is_deleted', 0)->get();
             
             // Ya no limitamos la vista de doctores al rol, permitimos que la recepcionista vea y agende globalmente.
             $dayArray = collect();
@@ -530,7 +529,7 @@ class AppointmentController extends Controller
                 if ($doctor_available_day['sat'] == 0) {
                     $dayArray->push(6);
                 }
-                $doctor_available_time = DoctorAvailableTime::where('doctor_id', $userId)->where('is_deleted', 0)->get();
+                $doctor_available_time = DoctorAvailableTime::where('doctor_id', $doctor_id)->where('is_deleted', 0)->get();
             }
             return view('appointment.appointment_create', compact('user', 'role', 'patients', 'doctors', 'doctor_available_day', 'doctor_available_time', 'dayArray'));
         }
@@ -790,7 +789,9 @@ class AppointmentController extends Controller
                 $appointment_slot = DoctorAvailableSlot::with(['appointment' => function ($re) use ($dates) {
                     $re->where('appointment_date', $dates)->where('status', '!=', 2);
                 }])
-                    ->where('doctor_available_time_id', $timeId)->get();
+                    ->where('doctor_available_time_id', $timeId)
+                    ->orderBy('from', 'asc')
+                    ->get();
                 return response()->json([
                     'isSuccess' => true,
                     'Message' => "Appointment slot find successfully",

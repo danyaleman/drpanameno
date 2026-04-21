@@ -372,12 +372,13 @@
                             </label>
                             <select class="form-control select2 sel-doctor @error('appointment_with') is-invalid @enderror"
                                 name="appointment_with" id="doctor">
-                                <option hidden selected disabled>Seleccionar doctor...</option>
+                                <option value="">Seleccionar doctor...</option>
                                 @foreach ($doctors as $doctor)
-                                    <option value="{{ $doctor->doctor->id }}"
-                                        {{ old('appointment_with') == $doctor->doctor->id ? 'selected' : '' }}>
-                                        {{ $doctor->first_name }} {{ $doctor->last_name }}
-                                    </option>
+                                    @if($doctor->user)
+                                        <option value="{{ $doctor->id }}" {{ old('appointment_with') == $doctor->id ? 'selected' : '' }}>
+                                            {{ $doctor->user->first_name }} {{ $doctor->user->last_name }}
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                             @error('appointment_with')
@@ -709,11 +710,19 @@
 
                     // Multi-slot activation
                     if ($(".availble_slot").length) {
-                        $(".availble_slot label").click(function() {
+                        $(".availble_slot label").off('click').on('click', function(e) {
+                            // Don't intercept if they clicked directly on the actual input, prevents double trigger
+                            if(e.target.tagName.toLowerCase() === 'input') {
+                                return true; 
+                            }
+                            // Otherwise, it was a click on the label wrapper, so prevent default and handle manually
+                            e.preventDefault();
+                            
                             if ($(this).hasClass('disabled-slot')) return;
                             $(this).toggleClass('active');
                             var checkbox = $(this).find('input[type=checkbox]');
                             checkbox.prop('checked', $(this).hasClass('active'));
+                            
                             updateSlotsSummary();
                             var checked = $('.availble_slot input[type=checkbox]:checked').length;
                             if (checked > 0) {

@@ -211,6 +211,7 @@
             <thead>
                 <tr>
                     <th>PACIENTE</th>
+                    <th>DUI / ID</th>
                     <th>EDAD</th>
                     <th>DIRECCIÓN</th>
                     <th>TELÉFONO</th>
@@ -314,6 +315,13 @@
                                     '<p class="mb-0 fw-semibold text-dark">' + fullName + '</p>' +
                                 '</div>' +
                             '</div>';
+                        }
+                    },
+                    {
+                        data: 'dui',
+                        name: 'dui',
+                        render: function(data) {
+                            return '<span class="text-muted">' + (data || 'N/A') + '</span>';
                         }
                     },
                     {

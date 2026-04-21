@@ -245,12 +245,12 @@
                                         @foreach ($appointments as $item)
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                <td> {{ $item->patient->first_name }} {{ $item->patient->last_name }}
+                                                <td> {{ optional($item->patient)->first_name }} {{ optional($item->patient)->last_name }}
                                                 </td>
-                                                <td> {{ $item->patient->mobile }} </td>
-                                                <td> {{ $item->patient->email }} </td>
+                                                <td> {{ optional($item->patient)->mobile }} </td>
+                                                <td> {{ optional($item->patient)->email }} </td>
                                                 <td>{{ $item->appointment_date }}</td>
-                                                <td>{{ $item->timeSlot->from . ' to ' . $item->timeSlot->to }}</td>
+                                                <td>{{ optional($item->timeSlot)->from . ' to ' . optional($item->timeSlot)->to }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -292,7 +292,7 @@
                                         @foreach ($prescriptions as $item)
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                <td>{{ $item->patient->first_name }} {{ $item->patient->last_name }}
+                                                <td>{{ optional($item->patient)->first_name }} {{ optional($item->patient)->last_name }}
                                                 </td>
                                                 <td>{{ date('d-m-Y', strtotime($item->created_at)) }}</td>
                                                 <td>
@@ -345,7 +345,7 @@
                                         @foreach ($invoices as $item)
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
-                                                <td>{{ $item->user->first_name }} {{ $item->user->last_name }}</td>
+                                                <td>{{ optional($item->patient)->first_name }} {{ optional($item->patient)->last_name }}</td>
                                                 <td>{{ date('d-m-Y', strtotime($item->created_at)) }}</td>
                                                 <td>{{ $item->payment_status }}</td>
                                                 <td>

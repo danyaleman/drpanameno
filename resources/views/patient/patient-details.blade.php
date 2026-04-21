@@ -235,6 +235,19 @@
                             @enderror
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">DUI o Identificación</label>
+                            <div class="input-icon-wrapper">
+                                <i class="bx bx-id-card input-icon"></i>
+                                <input type="text" class="form-control @error('dui') is-invalid @enderror"
+                                    name="dui"
+                                    value="{{ old('dui', $patient->dui ?? '') }}"
+                                    placeholder="00000000-0">
+                            </div>
+                            @error('dui')
+                                <span class="invalid-feedback d-block"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Fecha de nacimiento <span class="required-star">*</span></label>
                             <div class="input-icon-wrapper">
                                 <i class="bx bx-calendar input-icon"></i>

@@ -62,6 +62,9 @@ class PatientController extends Controller
                     ->addColumn('name', function ($row) {
                     return $row->first_name . ' ' . $row->last_name;
                 })
+                    ->addColumn('dui', function ($row) {
+                    return $row->dui ?? 'N/A';
+                })
                     ->addColumn('age', function ($row) {
                     if ($row->birth_date) {
                         return \Carbon\Carbon::parse($row->birth_date)->age . ' años';
@@ -136,6 +139,7 @@ class PatientController extends Controller
             $validatedData = $request->validate([
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
+                'dui' => 'nullable|string|max:20',
                 'phone_primary' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
@@ -435,6 +439,7 @@ class PatientController extends Controller
             $validatedData = $request->validate([
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
+                'dui' => 'nullable|string|max:20',
                 'phone_primary' => 'required|numeric|digits_between:8,20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',

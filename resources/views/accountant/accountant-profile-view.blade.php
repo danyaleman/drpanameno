@@ -223,7 +223,7 @@
                                             <tr>
                                                 <td>{{ $loop->index + 1 + $per_page * ($currentpage - 1) }}</td>
                                                 <td>{{ date('d-m-Y', strtotime($item->created_at)) }}</td>
-                                                <td>{{ $item->user->first_name . ' ' . $item->user->last_name }}</td>
+                                                <td>{{ optional($item->patient)->first_name . ' ' . optional($item->patient)->last_name }}</td>
                                                 <td>{{ $item->payment_status }}</td>
                                                 <td>
                                                     <a href="{{ url('invoice/' . $item->id) }}">

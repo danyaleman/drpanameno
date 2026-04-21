@@ -540,9 +540,9 @@ class UserController extends Controller
                     $re->orWhere('booked_by', $doctor_id);
                 })->orderBy('id', 'DESC')->paginate($this->limit, '*', 'appointments');
                 $prescriptions = Prescription::with('patient')->where('created_by', $doctor->id)->orderby('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
-                $invoices = Invoice::with('user')->where('invoices.created_by', '=', $doctor->id)->orderby('id', 'desc')->get();
+                $invoices = Invoice::with('patient')->where('invoices.created_by', '=', $doctor->id)->orderby('id', 'desc')->get();
                 $receptionists_doctor_id = ReceptionListDoctor::where('doctor_id', $doctor_id)->pluck('reception_id');
-                $invoices = Invoice::with('user')->where('doctor_id', $doctor_id)->paginate($this->limit, '*', 'invoices');
+                $invoices = Invoice::with('patient')->where('doctor_id', $doctor_id)->paginate($this->limit, '*', 'invoices');
                 $tot_appointment = Appointment::where(function ($re) use ($doctor_id) {
                     $re->orWhere('appointment_with', $doctor_id);
                     $re->orWhere('booked_by', $doctor_id);
@@ -601,7 +601,7 @@ class UserController extends Controller
                 $re->orWhereIN('booked_by', $receptionists_doctor_id);
                 $re->orWhere('booked_by', $user_id);
             })->orderBy('id', 'DESC')->paginate($this->limit, '*', 'appointments');
-            $invoices = Invoice::with('user')
+            $invoices = Invoice::with('patient')
                 ->where(function ($re) use ($user_id, $receptionists_doctor_id) {
                 $re->whereIN('doctor_id', $receptionists_doctor_id);
                 $re->orWhere('created_by', $user_id);
@@ -616,7 +616,7 @@ class UserController extends Controller
             $receptionist = Sentinel::getUser();
             $role = $user->roles[0]->slug;
 
-            $invoices = Invoice::where('is_deleted', 0)->paginate($this->limit, '*', 'invoice');
+            $invoices = Invoice::with('patient')->where('is_deleted', 0)->paginate($this->limit, '*', 'invoice');
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with(['roles', 'doctor'])->where('is_deleted', 0)->paginate($this->limit);
             $unpaid_invoices = Invoice::where('is_deleted', 0)->where('payment_status', 'Unpaid')->count();

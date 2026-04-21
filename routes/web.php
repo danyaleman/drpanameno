@@ -19,7 +19,7 @@ use App\Http\Controllers\PatientController;
 |
 */
 
-Route::get("/", [LandingController::class, "index"]);
+Route::redirect("/", "/dashboard");
 
 //Language Translation
 Route::get('index/{locale}', [App\Http\Controllers\HomeController::class, 'lang']);

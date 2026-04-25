@@ -251,6 +251,18 @@
                     </div>
                 </div>
 
+                {{-- Historia Clínica --}}
+                @if($prescription->diagnosis)
+                <div class="card border-0 shadow-sm mt-3" style="border-radius:12px;">
+                    <div class="section-header" style="background: linear-gradient(90deg, #6f42c1, #5a30a8);">
+                        <i class="bx bx-history"></i> Historia Clínica
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="mb-0" style="font-size:15px; line-height:1.7; color:#343a40; white-space:pre-wrap;">{{ $prescription->diagnosis }}</p>
+                    </div>
+                </div>
+                @endif
+
                 {{-- Estudios de laboratorio --}}
                 @if($evaluacion && $evaluacion->estudios_laboratorios)
                 <div class="card border-0 shadow-sm mt-3" style="border-radius:12px;">

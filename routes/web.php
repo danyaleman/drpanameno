@@ -64,6 +64,7 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::resource('receptionist', 'ReceptionistController');
     Route::resource('accountant', 'AccountantController');
     Route::resource('appointment', 'AppointmentController');
+    Route::get('prescription/codigos-por-tipo/{id}', 'PrescriptionController@getCodigosByTipo')->name('prescriptions.codigos_por_tipo');
     Route::resource('prescription', 'PrescriptionController');
     Route::resource('department', 'DepartmentController');
     Route::resource('invoice', 'InvoiceController');

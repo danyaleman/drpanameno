@@ -279,10 +279,23 @@
                                             </span>
                                             @if ($role != 'patient')
                                             <div class="mt-1">
-                                                <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                   class="btn btn-sm btn-success waves-effect" title="Crear consulta">
-                                                    <i class="bx bx-plus me-1"></i>Consulta
-                                                </a>
+                                                @php $tipo = $appointment->appointment_type ?? 'presencial'; @endphp
+                                                @if($tipo === 'vacunacion')
+                                                    <a href="/vaccines/records/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
+                                                       class="btn btn-sm waves-effect" style="background:#198754;color:#fff;font-weight:600;">
+                                                        <i class="bx bx-plus me-1"></i>Vacunación
+                                                    </a>
+                                                @elseif($tipo === 'telemedicine')
+                                                    <a href="/telemedicine/room/{{ $appointment->id }}"
+                                                       class="btn btn-sm btn-primary waves-effect fw-bold">
+                                                        <i class="bx bx-video me-1"></i>Unirse a sala
+                                                    </a>
+                                                @else
+                                                    <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
+                                                       class="btn btn-sm btn-success waves-effect">
+                                                        <i class="bx bx-plus me-1"></i>Consulta
+                                                    </a>
+                                                @endif
                                             </div>
                                             @endif
                                         </div>
@@ -570,7 +583,14 @@
                             var timeText = (apt.time_slot ? apt.time_slot.from + ' - ' + apt.time_slot.to : '—');
                             var actionBtn = '';
                             if (role !== 'patient' && patientId) {
-                                actionBtn = '<div class="mt-1"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect" title="Consulta"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
+                                var apptType = apt.appointment_type || 'presencial';
+                                if (apptType === 'vacunacion') {
+                                    actionBtn = '<div class="mt-1"><a href="/vaccines/records/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm waves-effect" style="background:#198754;color:#fff;font-weight:600;"><i class="bx bx-plus me-1"></i>Vacunaci\u00f3n</a></div>';
+                                } else if (apptType === 'telemedicine') {
+                                    actionBtn = '<div class="mt-1"><a href="/telemedicine/room/' + appointmentId + '" class="btn btn-sm btn-primary waves-effect fw-bold"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
+                                } else {
+                                    actionBtn = '<div class="mt-1"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
+                                }
                             }
 
                             $container.append(

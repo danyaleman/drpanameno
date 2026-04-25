@@ -54,48 +54,65 @@ class PatientController extends Controller
         if ($user->hasAccess('patient.list')) {
             $role = $user->roles[0]->slug;
 
-            // Load Datatables
+            // Load Datatables — Server-Side Processing (solo carga la página actual)
             if ($request->ajax()) {
-                $patients = Patient::where('is_deleted', 0)->orderByDesc('id')->get();
+                $patients = Patient::select([
+                        'id', 'first_name', 'last_name', 'dui',
+                        'birth_date', 'address', 'phone_primary',
+                        'email', 'created_at'
+                    ])
+                    ->where('is_deleted', 0)
+                    ->orderByDesc('id');
+
                 return Datatables::of($patients)
                     ->addIndexColumn()
                     ->addColumn('name', function ($row) {
-                    return $row->first_name . ' ' . $row->last_name;
-                })
+                        return $row->first_name . ' ' . $row->last_name;
+                    })
                     ->addColumn('dui', function ($row) {
-                    return $row->dui ?? 'N/A';
-                })
+                        return $row->dui ?? 'N/A';
+                    })
                     ->addColumn('age', function ($row) {
-                    if ($row->birth_date) {
-                        return \Carbon\Carbon::parse($row->birth_date)->age . ' años';
-                    }
-                    return 'N/A';
-                })
+                        if ($row->birth_date) {
+                            return \Carbon\Carbon::parse($row->birth_date)->age . ' años';
+                        }
+                        return 'N/A';
+                    })
                     ->addColumn('address', function ($row) {
-                    return $row->address ?? 'N/A';
-                })
+                        return $row->address ?? 'N/A';
+                    })
                     ->addColumn('mobile', function ($row) {
-                    return $row->phone_primary ?? 'N/A';
-                })
+                        return $row->phone_primary ?? 'N/A';
+                    })
                     ->addColumn('email', function ($row) {
-                    return $row->email ?? 'N/A';
-                })
+                        return $row->email ?? 'N/A';
+                    })
                     ->addColumn('option', function ($row) {
-                    $option = '
-                            <div class="d-flex gap-1 justify-content-center">
-                                <a href="patient/' . $row->id . '" class="btn btn-sm btn-outline-primary waves-effect" title="Ver Perfil">
-                                    <i class="bx bx-show"></i>
-                                </a>
-                                <a href="patient/' . $row->id . '/edit" class="btn btn-sm btn-success waves-effect" title="Editar Perfil">
-                                    <i class="bx bx-edit"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger waves-effect" title="Eliminar Paciente" data-id="' . $row->id . '" id="delete-patient">
-                                    <i class="bx bx-trash"></i>
-                                </button>
-                            </div>';
-                    return $option;
-                })->rawColumns(['option'])->make(true);
+                        $option = '
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="patient/' . $row->id . '" class="btn btn-sm btn-outline-primary waves-effect" title="Ver Perfil">
+                                        <i class="bx bx-show"></i>
+                                    </a>
+                                    <a href="patient/' . $row->id . '/edit" class="btn btn-sm btn-success waves-effect" title="Editar Perfil">
+                                        <i class="bx bx-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger waves-effect" title="Eliminar Paciente" data-id="' . $row->id . '" id="delete-patient">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </div>';
+                        return $option;
+                    })->rawColumns(['option'])->make(true);
             }
+            // Endpoint ligero para estadísticas (no DataTables)
+            if ($request->has('stat') && $request->stat === 'new_this_month') {
+                return response()->json([
+                    'new_this_month' => Patient::where('is_deleted', 0)
+                        ->whereYear('created_at', now()->year)
+                        ->whereMonth('created_at', now()->month)
+                        ->count()
+                ]);
+            }
+
             // Para carga inicial (no AJAX), pasar datos vacíos
             $patients = collect();
             return view('patient.patients', compact('user', 'role', 'patients'));
@@ -318,8 +335,16 @@ class PatientController extends Controller
             ]);
         }
 
-        // Buscamos las citas del paciente
-        $appointments = $patient->appointments()->orderBy('appointment_date', 'desc')->get();
+        // Para citas antiguas: buscar por appointment_for (user_id) del usuario con mismo email
+        $userWithSameEmail = User::where('email', $patient->email)->first();
+
+        $appointmentQuery = Appointment::where('patient_id', $patient->id);
+        if ($userWithSameEmail) {
+            $appointmentQuery->orWhere('appointment_for', $userWithSameEmail->id);
+        }
+        
+        // Buscamos las citas del paciente (nuevas y antiguas)
+        $appointments = $appointmentQuery->orderBy('appointment_date', 'desc')->get();
 
         // Opción predeterminada y opción "Sin Cita"
         $options = '<option value="" selected disabled>Seleccionar Cita</option>';
@@ -334,63 +359,23 @@ class PatientController extends Controller
 
         $age = $patient->age; // Ahora disponible como accessor
 
-        return response()->json([
-            'isSuccess' => true,
-            'options' => $options,
-            'patient' => [
-                'id' => $patient->id,
-                'name' => $patient->first_name . ' ' . $patient->last_name,
-                'info' => trim(
-                ($age ? $age . ' años · ' : '') .
-                ($patient->occupation ?? '') .
-                ($patient->address ? ' · ' . $patient->address : '')
-            ),
-                // Datos adicionales para el Tab de Información General
-                'first_name' => $patient->first_name,
-                'last_name' => $patient->last_name,
-                'gender' => $patient->gender,
-                'dui' => $patient->dui,
-                'dob' => $patient->birth_date, // Date of Birth
-                'age' => $age,
-                'mobile' => $patient->phone_primary,
-                'email' => $patient->email,
-                'blood_group' => $patient->medicalInfo->b_group ?? null,
-                'marital_status' => $patient->marital_status,
-                'address' => $patient->address,
-                'occupation' => $patient->occupation ?? 'No especificada',
-                'workplace' => $patient->workplace ?? 'No especificado',
-                'referred_by' => $patient->referred_by ?? 'Ninguno',
-                'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
-
-                // Antecedentes
-                'pathological_history' => $patient->pathological_history,
-                'non_pathological_history' => $patient->non_pathological_history,
-                'medications_allergies' => $patient->medications_allergies,
-
-                // Signos vitales más recientes
-                'signos' => $patient->signos ? [
-                    'peso' => $patient->signos->peso,
-                    'talla' => $patient->signos->talla,
-                    'frec_respiratoria' => $patient->signos->frec_respiratoria,
-                    'temperatura' => $patient->signos->temperatura,
-                    'presion_arterial_sistolica' => $patient->signos->presion_arterial_sistolica,
-                    'presion_arterial_diastolica' => $patient->signos->presion_arterial_diastolica,
-                    'frec_cardiaca' => $patient->signos->frec_cardiaca,
-                    'spo' => $patient->signos->spo,
-                    'examen' => $patient->signos->examen,
-                    'observaciones_adicionales' => $patient->signos->observaciones_adicionales,
-                ] : null,
-
-                // Historia Clínica (Últimas 10 consultas)
-                'historial' => Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos'])
-                ->where('patient_id', $patient->id)
+                // 1. Nuevas consultas (Prescriptions)
+                $appointmentIds = $appointments->pluck('id')->toArray();
+                $newHistorial = Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos'])
                 ->where('is_deleted', 0)
+                ->where(function ($q) use ($patient, $appointmentIds) {
+                    $q->where('patient_id', $patient->id);
+                    if (!empty($appointmentIds)) {
+                        $q->orWhereIn('appointment_id', $appointmentIds);
+                    }
+                })
                 ->orderBy('id', 'desc')
                 ->take(10)
                 ->get()
                 ->map(function ($presc) {
-            return [
+                    return [
                         'id' => $presc->id,
+                        'is_old' => false,
                         'date' => $presc->created_at->format('d/m/Y h:i A'),
                         'consulta_por' => $presc->consulta_por,
                         'diagnostico' => $presc->diagnosis,
@@ -399,9 +384,87 @@ class PatientController extends Controller
                         'archivos' => $presc->archivos,
                         'medicinas' => $presc->medicines
                     ];
-        })
-            ]
-        ]);
+                });
+
+                // 2. Consultas antiguas (tabla 'consulta')
+                $oldConsultas = \Illuminate\Support\Facades\DB::table('consulta')
+                ->where('paciente', $patient->id)
+                ->orderBy('fecha_consulta', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($cons) {
+                    return [
+                        'id' => $cons->id,
+                        'is_old' => true,
+                        'date' => \Carbon\Carbon::parse($cons->fecha_consulta)->format('d/m/Y h:i A'),
+                        'consulta_por' => $cons->sintomas,
+                        'diagnostico' => $cons->motivo,
+                        'evaluacion' => null,
+                        'vacunas' => [],
+                        'archivos' => [],
+                        'medicinas' => []
+                    ];
+                });
+
+                // Unir ambos y ordenar por fecha
+                $historial = $newHistorial->concat($oldConsultas)
+                ->sortByDesc(function ($item) {
+                    return \Carbon\Carbon::createFromFormat('d/m/Y h:i A', $item['date'])->timestamp;
+                })
+                ->take(10)
+                ->values();
+
+            return response()->json([
+                'isSuccess' => true,
+                'options' => $options,
+                'patient' => [
+                    'id' => $patient->id,
+                    'name' => $patient->first_name . ' ' . $patient->last_name,
+                    'info' => trim(
+                    ($age ? $age . ' años · ' : '') .
+                    ($patient->occupation ?? '') .
+                    ($patient->address ? ' · ' . $patient->address : '')
+                ),
+                    // Datos adicionales para el Tab de Información General
+                    'first_name' => $patient->first_name,
+                    'last_name' => $patient->last_name,
+                    'gender' => $patient->gender,
+                    'dui' => $patient->dui,
+                    'dob' => $patient->birth_date, // Date of Birth
+                    'age' => $age,
+                    'mobile' => $patient->phone_primary,
+                    'email' => $patient->email,
+                    'blood_group' => $patient->medicalInfo->b_group ?? null,
+                    'marital_status' => $patient->marital_status,
+                    'address' => $patient->address,
+                    'occupation' => $patient->occupation ?? 'No especificada',
+                    'workplace' => $patient->workplace ?? 'No especificado',
+                    'referred_by' => $patient->referred_by ?? 'Ninguno',
+                    'profile_photo_url' => $patient->photo ? asset('storage/images/patients/' . $patient->photo) : null, // Si existe
+    
+                    // Antecedentes
+                    'pathological_history' => $patient->pathological_history,
+                    'non_pathological_history' => $patient->non_pathological_history,
+                    'medications_allergies' => $patient->medications_allergies,
+    
+                    // Signos vitales más recientes
+                    'signos' => $patient->signos ? [
+                        'peso' => $patient->signos->peso,
+                        'talla' => $patient->signos->talla,
+                        'frec_respiratoria' => $patient->signos->frec_respiratoria,
+                        'temperatura' => $patient->signos->temperatura,
+                        'presion_arterial_sistolica' => $patient->signos->presion_arterial_sistolica,
+                        'presion_arterial_diastolica' => $patient->signos->presion_arterial_diastolica,
+                        'frec_cardiaca' => $patient->signos->frec_cardiaca,
+                        'spo' => $patient->signos->spo,
+                        'examen' => $patient->signos->examen,
+                        'observaciones_adicionales' => $patient->signos->observaciones_adicionales,
+                    ] : null,
+    
+                    // Historia Clínica (Últimas 10 consultas unidas)
+                    'historial' => $historial
+                ]
+            ]);
     }
 
     public function patientByAppointment(Request $request)

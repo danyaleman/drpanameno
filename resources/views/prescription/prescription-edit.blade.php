@@ -207,12 +207,126 @@
                 </div>
             </div>
 
+
             <div class="tab-pane fade" id="tab-consulta">
-                <div class="mb-3">
-                    <label>Consulta por</label>
-                    <textarea name="consulta_por" class="form-control">{{ old('consulta_por', $prescription->consulta_por) }}</textarea>
+
+                {{-- ── SECCIÓN: TIPO Y COSTO DE CONSULTA ── --}}
+                <div class="card border-0 mb-4" style="background: linear-gradient(135deg,#f0f4ff 0%,#e8f0fe 100%); border-radius:12px;">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-primary mb-3">
+                            <i class="bx bx-dollar-circle me-1"></i> Tipo y Costo de Consulta
+                        </h6>
+
+                        <div class="row g-3">
+                            {{-- Tipo de Consulta --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-dark">
+                                    <i class="bx bx-list-ul me-1 text-primary"></i> Tipo de Consulta
+                                </label>
+                                <select name="tipo_consulta_id" id="tipo_consulta_id" class="form-select">
+                                    <option value="">— Seleccionar tipo —</option>
+                                    @foreach($tipoConsultas as $tc)
+                                        <option value="{{ $tc->id }}"
+                                            {{ old('tipo_consulta_id', $prescription->tipo_consulta_id) == $tc->id ? 'selected' : '' }}>
+                                            {{ $tc->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Código de tarifa --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-dark">
+                                    <i class="bx bx-barcode me-1 text-primary"></i> Código / Tarifa
+                                    <span id="codigo-loading" class="spinner-border spinner-border-sm text-primary ms-1" style="display:none;"></span>
+                                </label>
+                                <select name="codigo_id" id="codigo_id" class="form-select"
+                                    data-current="{{ $prescription->codigo_id }}">
+                                    <option value="">— Seleccione tipo primero —</option>
+                                </select>
+                            </div>
+
+                            {{-- Precio editable --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-dark">
+                                    <i class="bx bx-money me-1 text-success"></i> Precio Consulta
+                                    <small class="text-muted fw-normal">(editable)</small>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white fw-bold border-0">$</span>
+                                    <input type="number" name="precio_consulta" id="precio_consulta"
+                                        class="form-control fw-bold fs-5"
+                                        step="0.01" min="0"
+                                        value="{{ old('precio_consulta', $prescription->precio_consulta) }}"
+                                        placeholder="0.00"
+                                        style="color:#198754;">
+                                </div>
+                                <small class="text-muted">Puede ajustar el precio a criterio del médico.</small>
+                            </div>
+                        </div>
+
+                        {{-- Resumen visual del costo --}}
+                        <div id="precio-resumen" class="mt-3 p-3 rounded-3 {{ $prescription->tipo_consulta_id ? '' : 'd-none' }}"
+                            style="background:rgba(25,135,84,0.08); border:1px solid rgba(25,135,84,0.2);">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <span class="text-muted me-2" style="font-size:13px;">Tipo:</span>
+                                    <strong id="res-tipo" class="text-dark">{{ optional($prescription->tipoConsulta)->nombre ?? '—' }}</strong>
+                                    <span class="mx-2 text-muted">·</span>
+                                    <span class="text-muted me-2" style="font-size:13px;">Código:</span>
+                                    <strong id="res-codigo" class="text-dark">{{ optional($prescription->codigo)->codigo ?? '—' }}</strong>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success-subtle text-success px-3 py-2 fs-6 fw-bold">
+                                        <i class="bx bx-dollar me-1"></i>
+                                        <span id="res-precio">{{ number_format($prescription->precio_consulta ?? 0, 2) }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                {{-- ── SECCIÓN: MOTIVO E HISTORIA ── --}}
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="form-label fw-semibold text-dark mb-0">
+                                <i class="bx bx-message-rounded-dots me-1 text-primary"></i> Consulta por / Motivo
+                            </label>
+                            <button type="button" class="btn-mic" id="mic-consulta_por"
+                                data-target="consulta_por" title="Dictar con voz">
+                                <i class="bx bx-microphone"></i>
+                                <span class="mic-label">Dictar</span>
+                            </button>
+                        </div>
+                        <textarea name="consulta_por" id="consulta_por" class="form-control" rows="3"
+                            placeholder="Describa el motivo principal de la consulta...">{{ old('consulta_por', $prescription->consulta_por) }}</textarea>
+                        <div id="status-consulta_por" class="mic-status d-none"></div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="form-label fw-semibold text-dark mb-0">
+                                <i class="bx bx-history me-1"></i> Historia Clínica
+                                <span class="badge bg-secondary-subtle text-secondary ms-1 fw-normal" style="font-size:10px;">
+                                    Queda registrada en el expediente
+                                </span>
+                            </label>
+                            <button type="button" class="btn-mic" id="mic-diagnosis"
+                                data-target="diagnosis" title="Dictar con voz">
+                                <i class="bx bx-microphone"></i>
+                                <span class="mic-label">Dictar</span>
+                            </button>
+                        </div>
+                        <textarea name="diagnosis" id="diagnosis" class="form-control" rows="5"
+                            placeholder="Resumen de antecedentes relevantes, evolución del padecimiento, procedimientos previos, tratamientos anteriores...">{{ old('diagnosis', $prescription->diagnosis) }}</textarea>
+                        <div id="status-diagnosis" class="mic-status d-none"></div>
+                    </div>
+                </div>
+
             </div>
+
 
             {{-- EXPLORACIÓN FÍSICA --}}
             <div class="tab-pane fade" id="tab-exploracion">
@@ -542,6 +656,155 @@ $(document).ready(function () {
         }, 50);
     });
 
+    // ── Carga dinámica de CÓDIGOS al cambiar Tipo de Consulta ──────
+    const tipoSelect    = document.getElementById('tipo_consulta_id');
+    const codigoSelect  = document.getElementById('codigo_id');
+    const precioInput   = document.getElementById('precio_consulta');
+    const codigoLoading = document.getElementById('codigo-loading');
+    const precioResumen = document.getElementById('precio-resumen');
+
+    function actualizarResumen() {
+        const tipoText   = tipoSelect ? tipoSelect.options[tipoSelect.selectedIndex]?.text : '';
+        const codigoText = codigoSelect ? codigoSelect.options[codigoSelect.selectedIndex]?.text : '';
+        const precio     = precioInput ? parseFloat(precioInput.value || 0).toFixed(2) : '0.00';
+        if (tipoText && tipoText !== '— Seleccionar tipo —') {
+            document.getElementById('res-tipo').textContent   = tipoText;
+            document.getElementById('res-codigo').textContent = codigoText || '—';
+            document.getElementById('res-precio').textContent = precio;
+            precioResumen.classList.remove('d-none');
+        } else {
+            precioResumen.classList.add('d-none');
+        }
+    }
+
+    function cargarCodigos(tipoId, currentCodigoId, callback) {
+        if (!tipoId) return;
+        codigoLoading.style.display = 'inline-block';
+        codigoSelect.disabled = true;
+
+        fetch(`/prescription/codigos-por-tipo/${tipoId}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            codigoSelect.innerHTML = '<option value="">— Seleccionar código —</option>';
+            data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value          = c.id;
+                opt.dataset.precio = c.precio;
+                opt.textContent    = `${c.codigo}  ($${parseFloat(c.precio).toFixed(2)})`;
+                if (currentCodigoId && c.id == currentCodigoId) opt.selected = true;
+                codigoSelect.appendChild(opt);
+            });
+            codigoSelect.disabled = false;
+            if (callback) callback();
+        })
+        .catch(err => {
+            console.error('Error codigos:', err);
+            codigoSelect.innerHTML = '<option value="">⚠ Error — intente de nuevo</option>';
+        })
+        .finally(() => { codigoLoading.style.display = 'none'; });
+    }
+
+    if (tipoSelect) {
+        // Pre-cargar códigos si hay tipo ya seleccionado (modo edición)
+        const initTipoId    = tipoSelect.value;
+        const initCodigoId  = codigoSelect ? codigoSelect.dataset.current : null;
+        if (initTipoId) {
+            cargarCodigos(initTipoId, initCodigoId, actualizarResumen);
+        }
+
+        tipoSelect.addEventListener('change', function () {
+            precioInput.value = '';
+            cargarCodigos(this.value, null, actualizarResumen);
+            actualizarResumen();
+        });
+
+        codigoSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            if (selected && selected.dataset.precio !== undefined) {
+                precioInput.value = parseFloat(selected.dataset.precio).toFixed(2);
+            }
+            actualizarResumen();
+        });
+
+        precioInput.addEventListener('input', actualizarResumen);
+    }
+
+    // ── Carga dinámica de dosis al cambiar vacuna ──────────────────
+
+    const vaccineSelect  = document.getElementById('vaccine_catalog_id');
+    const doseSelect     = document.getElementById('dose_number');
+    const doseLabelInput = document.getElementById('dose_label');
+    const doseLoading    = document.getElementById('dose-loading');
+
+    if (vaccineSelect) {
+        // Inicializar Select2 para la vacuna
+        $(vaccineSelect).select2({
+            placeholder: '— No registrar vacuna —',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $(vaccineSelect).on('change', function () {
+            const vaccineId = this.value;
+
+            doseSelect.innerHTML = '<option value="">— Seleccionar dosis —</option>';
+            doseLabelInput.value = '';
+
+            if (!vaccineId) return;
+
+            // Mostrar spinner
+            doseLoading.style.display = 'inline-block';
+            doseSelect.disabled = true;
+
+            fetch(`/vaccines/schedule/${vaccineId}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                const schedules = Array.isArray(data) ? data : (data.schedules || []);
+
+                doseSelect.innerHTML = '<option value="">— Seleccionar dosis —</option>';
+
+                if (schedules.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = 1;
+                    opt.dataset.label = 'Dosis única';
+                    opt.textContent = 'Dosis única (sin esquema definido)';
+                    doseSelect.appendChild(opt);
+                } else {
+                    schedules.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.dose_number;
+                        opt.dataset.label = s.dose_label;
+                        const intervalo = s.days_after_previous === 0
+                            ? 'Primera dosis'
+                            : `${s.days_after_previous} días después de la anterior`;
+                        opt.textContent = `${s.dose_label} — ${intervalo}`;
+                        doseSelect.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error cargando dosis:', err);
+                doseSelect.innerHTML = '<option value="">⚠ Error al cargar — intente de nuevo</option>';
+            })
+            .finally(() => {
+                doseLoading.style.display = 'none';
+                doseSelect.disabled = false;
+            });
+        });
+
+        doseSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            doseLabelInput.value = selected ? (selected.dataset.label || selected.textContent) : '';
+        });
+    }
+
     /* =========================================================
      *  LOGICA MANUAL PARA REPEATER (SIN LIBRERÍA EXTERNA)
      * ========================================================= */
@@ -789,5 +1052,106 @@ $(document).ready(function () {
     };
 
 });
+</script>
+
+{{-- ══ WEB SPEECH API — Dictado voz a texto ══ --}}
+<style>
+.btn-mic {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; font-size: 13px; font-weight: 600;
+    border: 2px solid #556ee6; border-radius: 20px;
+    background: transparent; color: #556ee6;
+    cursor: pointer; transition: all .2s ease;
+    white-space: nowrap; user-select: none; line-height: 1.4;
+}
+.btn-mic i { font-size: 16px; }
+.btn-mic:hover { background: #556ee6; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(85,110,230,.35); }
+.btn-mic.recording {
+    background: #dc3545; border-color: #dc3545; color: #fff;
+    animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 4px rgba(220,53,69,.25); }
+    50%      { box-shadow: 0 0 0 9px rgba(220,53,69,.06); }
+}
+.btn-mic.unsupported { opacity:.45; cursor:not-allowed; border-color:#adb5bd; color:#adb5bd; }
+.mic-status {
+    font-size: 12px; margin-top: 5px; padding: 4px 10px;
+    border-radius: 6px; color: #495057;
+    background: rgba(85,110,230,.07); border-left: 3px solid #556ee6;
+}
+.mic-status.listening { border-color:#dc3545; background:rgba(220,53,69,.06); }
+.mic-status.done      { border-color:#198754; background:rgba(25,135,84,.06); }
+</style>
+
+<script>
+(function () {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+        document.querySelectorAll('.btn-mic').forEach(b => {
+            b.classList.add('unsupported');
+            b.title = 'Tu navegador no soporta dictado. Usa Chrome o Edge.';
+            b.querySelector('.mic-label').textContent = 'No disponible';
+        });
+        return;
+    }
+    let activeRec = null;
+    document.querySelectorAll('.btn-mic').forEach(btn => {
+        const targetId = btn.dataset.target;
+        const textarea = document.getElementById(targetId);
+        const statusEl = document.getElementById('status-' + targetId);
+        if (!textarea) return;
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('recording')) { activeRec && activeRec.stop(); return; }
+            activeRec && activeRec.stop();
+            const rec = new SR();
+            rec.lang = 'es-ES'; rec.continuous = true; rec.interimResults = true;
+            activeRec = rec;
+            let baseText  = textarea.value;  // texto previo al dictado
+            let finalText = '';               // texto final acumulado durante el dictado
+            rec.onstart = () => {
+                btn.classList.add('recording');
+                btn.querySelector('.mic-label').textContent = 'Grabando...';
+                statusEl.textContent = 'Escuchando... hable ahora';
+                statusEl.className = 'mic-status listening'; statusEl.classList.remove('d-none');
+                textarea.focus();
+            };
+            rec.onresult = (e) => {
+                let interim = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const t = e.results[i][0].transcript;
+                    if (e.results[i].isFinal) {
+                        finalText += t + ' ';
+                    } else {
+                        interim += t;
+                    }
+                }
+                textarea.value = baseText + finalText + interim;
+                textarea.scrollTop = textarea.scrollHeight;
+                if (interim) statusEl.textContent = interim.slice(-80);
+            };
+            rec.onerror = (e) => {
+                const msgs = { 'not-allowed':'Permiso denegado. Habilite el microfono en el navegador.','no-speech':'No se detecto voz. Intente de nuevo.','network':'Error de red.','audio-capture':'No se detecto microfono.' };
+                statusEl.textContent = msgs[e.error] || ('Error: ' + e.error);
+                statusEl.className = 'mic-status'; resetBtn(btn, statusEl);
+            };
+            rec.onend = () => {
+                const fullText = textarea.value;
+                textarea.value = fullText.trim() ? fullText : (baseText + finalText);
+                textarea.dispatchEvent(new Event('input',  { bubbles: true }));
+                textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                const n = textarea.value.trim().length;
+                statusEl.textContent = n ? ('✓ Completado — ' + n + ' caracteres guardados.') : 'Finalizado sin texto detectado.';
+                statusEl.className = 'mic-status done'; resetBtn(btn, statusEl); activeRec = null;
+            };
+            rec.start();
+        });
+    });
+    function resetBtn(btn, statusEl) {
+        btn.classList.remove('recording');
+        btn.querySelector('.mic-label').textContent = 'Dictar';
+        setTimeout(() => statusEl.classList.add('d-none'), 4500);
+    }
+})();
 </script>
 @endsection

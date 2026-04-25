@@ -240,42 +240,10 @@
     <!-- Init js-->
     <script src="{{ URL::asset('build/js/pages/notification.init.js') }}"></script>
     <script>
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData, counter) {
-            if (settings.nTable.id !== 'patientList') return true;
-
-            var minAgeStr = $('#filterAgeMin').val();
-            var maxAgeStr = $('#filterAgeMax').val();
-            var minAge = parseInt(minAgeStr, 10);
-            var maxAge = parseInt(maxAgeStr, 10);
-            var deptoStr = $('#filterDepto').val().toLowerCase();
-
-            var ageStr = rowData.age || '';
-            var ageMatch = ageStr.match(/\d+/);
-            var age = ageMatch ? parseInt(ageMatch[0], 10) : null;
-            var addStr = (rowData.address || '').toLowerCase();
-
-            // Filtro por dirección depto
-            if (deptoStr !== '' && addStr.indexOf(deptoStr) === -1) {
-                return false;
-            }
-
-            // Filtro de edad mínima
-            if (!isNaN(minAge) && minAgeStr !== "") {
-                if (age === null || age < minAge) return false;
-            }
-
-            // Filtro de edad máxima
-            if (!isNaN(maxAge) && maxAgeStr !== "") {
-                if (age === null || age > maxAge) return false;
-            }
-
-            return true;
-        });
-
         $(document).ready(function() {
             var table = $('#patientList').DataTable({
                 processing: true,
-                serverSide: false,
+                serverSide: true,   // ← Solo carga la página actual desde el servidor
                 dom: '<"row mb-3"<"col-sm-6"B><"col-sm-6"f>>rt<"row mt-3"<"col-sm-5"i><"col-sm-7"p>>',
                 buttons: [
                     {
@@ -381,36 +349,30 @@
                 pageLength: 15,
                 order: [[0, 'asc']],
                 drawCallback: function(settings) {
-                    // Actualizar stats
                     var info = this.api().page.info();
-                    $('#stat-total').text(info.recordsTotal);
-                    $('#lblCount').text(info.recordsDisplay);
+                    $('#stat-total').text(info.recordsTotal.toLocaleString());
+                    $('#lblCount').text(info.recordsDisplay.toLocaleString());
                 }
             });
 
-            // Enlazamos filtros a la tabla
-            $('#filterAgeMin, #filterAgeMax').on('keyup', function() { table.draw(); });
-            $('#filterDepto').on('change', function() { table.draw(); });
-            $('#btnFilter').on('click', function() { table.draw(); });
+            // Filtros server-side: buscar al presionar botón o cambiar depto
+            $('#btnFilter').on('click', function() {
+                var minAge  = $('#filterAgeMin').val();
+                var maxAge  = $('#filterAgeMax').val();
+                var depto   = $('#filterDepto').val();
+                // Concatenar al search global (DataTables enviará como searchValue)
+                var extra = '';
+                if (depto)  extra += depto + ' ';
+                if (minAge) extra += 'edad>=' + minAge + ' ';
+                if (maxAge) extra += 'edad<=' + maxAge + ' ';
+                table.search(extra.trim()).draw();
+            });
+            $('#filterAgeMin, #filterAgeMax').on('keyup', function() { $('#btnFilter').trigger('click'); });
+            $('#filterDepto').on('change', function() { $('#btnFilter').trigger('click'); });
 
-            // Calcular pacientes nuevos este mes via los datos cargados
-            table.on('xhr', function() {
-                var data = table.ajax.json().data;
-                if (data) {
-                    var now = new Date();
-                    var currentMonth = now.getMonth();
-                    var currentYear = now.getFullYear();
-                    var newThisMonth = 0;
-                    data.forEach(function(row) {
-                        if (row.created_at) {
-                            var d = new Date(row.created_at);
-                            if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                                newThisMonth++;
-                            }
-                        }
-                    });
-                    $('#stat-new').text(newThisMonth);
-                }
+            // Pacientes nuevos este mes — consulta ligera independiente
+            $.get('{{ route("patient.index") }}', { stat: 'new_this_month' }, function(r) {
+                if (r.new_this_month !== undefined) $('#stat-new').text(r.new_this_month.toLocaleString());
             });
         });
 

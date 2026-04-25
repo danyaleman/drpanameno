@@ -17,6 +17,7 @@ class Appointment extends Model
         'booked_by',
         'status',
         'is_telemedicine',
+        'appointment_type',
         'is_deleted',
     ];
 

@@ -93,6 +93,8 @@ class PrescriptionController extends Controller
         if ($user->hasAccess('prescription.create')) {
             $role = $user->roles[0]->slug;
             $patients = Patient::where('is_deleted', 0)->get();
+            $vaccines = \App\VaccineCatalog::active()->orderBy('name')->get();
+            $tipoConsultas = \App\TipoConsulta::where('estado', 1)->orderBy('nombre')->get();
 
             // Obtener parámetros opcionales de la URL
             $preloadPatientId = $request->query('patient_id');
@@ -114,6 +116,8 @@ class PrescriptionController extends Controller
                 'user',
                 'role',
                 'patients',
+                'vaccines',
+                'tipoConsultas',
                 'preloadPatientId',
                 'preloadAppointmentId',
                 'preloadPatient',
@@ -123,6 +127,19 @@ class PrescriptionController extends Controller
         else {
             return view('error.403');
         }
+    }
+
+    /**
+     * API: Devuelve los códigos activos de un tipo de consulta (JSON para AJAX)
+     */
+    public function getCodigosByTipo($tipoConsultaId)
+    {
+        $codigos = \App\Codigo::where('tipo_consulta_id', $tipoConsultaId)
+            ->where('estado', 1)
+            ->orderBy('codigo')
+            ->get(['id', 'codigo', 'precio']);
+
+        return response()->json($codigos);
     }
 
     /**
@@ -142,20 +159,23 @@ class PrescriptionController extends Controller
         if ($user->hasAccess('prescription.create')) {
             $request->validate([
                 'patient_id_hidden' => 'required',
-                'appointment_id' => 'required',
-                'consulta_por' => 'required',
-                'diagnostico' => 'required'
+                'appointment_id'    => 'required',
+                'consulta_por'      => 'nullable|string',
+                'diagnostico'       => 'nullable|string',
             ]);
 
             try {
                 $user = Sentinel::getUser();
 
-                $this->prescription->patient_id = $request->patient_id_hidden;
-                $this->prescription->appointment_id = $request->appointment_id;
-                $this->prescription->consulta_por = $request->consulta_por;
-                $this->prescription->diagnosis = $request->diagnostico;
-                $this->prescription->created_by = $request->created_by;
-                $this->prescription->updated_by = $user->id;
+                $this->prescription->patient_id      = $request->patient_id_hidden;
+                $this->prescription->appointment_id   = $request->appointment_id;
+                $this->prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
+                $this->prescription->codigo_id        = $request->codigo_id ?: null;
+                $this->prescription->precio_consulta  = $request->precio_consulta ?: null;
+                $this->prescription->consulta_por     = $request->consulta_por;
+                $this->prescription->diagnosis        = $request->diagnosis; // Historia Clínica
+                $this->prescription->created_by       = $request->created_by;
+                $this->prescription->updated_by       = $user->id;
                 $this->prescription->save();
 
                 Signos::updateOrCreate(
@@ -222,16 +242,21 @@ class PrescriptionController extends Controller
                     }
                 }
 
-                if ($request->has('vacunas')) {
-                    foreach ($request->vacunas as $item) {
-                        if (!empty($item['tipo'])) {
-                            Vacuna::create([
-                                'prescription_id' => $this->prescription->id,
-                                'tipo' => $item['tipo'],
-                                'dosis' => $item['dosis'],
-                            ]);
-                        }
-                    }
+                // Guardar Vacuna si fue seleccionada (usando nuevo módulo VaccineRecord)
+                if ($request->has('vaccine_catalog_id') && !empty($request->vaccine_catalog_id)) {
+                    \App\VaccineRecord::create([
+                        'patient_id'         => $request->patient_id_hidden,
+                        'prescription_id'    => $this->prescription->id,
+                        'vaccine_catalog_id' => $request->vaccine_catalog_id,
+                        'dose_number'        => $request->dose_number ?? 1,
+                        'dose_label'         => $request->dose_label ?? 'Dosis',
+                        'status'             => 'applied',
+                        'applied_date'       => $request->applied_date ?? date('Y-m-d'),
+                        'scheduled_date'     => $request->applied_date ?? date('Y-m-d'),
+                        'lot_number'         => $request->lot_number,
+                        'applied_by'         => $request->applied_by,
+                        'notes'              => $request->vaccine_notes,
+                    ]);
                 }
 
                 return redirect('prescription')->with('success', 'Prescription created successfully!');
@@ -256,7 +281,13 @@ class PrescriptionController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('prescription.show')) {
             $role = $user->roles[0]->slug;
-            $vacunas = Vacuna::where('prescription_id', $prescription->id)->get();
+            $oldVacunas = Vacuna::where('prescription_id', $prescription->id)->get()->map(function($v) {
+                return (object)[ 'tipo' => $v->tipo, 'dosis' => $v->dosis ];
+            });
+            $newVacunas = \App\VaccineRecord::with('vaccine')->where('prescription_id', $prescription->id)->get()->map(function($v) {
+                return (object)[ 'tipo' => $v->vaccine ? $v->vaccine->name : 'Vacuna', 'dosis' => $v->dose_label ];
+            });
+            $vacunas = $oldVacunas->merge($newVacunas);
             $user_details = Prescription::with('patient', 'appointment', 'appointment.doctor.user', 'evaluacion', 'archivos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
             if ($user_details) {
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
@@ -292,9 +323,19 @@ class PrescriptionController extends Controller
                 $appointment = Appointment::where('appointment_for', $prescription->patient->id)->where('is_deleted', 0)->get();
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
-                $vacunas = Vacuna::where('prescription_id', $prescription->id)->get();
+                
+                $oldVacunas = Vacuna::where('prescription_id', $prescription->id)->get()->map(function($v) {
+                    return (object)[ 'tipo' => $v->tipo, 'dosis' => $v->dosis ];
+                });
+                $newVacunas = \App\VaccineRecord::with('vaccine')->where('prescription_id', $prescription->id)->get()->map(function($v) {
+                    return (object)[ 'tipo' => $v->vaccine ? $v->vaccine->name : 'Vacuna', 'dosis' => $v->dose_label ];
+                });
+                $vacunas = $oldVacunas->merge($newVacunas);
+                
+                $vaccines = \App\VaccineCatalog::active()->orderBy('name')->get();
+                $tipoConsultas = \App\TipoConsulta::where('estado', 1)->orderBy('nombre')->get();
                 $signos = Signos::where('patient_id', $prescription->patient_id)->first();
-                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas'));
+                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas', 'vaccines', 'tipoConsultas'));
             }
             else {
                 return redirect('/dashboard')->with('error', 'Prescription not found');
@@ -324,11 +365,14 @@ class PrescriptionController extends Controller
             ]);
             try {
                 $prescription = Prescription::find($prescription->id);
-                $prescription->patient_id = $request->patient_id_hidden;
-                $prescription->appointment_id = $request->appointment_id;
-                $prescription->consulta_por = $request->consulta_por;
-                $prescription->diagnosis = $request->diagnostico;
-                $prescription->updated_by = $user->id;
+                $prescription->patient_id      = $request->patient_id_hidden;
+                $prescription->appointment_id   = $request->appointment_id;
+                $prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
+                $prescription->codigo_id        = $request->codigo_id ?: null;
+                $prescription->precio_consulta  = $request->precio_consulta ?: null;
+                $prescription->consulta_por     = $request->consulta_por;
+                $prescription->diagnosis        = $request->diagnosis; // Historia Clínica
+                $prescription->updated_by       = $user->id;
                 $prescription->save();
 
                 Vacuna::where('prescription_id', $prescription->id)->delete();
@@ -405,6 +449,23 @@ class PrescriptionController extends Controller
                             ]);
                         }
                     }
+                }
+
+                // Guardar Vacuna si fue seleccionada (usando nuevo módulo VaccineRecord)
+                if ($request->has('vaccine_catalog_id') && !empty($request->vaccine_catalog_id)) {
+                    \App\VaccineRecord::create([
+                        'patient_id'         => $request->patient_id_hidden,
+                        'prescription_id'    => $prescription->id,
+                        'vaccine_catalog_id' => $request->vaccine_catalog_id,
+                        'dose_number'        => $request->dose_number ?? 1,
+                        'dose_label'         => $request->dose_label ?? 'Dosis',
+                        'status'             => 'applied',
+                        'applied_date'       => $request->applied_date ?? date('Y-m-d'),
+                        'scheduled_date'     => $request->applied_date ?? date('Y-m-d'),
+                        'lot_number'         => $request->lot_number,
+                        'applied_by'         => $request->applied_by,
+                        'notes'              => $request->vaccine_notes,
+                    ]);
                 }
 
                 return redirect('prescription')->with('success', 'Prescription Updated successfully!');

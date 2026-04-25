@@ -574,20 +574,26 @@ class AppointmentController extends Controller
                     }
 
                     // Crear una cita por cada franja (slot) seleccionada
-                    $slots = $request->available_slot;
-                    $firstAppointment = null;
+                    $slots             = $request->available_slot;
+                    $firstAppointment  = null;
+                    $savedAppointments = []; // guardar referencias directas para crear salas
 
                     foreach ($slots as $slotId) {
                         $appointment = new Appointment();
-                        $appointment->patient_id = $request->patient_id;
-                        $appointment->appointment_for = $request->patient_id;
+                        $appointment->patient_id       = $request->patient_id;
+                        $appointment->appointment_for  = $request->patient_id;
                         $appointment->appointment_with = $request->appointment_with;
                         $appointment->appointment_date = $newDate;
-                        $appointment->available_time = $request->available_time;
-                        $appointment->available_slot = $slotId;
-                        $appointment->booked_by = $user->id;
-                        $appointment->is_telemedicine = $request->is_telemedicine ?? 0;
+                        $appointment->available_time   = $request->available_time;
+                        $appointment->available_slot   = $slotId;
+                        $appointment->booked_by        = $user->id;
+                        // Nuevo campo tipo — mapear is_telemedicine por compatibilidad
+                        $apptType = $request->appointment_type ?? 'presencial';
+                        $appointment->appointment_type = $apptType;
+                        $appointment->is_telemedicine  = ($apptType === 'telemedicine') ? 1 : 0;
                         $appointment->save();
+
+                        $savedAppointments[] = $appointment;
 
                         if ($firstAppointment === null) {
                             $firstAppointment = $appointment;
@@ -597,25 +603,29 @@ class AppointmentController extends Controller
                     // Usar la primera cita para la data principal, pero ajustar el slot de tiempo para el correo
                     // Para mostrar "10:00 - 11:00" en lugar de "10:00 - 10:30"
                     $firstSlotId = $slots[0];
-                    $lastSlotId = end($slots);
+                    $lastSlotId  = end($slots);
 
                     $firstSlot = \App\DoctorAvailableSlot::find($firstSlotId);
-                    $lastSlot = \App\DoctorAvailableSlot::find($lastSlotId);
+                    $lastSlot  = \App\DoctorAvailableSlot::find($lastSlotId);
 
                     $appointment = $firstAppointment; // Para notificaciones usamos la primera como base
 
-                    if ($request->is_telemedicine) {
+                    // ── Crear sala Daily.co para CADA cita de telemedicina ──
+                    if ($apptType === 'telemedicine') {
                         $dailyService = new DailyService();
-                        $roomName = 'teleconsulta-' . $appointment->id . '-' . time();
-                        $dailyRoom = $dailyService->createRoom($roomName);
-
-                        if ($dailyRoom) {
-                            Teleconsultation::create([
-                                'appointment_id' => $appointment->id,
-                                'daily_room_url' => $dailyRoom['url'],
-                                'daily_room_name' => $dailyRoom['name'],
-                                'status' => 'pending'
-                            ]);
+                        foreach ($savedAppointments as $savedApt) {
+                            if (!Teleconsultation::where('appointment_id', $savedApt->id)->exists()) {
+                                $roomName  = 'teleconsulta-' . $savedApt->id . '-' . time();
+                                $dailyRoom = $dailyService->createRoom($roomName);
+                                if ($dailyRoom) {
+                                    Teleconsultation::create([
+                                        'appointment_id'  => $savedApt->id,
+                                        'daily_room_url'  => $dailyRoom['url'],
+                                        'daily_room_name' => $dailyRoom['name'],
+                                        'status'          => 'pending',
+                                    ]);
+                                }
+                            }
                         }
                     }
 

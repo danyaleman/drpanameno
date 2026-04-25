@@ -332,11 +332,19 @@
                             <i class="bx bx-laptop text-primary me-1"></i>Tipo de Cita
                             <span class="required-star">*</span>
                         </label>
-                        <select class="form-select" name="is_telemedicine" id="is_telemedicine">
-                            <option value="0" {{ old('is_telemedicine') == '0' ? 'selected' : '' }}>Presencial</option>
-                            <option value="1" {{ old('is_telemedicine') == '1' ? 'selected' : '' }}>Telemedicina (Videollamada)</option>
+                        <select class="form-select" name="appointment_type" id="appointment_type">
+                            <option value="presencial"  {{ old('appointment_type') == 'presencial'   ? 'selected' : '' }}>🏥 Presencial</option>
+                            <option value="telemedicine" {{ old('appointment_type') == 'telemedicine' ? 'selected' : '' }}>💻 Telemedicina (Videollamada)</option>
+                            <option value="vacunacion"  {{ old('appointment_type') == 'vacunacion'   ? 'selected' : '' }}>💉 Vacunación</option>
                         </select>
-                        @error('is_telemedicine')
+                        {{-- Nota vacunación --}}
+                        <div id="nota-vacunacion" class="mt-2 p-3 rounded-3 d-none"
+                            style="background:rgba(25,135,84,.07);border-left:3px solid #198754;font-size:13px;">
+                            <i class="bx bx-info-circle text-success me-1"></i>
+                            <strong>Cita de Vacunación:</strong> Varios pacientes pueden coincidir en el mismo horario.
+                            Al atender la cita, el botón redirigirá directamente al <strong>Registro de Vacunación</strong> del paciente.
+                        </div>
+                        @error('appointment_type')
                             <span class="invalid-feedback d-block"><strong>{{ $message }}</strong></span>
                         @enderror
                     </div>
@@ -696,11 +704,15 @@
                 data: { timeId: timeId, _token: token, dates: dates, doctorId: doctorId },
                 success: function(response) {
                     var available_slot = response.data[0];
+                    var isVacunacion = ($('#appointment_type').val() === 'vacunacion');
                     $.each(available_slot, function(key, value) {
-                        if (value.appointment.length == 0) {
+                        if (value.appointment.length == 0 || isVacunacion) {
+                            var badge = (isVacunacion && value.appointment.length > 0)
+                                ? ' <span class="badge bg-warning text-dark" style="font-size:10px;vertical-align:middle;">' + value.appointment.length + ' ya agendada(s)</span>'
+                                : '';
                             $('.availble_slot').append(
                                 '<label><input type="checkbox" name="available_slot[]" class="btn-check available-slot" value="' +
-                                value.id + '" data-from="' + value.from + '" data-to="' + value.to + '"><i class="bx bx-check-circle"></i> ' + value.from + ' - ' + value.to + '</label>');
+                                value.id + '" data-from="' + value.from + '" data-to="' + value.to + '"><i class="bx bx-check-circle"></i> ' + value.from + ' - ' + value.to + badge + '</label>');
                         } else {
                             $('.availble_slot').append(
                                 '<label class="disabled-slot"><input type="checkbox" name="available_slot[]" class="btn-check available-slot" value="' +
@@ -953,4 +965,23 @@
             });
         });
     </script>
+
+<script>
+// ── Nota de vacunación al cambiar tipo de cita ──────────────
+(function () {
+    var sel = document.getElementById('appointment_type');
+    var nota = document.getElementById('nota-vacunacion');
+    if (!sel || !nota) return;
+
+    function toggleNota() {
+        if (sel.value === 'vacunacion') {
+            nota.classList.remove('d-none');
+        } else {
+            nota.classList.add('d-none');
+        }
+    }
+    sel.addEventListener('change', toggleNota);
+    toggleNota(); // On load (old value)
+})();
+</script>
 @endsection

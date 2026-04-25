@@ -53,7 +53,7 @@
                                             <th>{{ __('No.') }}</th>
                                             <th>{{ __('Nombre de Paciente') }}</th>
                                             <th>{{ __('Teléfono') }}</th>
-                                            <th>{{ __('Correo Electrónico') }}</th>
+                                            <th>{{ __('Tipo') }}</th>
                                             <th>{{ __('Fecha') }}</th>
                                             <th>{{ __('Hora') }}</th>
                                             <th>{{ __('Acción') }}</th>
@@ -78,16 +78,41 @@
                                                 <td> {{ optional($item->patient)->first_name ?? 'N/A' }} {{ optional($item->patient)->last_name ?? '' }}
                                                 </td>
                                                 <td> {{ optional($item->patient)->mobile ?? 'N/A' }} </td>
-                                                <td> {{ optional($item->patient)->email ?? 'N/A' }} </td>
+                                                <td>
+                                                    @php $tipo = $item->appointment_type ?? 'presencial'; @endphp
+                                                    @if($tipo === 'vacunacion')
+                                                        <span class="badge" style="background:#198754;color:#fff;">💉 Vacunación</span>
+                                                    @elseif($tipo === 'telemedicine')
+                                                        <span class="badge bg-primary">💻 Telemedicina</span>
+                                                    @else
+                                                        <span class="badge bg-secondary">🏥 Presencial</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ \Carbon\Carbon::parse($item->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }}</td>
                                                 <td>{{ optional($item->timeSlot)->from ?? 'N/A' }} {{ optional($item->timeSlot)->to ? '- ' . optional($item->timeSlot)->to : '' }}</td>
                                                 <td>
                                                     @if ($role != 'patient')
-                                                        <button type="button" class="btn btn-success complete"
-                                                            data-id="{{ $item->id }}">Completar</button>
+                                                        @if($tipo === 'vacunacion')
+                                                            <a href="{{ url('vaccines/records/create?patient_id=' . optional($item->patient)->id . '&appointment_id=' . $item->id) }}"
+                                                               class="btn btn-sm" style="background:#198754;color:#fff;font-weight:600;">
+                                                                💉 Registrar Vacuna
+                                                            </a>
+                                                        @elseif($tipo === 'telemedicine')
+                                                            <a href="{{ url('telemedicine/room/' . $item->id) }}"
+                                                               class="btn btn-sm btn-primary fw-bold">
+                                                                📹 Unirse a sala
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ url('prescription/create?patient_id=' . optional($item->patient)->id . '&appointment_id=' . $item->id) }}"
+                                                               class="btn btn-sm btn-primary fw-bold">
+                                                                🩺 Iniciar Consulta
+                                                            </a>
+                                                        @endif
+                                                        <button type="button" class="btn btn-sm btn-success complete ms-1"
+                                                            data-id="{{ $item->id }}">✔ Completar</button>
                                                     @endif
-                                                    <button type="button" class="btn btn-danger cancel"
-                                                        data-id="{{ $item->id }}">Cancelar</button>
+                                                    <button type="button" class="btn btn-sm btn-danger cancel ms-1"
+                                                        data-id="{{ $item->id }}">✖ Cancelar</button>
                                                 </td>
                                             </tr>
                                         @endforeach

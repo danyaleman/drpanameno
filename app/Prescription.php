@@ -11,6 +11,10 @@ class Prescription extends Model
 
     protected $fillable = [
         'patient_id',
+        'appointment_id',
+        'tipo_consulta_id',
+        'codigo_id',
+        'precio_consulta',
         'consulta_por',
         'diagnosis',
         'prescription_date',
@@ -18,6 +22,22 @@ class Prescription extends Model
         'updated_by',
         'is_deleted',
     ];
+
+    /**
+     * Tipo de consulta seleccionado
+     */
+    public function tipoConsulta()
+    {
+        return $this->belongsTo(TipoConsulta::class, 'tipo_consulta_id');
+    }
+
+    /**
+     * Código de tarifa seleccionado
+     */
+    public function codigo()
+    {
+        return $this->belongsTo(Codigo::class, 'codigo_id');
+    }
 
     /**
      * Doctor que creó la prescripción

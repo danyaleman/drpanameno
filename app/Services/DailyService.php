@@ -43,10 +43,18 @@ class DailyService
         }
 
         try {
-            $response = Http::withHeaders([
+            $http = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/rooms', $payload);
+                'Content-Type'  => 'application/json',
+            ]);
+
+            // En entorno local (WAMP/XAMPP) cURL no tiene certificados CA configurados.
+            // Solo desactivamos la verificación SSL en desarrollo, nunca en producción.
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->post($this->baseUrl . '/rooms', $payload);
 
             if ($response->successful()) {
                 return $response->json();

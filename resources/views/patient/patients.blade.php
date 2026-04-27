@@ -144,20 +144,34 @@
     <div class="card-body p-3">
         <div class="row align-items-end g-2">
             <div class="col-md-2">
-                <label for="filterAgeMin" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÍN (AÑOS)</label>
+                <label for="filterName" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">NOMBRE</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-down-arrow-alt"></i></span>
-                    <input type="number" id="filterAgeMin" class="form-control border-start-0 ps-0" placeholder="Ej: 18" min="0">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-user"></i></span>
+                    <input type="text" id="filterName" class="form-control border-start-0 ps-0" placeholder="Ej: Juan">
                 </div>
             </div>
             <div class="col-md-2">
-                <label for="filterAgeMax" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÁX (AÑOS)</label>
+                <label for="filterDui" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DUI / ID</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-up-arrow-alt"></i></span>
-                    <input type="number" id="filterAgeMax" class="form-control border-start-0 ps-0" placeholder="Ej: 60" min="0">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-id-card"></i></span>
+                    <input type="text" id="filterDui" class="form-control border-start-0 ps-0" placeholder="00000000-0">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <label for="filterAgeMin" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÍN</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-down-arrow-alt"></i></span>
+                    <input type="number" id="filterAgeMin" class="form-control border-start-0 ps-0" placeholder="18" min="0">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label for="filterAgeMax" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÁX</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-up-arrow-alt"></i></span>
+                    <input type="number" id="filterAgeMax" class="form-control border-start-0 ps-0" placeholder="60" min="0">
+                </div>
+            </div>
+            <div class="col-md-2">
                 <label for="filterDepto" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DEPARTAMENTO</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-map"></i></span>
@@ -262,7 +276,16 @@
                         className: 'btn btn-sm'
                     }
                 ],
-                ajax: "{{ route('patient.index') }}",
+                ajax: {
+                    url: "{{ route('patient.index') }}",
+                    data: function(d) {
+                        d.filter_name = $('#filterName').val();
+                        d.filter_dui = $('#filterDui').val();
+                        d.filter_age_min = $('#filterAgeMin').val();
+                        d.filter_age_max = $('#filterAgeMax').val();
+                        d.filter_depto = $('#filterDepto').val();
+                    }
+                },
                 columns: [
                     {
                         data: null,
@@ -357,18 +380,20 @@
 
             // Filtros server-side: buscar al presionar botón o cambiar depto
             $('#btnFilter').on('click', function() {
-                var minAge  = $('#filterAgeMin').val();
-                var maxAge  = $('#filterAgeMax').val();
-                var depto   = $('#filterDepto').val();
-                // Concatenar al search global (DataTables enviará como searchValue)
-                var extra = '';
-                if (depto)  extra += depto + ' ';
-                if (minAge) extra += 'edad>=' + minAge + ' ';
-                if (maxAge) extra += 'edad<=' + maxAge + ' ';
-                table.search(extra.trim()).draw();
+                table.draw();
             });
-            $('#filterAgeMin, #filterAgeMax').on('keyup', function() { $('#btnFilter').trigger('click'); });
-            $('#filterDepto').on('change', function() { $('#btnFilter').trigger('click'); });
+
+            // Permitir búsqueda al presionar ENTER en los campos
+            $('#filterName, #filterDui, #filterAgeMin, #filterAgeMax').on('keypress', function(e) {
+                if(e.which == 13) {
+                    table.draw();
+                }
+            });
+
+            // Auto-filtrado al cambiar departamento
+            $('#filterDepto').on('change', function() {
+                table.draw();
+            });
 
             // Pacientes nuevos este mes — consulta ligera independiente
             $.get('{{ route("patient.index") }}', { stat: 'new_this_month' }, function(r) {

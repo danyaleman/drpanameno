@@ -62,9 +62,35 @@ class PatientController extends Controller
                         'email', 'created_at'
                     ])
                     ->where('is_deleted', 0)
+                    ->when($request->filter_name, function($q) use ($request) {
+                        $q->where(function($sq) use ($request) {
+                            $sq->where('first_name', 'like', "%{$request->filter_name}%")
+                               ->orWhere('last_name', 'like', "%{$request->filter_name}%")
+                               ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$request->filter_name}%"]);
+                        });
+                    })
+                    ->when($request->filter_dui, function($q) use ($request) {
+                        $q->where('dui', 'like', "%{$request->filter_dui}%");
+                    })
+                    ->when($request->filter_depto, function($q) use ($request) {
+                        $q->where('address', 'like', "%{$request->filter_depto}%");
+                    })
+                    ->when($request->filter_age_min, function($q) use ($request) {
+                        $q->whereDate('birth_date', '<=', now()->subYears($request->filter_age_min)->format('Y-m-d'));
+                    })
+                    ->when($request->filter_age_max, function($q) use ($request) {
+                        $q->whereDate('birth_date', '>=', now()->subYears($request->filter_age_max + 1)->format('Y-m-d'));
+                    })
                     ->orderByDesc('id');
 
                 return Datatables::of($patients)
+                    ->filterColumn('name', function($query, $keyword) {
+                        $sql = "CONCAT(first_name, ' ', last_name) like ?";
+                        $query->whereRaw($sql, ["%{$keyword}%"]);
+                    })
+                    ->filterColumn('dui', function($query, $keyword) {
+                        $query->where('dui', 'like', "%{$keyword}%");
+                    })
                     ->addIndexColumn()
                     ->addColumn('name', function ($row) {
                         return $row->first_name . ' ' . $row->last_name;

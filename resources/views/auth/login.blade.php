@@ -95,8 +95,6 @@
                         </div>
                     </div>
                     <div class="mt-5 text-center">
-                        <p>{{ __("No tengo cuenta. ") }} <a href="{{ url('register') }}"
-                                class="fw-medium text-primary"> {{ __("Registrarme") }}</a> </p>
                         <p>© {{ date('Y') }} {{ AppSetting('title'); }}. </p>
                     </div>
                 </div>

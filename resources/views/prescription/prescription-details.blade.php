@@ -555,8 +555,8 @@ $(document).ready(function () {
                         $('input[name="presion_arterial_diastolica"]').val(res.patient.signos.presion_arterial_diastolica ?? '');
                         $('input[name="frec_cardiaca"]').val(res.patient.signos.frec_cardiaca ?? '');
                         $('input[name="spo"]').val(res.patient.signos.spo ?? '');
-                        $('textarea[name="examen"]').val(res.patient.signos.examen ?? '');
-                        $('textarea[name="observaciones_adicionales"]').val(res.patient.signos.observaciones_adicionales ?? '');
+                        $('textarea[name="examen"]').val('');
+                        $('textarea[name="observaciones_adicionales"]').val('');
                     } else {
                         // Limpiar si no hay previos
                         $('#tab-exploracion input, #tab-exploracion textarea').val('');

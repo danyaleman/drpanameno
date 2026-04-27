@@ -71,7 +71,7 @@ return [
     |
     */
 
-    'timezone' => 'Asia/Kolkata',
+    'timezone' => env('APP_TIMEZONE', 'America/El_Salvador'),
 
     /*
     |--------------------------------------------------------------------------

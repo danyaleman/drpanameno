@@ -20,8 +20,8 @@ class AdminSeeder extends Seeder
             'last_name'  => 'Admin',
             'mobile'     => '5142323114',
             'profile_photo'=>'avatar-5.jpg',
-            'email'      => 'admin@themesbrand.website',
-            'password' => 'admin@123456',
+            'email'      => 'admin@doctorly.local',
+            'password' => 'admin@123',
             'last_login' => now(),
         ];
         $user = Sentinel::registerAndActivate( $credentials );
@@ -34,8 +34,8 @@ class AdminSeeder extends Seeder
             'last_name'  => 'Doctorly',
             'mobile'     => '5142323114',
             'profile_photo' => 'avatar-5.jpg',
-            'email'      => 'accountant@themesbrand.website',
-            'password' => 'accountant@123456',
+            'email'      => 'accountant@doctorly.local',
+            'password' => 'accountant@123',
             'last_login' => now(),
         ];
         $accountant = Sentinel::registerAndActivate($acc_credentials);

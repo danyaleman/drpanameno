@@ -21,8 +21,8 @@ class ReceptionistSeeder extends Seeder
             'last_name' => 'Doctorly',
             'mobile' => '5142323114',
             'profile_photo' => 'Male_receptionist.png',
-            'email' => 'receptionist@themesbrand.website',
-            'password' => 'receptionist@123456',
+            'email'      => 'receptionist@doctorly.local',
+            'password' => 'receptionist@123',
             'last_login' => now(),
         ];
         $user = Sentinel::registerAndActivate($user);
@@ -37,7 +37,7 @@ class ReceptionistSeeder extends Seeder
                 'mobile' => rand(1000000000, 2000000000),
                 'profile_photo' => 're-avatar-' . $i . '.jpg',
                 'email' => $faker->safeEmail,
-                'password' => 'receptionist@123456',
+                'password' => 'receptionist@123',
                 'last_login' => now(),
             ];
             $user = Sentinel::registerAndActivate($user);

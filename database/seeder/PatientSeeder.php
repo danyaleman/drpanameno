@@ -22,8 +22,8 @@ class PatientSeeder extends Seeder
             'last_name' => 'Doctorly',
             'mobile' => '5142323114',
             'profile_photo' => 'Female_patient.png',
-            'email' => 'patient@themesbrand.website',
-            'password' => 'patient@123456',
+            'email' => 'patient@doctorly.local',
+            'password' => 'patient@123',
             'last_login' => now(),
         ];
         $user = Sentinel::registerAndActivate($user);
@@ -46,7 +46,7 @@ class PatientSeeder extends Seeder
                 'mobile' => rand(1000000000, 2000000000),
                 'profile_photo' => 'avatar-' . $i . '.jpg',
                 'email' => $faker->safeEmail,
-                'password' => 'patient@123456',
+                'password' => 'patient@123',
                 'last_login' => now(),
             ];
             $user = Sentinel::registerAndActivate($user);

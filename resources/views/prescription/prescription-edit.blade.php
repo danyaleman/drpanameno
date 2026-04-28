@@ -470,11 +470,26 @@
 
 <script>
 $(document).ready(function () {
-    // Inicializar Select2
+    function matchCustom(params, data) {
+        if ($.trim(params.term) === '') { return data; }
+        if (typeof data.text === 'undefined') { return null; }
+        var terms = $.trim(params.term).toLowerCase().split(/\s+/);
+        var text = data.text.toLowerCase();
+        var matches = true;
+        for (var i = 0; i < terms.length; i++) {
+            if (text.indexOf(terms[i]) === -1) {
+                matches = false;
+                break;
+            }
+        }
+        return matches ? data : null;
+    }
+
     $('.select2').select2({
         placeholder: 'Seleccionar',
         allowClear: true,
-        width: '100%'
+        width: '100%',
+        matcher: matchCustom
     });
 
     // Verificar si hay precarga de paciente (viniendo desde calendario)

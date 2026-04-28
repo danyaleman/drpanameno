@@ -691,7 +691,7 @@
 <script>
     window.generarRecetaPDF = function() {
         let pName = '{{ addslashes($patientName) }}';
-        let pDui = '{{ $patient->dui ?? "-" }}';
+        let pDui = '{{ optional($patient)->dui ?? "-" }}';
         let actDate = '{{ addslashes(\Carbon\Carbon::parse($prescription->created_at)->format('d/m/Y')) }}';
         
         let medsDiv = document.getElementById('receta_text_view');

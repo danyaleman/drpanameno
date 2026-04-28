@@ -320,7 +320,7 @@ class PrescriptionController extends Controller
 
             if ($prescription) {
                 $patients = Patient::where('is_deleted', 0)->get();
-                $appointment = Appointment::where('appointment_for', $prescription->patient->id)->where('is_deleted', 0)->get();
+                $appointment = Appointment::where('appointment_for', $prescription->patient_id)->where('is_deleted', 0)->get();
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 

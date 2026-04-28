@@ -36,8 +36,8 @@
 <input type="hidden" name="_method" value="PATCH" />
 <input type="hidden" name="id" value="{{ $prescription->id }}" id="form_id" />
 
-<input type="hidden" name="patient_id_hidden" id="patient_id_hidden" value="{{ $preloadPatientId ?? '' }}">
-<input type="hidden" name="appointment_id" id="appointment_id_hidden" value="{{ $preloadAppointmentId ?? '' }}">
+<input type="hidden" name="patient_id_hidden" id="patient_id_hidden" value="{{ $prescription->patient_id ?? '' }}">
+<input type="hidden" name="appointment_id" id="appointment_id_hidden" value="{{ $prescription->appointment_id ?? '' }}">
 <input type="hidden" id="info_dui_hidden" value="">
 
 <div class="row">
@@ -365,41 +365,41 @@
 
             {{-- IMÁGENES --}}
             <div class="tab-pane fade" id="tab-imagenes">
-                                            @if(isset($prescription) && $prescription->archivos->count())
-                                <hr>
-                                <h5>Archivos Clínicos Guardados</h5>
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Archivo</th>
-                                            <th>Observaciones</th>
-                                            <th width="120">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($prescription->archivos as $archivo)
-                                            <tr>
-                                                <td>
-                                                    <a href="{{ asset('storage/'.$archivo->url_file) }}" target="_blank">
-                                                        {{ basename($archivo->url_file) }}
-                                                    </a>
-                                                </td>
-                                                <td>{{ $archivo->observaciones }}</td>
-                                                <td>
-                                                    <a href="javascript:void(0)" onclick="if(confirm('¿Eliminar archivo?')){ document.getElementById('del-archivo-{{ $archivo->id }}').submit(); }" class="btn btn-danger btn-sm">Eliminar</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                
-                                @foreach($prescription->archivos as $archivo)
-                                <form id="del-archivo-{{ $archivo->id }}" action="{{ route('archivo.destroy', $archivo->id) }}" method="POST" style="display:none;">
-                                    @csrf @method('DELETE')
-                                </form>
-                                @endforeach
-                            @endif
-<br/>@include('prescription.partials.archivos')
+                @if(isset($prescription) && $prescription->archivos->count())
+                    <hr>
+                    <h5>Archivos Clínicos Guardados</h5>
+                    <table class="table table-bordered" id="tabla-archivos-guardados">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Observaciones</th>
+                                <th width="120">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($prescription->archivos as $archivo)
+                                <tr id="fila-archivo-{{ $archivo->id }}">
+                                    <td>
+                                        <a href="{{ asset('storage/'.$archivo->url_file) }}" target="_blank">
+                                            {{ basename($archivo->url_file) }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $archivo->observaciones }}</td>
+                                    <td>
+                                        <button type="button"
+                                            class="btn btn-danger btn-sm btn-eliminar-archivo"
+                                            data-id="{{ $archivo->id }}"
+                                            data-url="{{ route('archivo.destroy', $archivo->id) }}"
+                                            data-token="{{ csrf_token() }}">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+                <br/>@include('prescription.partials.archivos')
             </div>
 
                 </div> <!-- End tab-content -->
@@ -853,6 +853,49 @@ $(document).ready(function () {
         } else {
             alert('Debe quedar al menos un registro.');
         }
+    });
+
+    // ── Eliminar archivos guardados vía AJAX ─────────────────────────
+    $(document).on('click', '.btn-eliminar-archivo', function () {
+        const btn   = $(this);
+        const id    = btn.data('id');
+        const url   = btn.data('url');
+        const token = btn.data('token');
+
+        if (!confirm('¿Eliminar este archivo?')) return;
+
+        btn.prop('disabled', true).text('Eliminando...');
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'X-HTTP-Method-Override': 'DELETE',
+                'Accept': 'application/json',
+            },
+            body: new URLSearchParams({ _method: 'DELETE', _token: token })
+        })
+        .then(r => {
+            if (r.ok || r.redirected) {
+                // Quitar la fila de la tabla
+                $('#fila-archivo-' + id).fadeOut(300, function () {
+                    $(this).remove();
+                    // Si ya no quedan filas, ocultar toda la sección
+                    if ($('#tabla-archivos-guardados tbody tr').length === 0) {
+                        $('#tabla-archivos-guardados').closest('div').prev('hr').remove();
+                        $('#tabla-archivos-guardados').closest('div').find('h5').remove();
+                        $('#tabla-archivos-guardados').remove();
+                    }
+                });
+            } else {
+                alert('Error al eliminar el archivo. Intente de nuevo.');
+                btn.prop('disabled', false).text('Eliminar');
+            }
+        })
+        .catch(() => {
+            alert('Error de conexión al eliminar el archivo.');
+            btn.prop('disabled', false).text('Eliminar');
+        });
     });
 
     window.generarRecetaPDF = function() {

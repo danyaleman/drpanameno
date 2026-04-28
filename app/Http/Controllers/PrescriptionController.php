@@ -359,14 +359,16 @@ class PrescriptionController extends Controller
         if ($user->hasAccess('prescription.update')) {
             $request->validate([
                 'patient_id_hidden' => 'required',
-                'appointment_id' => 'required',
-                'consulta_por' => 'required',
-                'diagnostico' => 'required'
+                'appointment_id'    => 'nullable',
+                'consulta_por'      => 'nullable|string',
+                'diagnostico'       => 'nullable|string',
+                'archivos.*.file'   => 'nullable|file|max:10240',
+                'archivos.*.observaciones' => 'nullable|string|max:255',
             ]);
             try {
                 $prescription = Prescription::find($prescription->id);
                 $prescription->patient_id      = $request->patient_id_hidden;
-                $prescription->appointment_id   = $request->appointment_id;
+                $prescription->appointment_id   = $request->appointment_id ?: $prescription->appointment_id;
                 $prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
                 $prescription->codigo_id        = $request->codigo_id ?: null;
                 $prescription->precio_consulta  = $request->precio_consulta ?: null;

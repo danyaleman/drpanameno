@@ -287,7 +287,7 @@ class PrescriptionController extends Controller
             $newVacunas = \App\VaccineRecord::with('vaccine')->where('prescription_id', $prescription->id)->get()->map(function($v) {
                 return (object)[ 'tipo' => $v->vaccine ? $v->vaccine->name : 'Vacuna', 'dosis' => $v->dose_label ];
             });
-            $vacunas = $oldVacunas->merge($newVacunas);
+            $vacunas = $oldVacunas->concat($newVacunas);
             $user_details = Prescription::with('patient', 'appointment', 'appointment.doctor.user', 'evaluacion', 'archivos')->where('id', $prescription->id)->where('is_deleted', 0)->first();
             if ($user_details) {
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
@@ -330,7 +330,7 @@ class PrescriptionController extends Controller
                 $newVacunas = \App\VaccineRecord::with('vaccine')->where('prescription_id', $prescription->id)->get()->map(function($v) {
                     return (object)[ 'tipo' => $v->vaccine ? $v->vaccine->name : 'Vacuna', 'dosis' => $v->dose_label ];
                 });
-                $vacunas = $oldVacunas->merge($newVacunas);
+                $vacunas = $oldVacunas->concat($newVacunas);
                 
                 $vaccines = \App\VaccineCatalog::active()->orderBy('name')->get();
                 $tipoConsultas = \App\TipoConsulta::where('estado', 1)->orderBy('nombre')->get();

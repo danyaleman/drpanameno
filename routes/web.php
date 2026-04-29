@@ -170,6 +170,7 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('storage/{path}', function ($path) {
         $file = storage_path('app/public/' . $path);
         if (!file_exists($file)) {
+            \Log::error("SecureStorage 404: File not found at path: " . $file);
             abort(404);
         }
         return response()->file($file);

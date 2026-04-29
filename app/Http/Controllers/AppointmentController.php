@@ -76,15 +76,16 @@ class AppointmentController extends Controller
             $doctor_role = Sentinel::findRoleBySlug('doctor');
             $doctors = $doctor_role->users()->with('roles')->get();
             if ($role == 'patient') {
-                $appointments = Appointment::with('doctor', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', Carbon::today())->where('status', '!=', 2)->orderBy('available_time', 'ASC')->get();
+                $appointments = Appointment::with('doctor', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', Carbon::today())->where('status', '!=', 2)->get()->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })->values();
             }
             else {
                 // Admin, Doctor, Recepcionistas ven todas las citas globalmente
                 $appointments = Appointment::with('doctor', 'patient', 'timeSlot')
                     ->where('appointment_date', Carbon::today())
                     ->where('status', '!=', 2)
-                    ->orderBy('available_time', 'ASC')
-                    ->get();
+                    ->get()
+                    ->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })
+                    ->values();
             }
             return view('appointment.appointment', compact('user', 'role', 'patients', 'doctors', 'appointments'));
         }
@@ -151,15 +152,16 @@ class AppointmentController extends Controller
         $role = $user->roles[0]->slug;
         $userId = $user->id;
         if ($role == 'patient') {
-            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', $request->date)->where('status', '!=', 2)->orderBy('available_time', 'ASC')->get();
+            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', $request->date)->where('status', '!=', 2)->get()->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })->values();
         }
         else {
             // Admin, Doctor, Recepcionistas ven todas las citas globalmente
             $res = Appointment::with('patient', 'timeSlot', 'doctor', 'doctor.user')
                 ->where('appointment_date', $request->date)
                 ->where('status', '!=', 2)
-                ->orderBy('available_time', 'ASC')
-                ->get();
+                ->get()
+                ->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })
+                ->values();
         }
         if (empty($res)) {
             $response = [
@@ -185,8 +187,8 @@ class AppointmentController extends Controller
             $today = Carbon::today()->format('Y/m/d');
             $time = date('H:i:s');
             if ($role == 'patient') {
-                $pending_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 0, 'appointment_for' => $user_id])->orderBy('appointment_date', 'ASC')->orderBy('available_time', 'ASC')->get();
-                $Complete_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 1, 'appointment_for' => $user_id])->orderBy('appointment_date', 'DESC')->orderBy('available_time', 'DESC')->get();
+                $pending_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 0, 'appointment_for' => $user_id])->get()->sortBy(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
+                $Complete_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 1, 'appointment_for' => $user_id])->get()->sortByDesc(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
                 $Upcoming_appointment = Appointment::with('doctor', 'patient', 'timeSlot')
                     ->where('appointment_for', $user_id)
                     ->whereDate('appointment_date', '>', $today)
@@ -198,13 +200,13 @@ class AppointmentController extends Controller
                         }
                         );
                     })->where('status', 0)
-                    ->orderBy('appointment_date', 'ASC')->orderBy('available_time', 'ASC')->get();
-                $Cancel_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 2, 'appointment_for' => $user_id])->orderBy('appointment_date', 'DESC')->orderBy('available_time', 'DESC')->get();
+                    ->get()->sortBy(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
+                $Cancel_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 2, 'appointment_for' => $user_id])->get()->sortByDesc(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
             }
             else {
                 // Admin, Doctor, Recepcionistas ven todas las citas globalmente en la lista de citas
-                $pending_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 0])->orderBy('appointment_date', 'ASC')->orderBy('available_time', 'ASC')->get();
-                $Complete_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 1])->orderBy('appointment_date', 'DESC')->orderBy('available_time', 'DESC')->get();
+                $pending_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 0])->get()->sortBy(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
+                $Complete_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where(['status' => 1])->get()->sortByDesc(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
                 
                 $Upcoming_appointment = Appointment::with('doctor', 'patient', 'timeSlot')
                     ->whereDate('appointment_date', '>', $today)
@@ -212,9 +214,9 @@ class AppointmentController extends Controller
                         $re->whereDate('appointment_date', '=', $today);
                         $re->whereTime('available_time', '>=', $time);
                     })->where('status', 0)
-                    ->orderBy('appointment_date', 'ASC')->orderBy('available_time', 'ASC')->get();
+                    ->get()->sortBy(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
                     
-                $Cancel_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where('status', 2)->orderBy('appointment_date', 'DESC')->orderBy('available_time', 'DESC')->get();
+                $Cancel_appointment = Appointment::with('doctor', 'patient', 'timeSlot')->where('status', 2)->get()->sortByDesc(function($a){ return $a->appointment_date . ' ' . ($a->timeSlot ? $a->timeSlot->from : '23:59'); })->values();
             }
 
             // Agrupar citas consecutivas visualmente

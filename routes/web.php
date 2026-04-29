@@ -165,4 +165,14 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('telemedicine', 'TelemedicineController@index')->name('telemedicine.index');
     Route::get('telemedicine/room/{id}', 'TelemedicineController@room')->name('telemedicine.room');
     // ─────────────────────────────────────────────────────────────────────────
+
+    // Secure Storage Access Route
+    Route::get('storage/{path}', function ($path) {
+        $file = storage_path('app/public/' . $path);
+        if (!file_exists($file)) {
+            abort(404);
+        }
+        return response()->file($file);
+    })->where('path', '.*')->name('secure.storage');
+    
 });

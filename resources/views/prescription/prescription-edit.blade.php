@@ -601,7 +601,12 @@ $(document).ready(function () {
                             if (item.archivos && item.archivos.length > 0) {
                                 archivosHtml = '<div class="mt-2 text-secondary"><strong>Imágenes o Archivos:</strong><ul class="mb-0 ps-3">';
                                 item.archivos.forEach(function(a) { 
-                                    archivosHtml += `<li><i class="bx bx-image"></i> ${a.titulo || 'Archivo Adjunto'}</li>`; 
+                                    if (a.url_file) {
+                                        let fileName = a.observaciones || a.url_file.split('/').pop() || 'Archivo Adjunto';
+                                        archivosHtml += `<li><a href="/storage/${a.url_file}" target="_blank" class="text-decoration-none"><i class="bx bx-image"></i> ${fileName}</a></li>`; 
+                                    } else {
+                                        archivosHtml += `<li><i class="bx bx-image"></i> ${a.observaciones || 'Archivo Adjunto'}</li>`; 
+                                    }
                                 });
                                 archivosHtml += '</ul></div>';
                             }

@@ -274,7 +274,7 @@
                                             </div>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3" style="font-size:0.85rem;">
+                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold" style="font-size:0.95rem;">
                                                 <i class="bx bx-time me-1"></i>{{ $appointment->timeSlot->from }} - {{ $appointment->timeSlot->to }}
                                             </span>
                                             @if ($role != 'patient')
@@ -282,17 +282,17 @@
                                                 @php $tipo = $appointment->appointment_type ?? 'presencial'; @endphp
                                                 @if($tipo === 'vacunacion')
                                                     <a href="/vaccines/records/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                       class="btn btn-sm waves-effect" style="background:#198754;color:#fff;font-weight:600;">
+                                                       class="btn waves-effect px-3 py-2 fw-bold" style="background:#198754;color:#fff;font-size:0.95rem;">
                                                         <i class="bx bx-plus me-1"></i>Vacunación
                                                     </a>
                                                 @elseif($tipo === 'telemedicine')
                                                     <a href="/telemedicine/room/{{ $appointment->id }}"
-                                                       class="btn btn-sm btn-primary waves-effect fw-bold">
+                                                       class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;">
                                                         <i class="bx bx-video me-1"></i>Unirse a sala
                                                     </a>
                                                 @else
                                                     <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
-                                                       class="btn btn-sm btn-success waves-effect">
+                                                       class="btn btn-success waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;">
                                                         <i class="bx bx-plus me-1"></i>Consulta
                                                     </a>
                                                 @endif
@@ -319,7 +319,7 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        <span class="badge bg-info-subtle text-info rounded-pill px-3" style="font-size:0.85rem;">
+                                        <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fw-bold" style="font-size:0.95rem;">
                                             <i class="bx bx-time me-1"></i>{{ $appointment->timeSlot->from }} - {{ $appointment->timeSlot->to }}
                                         </span>
                                     </div>
@@ -585,11 +585,11 @@
                             if (role !== 'patient' && patientId) {
                                 var apptType = apt.appointment_type || 'presencial';
                                 if (apptType === 'vacunacion') {
-                                    actionBtn = '<div class="mt-1"><a href="/vaccines/records/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm waves-effect" style="background:#198754;color:#fff;font-weight:600;"><i class="bx bx-plus me-1"></i>Vacunaci\u00f3n</a></div>';
+                                    actionBtn = '<div class="mt-2"><a href="/vaccines/records/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn waves-effect px-3 py-2 fw-bold" style="background:#198754;color:#fff;font-size:0.95rem;"><i class="bx bx-plus me-1"></i>Vacunaci\u00f3n</a></div>';
                                 } else if (apptType === 'telemedicine') {
-                                    actionBtn = '<div class="mt-1"><a href="/telemedicine/room/' + appointmentId + '" class="btn btn-sm btn-primary waves-effect fw-bold"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
+                                    actionBtn = '<div class="mt-2"><a href="/telemedicine/room/' + appointmentId + '" class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
                                 } else {
-                                    actionBtn = '<div class="mt-1"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-sm btn-success waves-effect"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
+                                    actionBtn = '<div class="mt-2"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-success waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
                                 }
                             }
 
@@ -605,7 +605,7 @@
                                             '</div>' +
                                         '</div>' +
                                         '<div class="text-end">' +
-                                            '<span class="badge bg-primary-subtle text-primary rounded-pill px-3" style="font-size:0.85rem;"><i class="bx bx-time me-1"></i>' + timeText + '</span>' +
+                                            '<span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-time me-1"></i>' + timeText + '</span>' +
                                             actionBtn +
                                         '</div>' +
                                     '</div>' +

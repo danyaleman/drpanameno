@@ -419,6 +419,16 @@ class PatientController extends Controller
                 ->take(10)
                 ->get()
                 ->map(function ($cons) {
+                    $oldArchivos = \Illuminate\Support\Facades\DB::table('imagen_consulta')
+                        ->where('id_consulta', $cons->id)
+                        ->get()
+                        ->map(function($img) {
+                            return (object)[
+                                'url_file' => 'legacy_images/' . $img->foto_consulta,
+                                'observaciones' => $img->observaciones
+                            ];
+                        })->toArray();
+
                     return [
                         'id' => $cons->id,
                         'is_old' => true,
@@ -427,7 +437,7 @@ class PatientController extends Controller
                         'diagnostico' => $cons->motivo,
                         'evaluacion' => null,
                         'vacunas' => [],
-                        'archivos' => [],
+                        'archivos' => $oldArchivos,
                         'medicinas' => []
                     ];
                 });

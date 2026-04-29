@@ -100,16 +100,22 @@ class PrescriptionController extends Controller
             $preloadPatientId = $request->query('patient_id');
             $preloadAppointmentId = $request->query('appointment_id');
 
-            // Si vienen parámetros, obtener datos del paciente
             $preloadPatient = null;
             $preloadAppointment = null;
 
-            if ($preloadPatientId) {
-                $preloadPatient = Patient::find($preloadPatientId);
+            if ($preloadAppointmentId) {
+                // VERIFICAR SI YA EXISTE UNA CONSULTA PARA ESTA CITA
+                // Si la enfermera ya creó la consulta, enviamos al doctor a editar esa misma consulta.
+                $existingPrescription = Prescription::where('appointment_id', $preloadAppointmentId)->where('is_deleted', 0)->first();
+                if ($existingPrescription) {
+                    return redirect('prescription/' . $existingPrescription->id . '/edit')->with('info', 'Esta consulta ya fue iniciada. Continuando edición.');
+                }
+                
+                $preloadAppointment = Appointment::with('patient')->find($preloadAppointmentId);
             }
 
-            if ($preloadAppointmentId) {
-                $preloadAppointment = Appointment::with('patient')->find($preloadAppointmentId);
+            if ($preloadPatientId) {
+                $preloadPatient = Patient::find($preloadPatientId);
             }
 
             return view('prescription.prescription-details', compact(

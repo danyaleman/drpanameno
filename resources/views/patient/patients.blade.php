@@ -107,8 +107,8 @@
     </div>
 </div>
 
-{{-- Tarjeta de estadísticas rápida --}}
-<div class="row g-3 mb-4">
+{{-- Tarjeta de estadísticas rápida y Buscador Principal --}}
+<div class="row g-3 mb-4 align-items-center">
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
@@ -137,42 +137,48 @@
             </div>
         </div>
     </div>
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+            <div class="card-body d-flex align-items-center justify-content-center p-3">
+                <div class="input-group input-group-lg w-100 shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <span class="input-group-text bg-white border-0 text-primary" style="padding: 0 20px;">
+                        <i class="bx bx-search font-size-24"></i>
+                    </span>
+                    <input type="text" id="customGlobalSearch" class="form-control border-0 fw-medium shadow-none" placeholder="Buscar paciente por nombre..." style="font-size: 1.05rem; padding: 14px 20px;">
+                    <button id="btnCustomSearch" class="btn btn-primary fw-bold px-4 waves-effect waves-light" type="button" style="font-size: 1rem; letter-spacing: 0.5px;">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- Buscador y filtros avanzados --}}
 <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
     <div class="card-body p-3">
-        <div class="row align-items-end g-2">
-            <div class="col-md-2">
-                <label for="filterName" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">NOMBRE</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-user"></i></span>
-                    <input type="text" id="filterName" class="form-control border-start-0 ps-0" placeholder="Ej: Juan">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <label for="filterDui" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DUI / ID</label>
+        <div class="row align-items-end g-3">
+            <div class="col-md-3">
+                <label for="filterDui" class="form-label fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">DUI / ID</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-id-card"></i></span>
                     <input type="text" id="filterDui" class="form-control border-start-0 ps-0" placeholder="00000000-0">
                 </div>
             </div>
             <div class="col-md-2">
-                <label for="filterAgeMin" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÍN</label>
+                <label for="filterAgeMin" class="form-label fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">EDAD MÍN</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-down-arrow-alt"></i></span>
                     <input type="number" id="filterAgeMin" class="form-control border-start-0 ps-0" placeholder="18" min="0">
                 </div>
             </div>
             <div class="col-md-2">
-                <label for="filterAgeMax" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">EDAD MÁX</label>
+                <label for="filterAgeMax" class="form-label fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">EDAD MÁX</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-up-arrow-alt"></i></span>
                     <input type="number" id="filterAgeMax" class="form-control border-start-0 ps-0" placeholder="60" min="0">
                 </div>
             </div>
-            <div class="col-md-2">
-                <label for="filterDepto" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DEPARTAMENTO</label>
+            <div class="col-md-3">
+                <label for="filterDepto" class="form-label fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">DEPARTAMENTO</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted border-end-0"><i class="bx bx-map"></i></span>
                     <select id="filterDepto" class="form-select border-start-0 ps-0">
@@ -195,14 +201,9 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <button type="button" id="btnFilter" class="btn btn-primary w-100 shadow-sm font-size-13 fw-bold">
+                <button type="button" id="btnFilter" class="btn btn-primary w-100 shadow-sm font-size-13 fw-bold" style="padding: 9px;">
                     <i class="bx bx-filter-alt me-1"></i> Filtrar
                 </button>
-            </div>
-            <div class="col-md-3 text-end">
-                <div class="bg-primary-subtle text-primary rounded px-3 py-2 d-inline-block fw-semibold" id="filterResultLabel" style="font-size:13px; min-width:180px;">
-                    <i class="bx bx-select-multiple me-1 align-middle font-size-16"></i> <span id="lblCount">—</span> registros
-                </div>
             </div>
         </div>
     </div>
@@ -227,7 +228,6 @@
                     <th>PACIENTE</th>
                     <th>DUI / ID</th>
                     <th>EDAD</th>
-                    <th>DIRECCIÓN</th>
                     <th>TELÉFONO</th>
                     <th>CORREO ELECTRÓNICO</th>
                     <th class="text-center">ACCIONES</th>
@@ -258,7 +258,7 @@
             var table = $('#patientList').DataTable({
                 processing: true,
                 serverSide: true,   // ← Solo carga la página actual desde el servidor
-                dom: '<"row mb-3"<"col-sm-6"B><"col-sm-6"f>>rt<"row mt-3"<"col-sm-5"i><"col-sm-7"p>>',
+                dom: '<"row mb-3"<"col-sm-12"B>>rt<"row mt-3"<"col-sm-5"i><"col-sm-7"p>>',
                 buttons: [
                     {
                         extend: 'copy',
@@ -279,7 +279,6 @@
                 ajax: {
                     url: "{{ route('patient.index') }}",
                     data: function(d) {
-                        d.filter_name = $('#filterName').val();
                         d.filter_dui = $('#filterDui').val();
                         d.filter_age_min = $('#filterAgeMin').val();
                         d.filter_age_max = $('#filterAgeMax').val();
@@ -318,13 +317,6 @@
                     {
                         data: 'age',
                         name: 'age',
-                        render: function(data) {
-                            return '<span class="text-muted">' + (data || 'N/A') + '</span>';
-                        }
-                    },
-                    {
-                        data: 'address',
-                        name: 'address',
                         render: function(data) {
                             return '<span class="text-muted">' + (data || 'N/A') + '</span>';
                         }
@@ -374,7 +366,6 @@
                 drawCallback: function(settings) {
                     var info = this.api().page.info();
                     $('#stat-total').text(info.recordsTotal.toLocaleString());
-                    $('#lblCount').text(info.recordsDisplay.toLocaleString());
                 }
             });
 
@@ -383,11 +374,28 @@
                 table.draw();
             });
 
-            // Permitir búsqueda al presionar ENTER en los campos
-            $('#filterName, #filterDui, #filterAgeMin, #filterAgeMax').on('keypress', function(e) {
+            // Permitir búsqueda al presionar ENTER en los campos avanzados
+            $('#filterDui, #filterAgeMin, #filterAgeMax').on('keypress', function(e) {
                 if(e.which == 13) {
                     table.draw();
                 }
+            });
+
+            // Buscador Global Personalizado
+            $('#customGlobalSearch').on('keyup', function(e) {
+                // Buscar al presionar ENTER
+                if(e.which == 13) {
+                    table.search(this.value).draw();
+                } 
+                // Auto-limpiar si se borra todo el texto
+                else if (this.value === '') {
+                    table.search('').draw();
+                }
+            });
+
+            // Buscar al hacer click en el botón "Buscar"
+            $('#btnCustomSearch').on('click', function() {
+                table.search($('#customGlobalSearch').val()).draw();
             });
 
             // Auto-filtrado al cambiar departamento

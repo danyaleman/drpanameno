@@ -62,13 +62,7 @@ class PatientController extends Controller
                         'email', 'created_at'
                     ])
                     ->where('is_deleted', 0)
-                    ->when($request->filter_name, function($q) use ($request) {
-                        $q->where(function($sq) use ($request) {
-                            $sq->where('first_name', 'like', "%{$request->filter_name}%")
-                               ->orWhere('last_name', 'like', "%{$request->filter_name}%")
-                               ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$request->filter_name}%"]);
-                        });
-                    })
+
                     ->when($request->filter_dui, function($q) use ($request) {
                         $q->where('dui', 'like', "%{$request->filter_dui}%");
                     })
@@ -183,7 +177,7 @@ class PatientController extends Controller
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
                 'dui' => 'nullable|string|max:20',
-                'phone_primary' => 'required|numeric|digits_between:8,20',
+                'phone_primary' => 'required|regex:/^[\d\s\-\+\(\)\[\]]+$/|max:20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
                 'address' => 'required|max:100',
@@ -539,7 +533,7 @@ class PatientController extends Controller
                 'first_name' => 'required|string|max:50',
                 'last_name' => 'required|string|max:50',
                 'dui' => 'nullable|string|max:20',
-                'phone_primary' => 'required|numeric|digits_between:8,20',
+                'phone_primary' => 'required|regex:/^[\d\s\-\+\(\)\[\]]+$/|max:20',
                 'email' => 'required|email|regex:/(.+)@(.+)\.(.+)/i|max:50',
                 'birth_date' => 'required|date',
                 'address' => 'required|max:100',

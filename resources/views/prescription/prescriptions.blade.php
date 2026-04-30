@@ -177,9 +177,9 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Paciente</th>
-                                    @if($role != 'doctor') <th>Doctor</th> @endif
                                     <th>Fecha de Cita</th>
                                     <th>Horario</th>
+                                    <th>Última actualización</th>
                                     <th class="text-end">Acciones</th>
                                 </tr>
                             </thead>
@@ -227,31 +227,28 @@
                                             </div>
                                         </td>
 
-                                        {{-- Columna Doctor (si aplica) --}}
-                                        @if($role != 'doctor')
-                                            <td>
-                                                @if($prescription->doctor)
-                                                    <span class="badge badge-soft-primary">Dr. {{ $prescription->doctor->first_name }} {{ $prescription->doctor->last_name }}</span>
-                                                @else
-                                                    <span class="text-muted">—</span>
-                                                @endif
-                                            </td>
-                                        @endif
-
-                                        {{-- Fecha --}}
+                                        {{-- Fecha Cita Programada --}}
                                         <td>
                                             <div class="d-flex align-items-center text-dark">
                                                 <i class="bx bx-calendar text-primary me-2 font-size-16"></i>
-                                                {{ $prescription->created_at->format('Y-m-d') }}
+                                                <span style="text-transform: capitalize;">{{ $prescription->appointment ? \Carbon\Carbon::parse($prescription->appointment->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') : 'N/A' }}</span>
                                             </div>
                                         </td>
 
-                                        {{-- Hora --}}
+                                        {{-- Horario Cita Programada --}}
                                         <td>
-                                            <span class="badge bg-light text-dark border">
-                                                <i class="bx bx-time me-1"></i>
-                                                {{ $prescription->created_at->format('h:i A') }}
+                                            <span class="badge bg-light text-dark border" style="font-weight: 500;">
+                                                <i class="bx bx-time me-1 text-primary"></i>
+                                                {{ $prescription->appointment && $prescription->appointment->timeSlot ? $prescription->appointment->timeSlot->from . ($prescription->appointment->timeSlot->to ? ' - ' . $prescription->appointment->timeSlot->to : '') : 'N/A' }}
                                             </span>
+                                        </td>
+
+                                        {{-- Última actualización --}}
+                                        <td>
+                                            <div class="d-flex align-items-center text-muted font-size-12">
+                                                <i class="bx bx-history me-1"></i>
+                                                {{ $prescription->updated_at->format('Y-m-d h:i A') }}
+                                            </div>
                                         </td>
 
                                         {{-- Acciones --}}

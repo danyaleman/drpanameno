@@ -62,9 +62,14 @@ class PrescriptionController extends Controller
 
             // Aplicar Filtros
             if ($request->has('patient_name') && $request->patient_name != '') {
-                $query->whereHas('patient', function ($q) use ($request) {
-                    $q->where('first_name', 'like', '%' . $request->patient_name . '%')
-                        ->orWhere('last_name', 'like', '%' . $request->patient_name . '%');
+                $terms = explode(' ', $request->patient_name);
+                $query->whereHas('patient', function ($q) use ($terms) {
+                    foreach ($terms as $term) {
+                        $term = trim($term);
+                        if (!empty($term)) {
+                            $q->whereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ['%' . $term . '%']);
+                        }
+                    }
                 });
             }
 

@@ -263,10 +263,10 @@
                             <label class="form-label">Estado civil</label>
                             <select class="form-select @error('marital_status') is-invalid @enderror" name="marital_status">
                                 <option value="">Seleccione...</option>
-                                @foreach (['soltero','casado','divorciado','viudo'] as $status)
+                                @foreach (['soltero','casado','divorciado','viudo','acompañado'] as $status)
                                     <option value="{{ $status }}"
                                         {{ old('marital_status', $patient->marital_status ?? '') == $status ? 'selected' : '' }}>
-                                        {{ ucfirst($status) }}
+                                        {{ ucfirst($status) }}/a
                                     </option>
                                 @endforeach
                             </select>

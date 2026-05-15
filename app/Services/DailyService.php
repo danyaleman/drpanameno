@@ -25,7 +25,7 @@ class DailyService
     public function createRoom($roomName = null, $properties = [])
     {
         $defaultProperties = [
-            'exp' => time() + 86400, // Expires in 24 hours
+            'exp' => time() + (86400 * 30), // Expires in 30 days
             'enable_chat' => true,
             'enable_recording' => 'cloud',
         ];
@@ -74,6 +74,33 @@ class DailyService
      * @param string $roomName
      * @return boolean
      */
+    /**
+     * Check if a room exists and has not expired on Daily.co
+     */
+    public function roomExists($roomName): bool
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ])->get($this->baseUrl . '/rooms/' . $roomName);
+
+            if (!$response->successful()) {
+                return false;
+            }
+
+            $data = $response->json();
+            // If it has an expiry, check it hasn't passed
+            if (!empty($data['config']['exp']) && $data['config']['exp'] < time()) {
+                return false;
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Daily.co roomExists Exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function deleteRoom($roomName)
     {
         try {

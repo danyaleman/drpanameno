@@ -62,7 +62,23 @@ class TelemedicineController extends Controller
             }
         }
 
-        // Marcar como en curso si entraron (puedes ajustar lógica luego)
+        // Verificar si la sala sigue activa en Daily.co; si no, recrearla
+        $dailyService = new \App\Services\DailyService();
+        if (!$dailyService->roomExists($teleconsultation->daily_room_name)) {
+            \Log::info("Sala Daily.co expirada ({$teleconsultation->daily_room_name}), recreando...");
+            $newRoomName = 'teleconsulta-' . $teleconsultation->appointment_id . '-' . time();
+            $newRoom = $dailyService->createRoom($newRoomName);
+            if ($newRoom) {
+                $teleconsultation->daily_room_url  = $newRoom['url'];
+                $teleconsultation->daily_room_name = $newRoom['name'];
+                $teleconsultation->save();
+                \Log::info("Sala recreada: {$newRoom['url']}");
+            } else {
+                return redirect()->back()->with('error', 'No se pudo crear la sala de telemedicina. Intenta de nuevo.');
+            }
+        }
+
+        // Marcar como en curso si entraron
         if ($teleconsultation->status == 'pending') {
             $teleconsultation->status = 'in-progress';
             if (!$teleconsultation->started_at) {

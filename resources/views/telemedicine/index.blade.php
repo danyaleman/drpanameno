@@ -35,7 +35,7 @@
                     <tbody>
                         @foreach($teleconsultations as $tel)
                         <tr>
-                            <td>#{{ $tel->id }}</td>
+                            <td>{{ $tel->id }}</td>
                             <td>{{ $tel->appointment->patient->first_name ?? '' }} {{ $tel->appointment->patient->last_name ?? '' }}</td>
                             @if($role != 'doctor')
                             <td>{{ $tel->appointment->doctor->first_name ?? '' }} {{ $tel->appointment->doctor->last_name ?? '' }}</td>
@@ -78,6 +78,7 @@
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
+                "order": [[ 0, "desc" ]],
                 "language": {
                     "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
                 }

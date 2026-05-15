@@ -152,11 +152,11 @@ class AppointmentController extends Controller
         $role = $user->roles[0]->slug;
         $userId = $user->id;
         if ($role == 'patient') {
-            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot')->where('appointment_for', $userId)->where('appointment_date', $request->date)->where('status', '!=', 2)->get()->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })->values();
+            $res = Appointment::with('doctor', 'doctor.user', 'timeSlot', 'teleconsultation')->where('appointment_for', $userId)->where('appointment_date', $request->date)->where('status', '!=', 2)->get()->sortBy(function($a) { return $a->timeSlot ? $a->timeSlot->from : '23:59:59'; })->values();
         }
         else {
             // Admin, Doctor, Recepcionistas ven todas las citas globalmente
-            $res = Appointment::with('patient', 'timeSlot', 'doctor', 'doctor.user')
+            $res = Appointment::with('patient', 'timeSlot', 'doctor', 'doctor.user', 'teleconsultation')
                 ->where('appointment_date', $request->date)
                 ->where('status', '!=', 2)
                 ->get()

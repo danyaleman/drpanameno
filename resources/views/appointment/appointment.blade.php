@@ -286,10 +286,15 @@
                                                         <i class="bx bx-plus me-1"></i>Vacunación
                                                     </a>
                                                 @elseif($tipo === 'telemedicine')
-                                                    <a href="/telemedicine/room/{{ $appointment->id }}"
+                                                    @php $salaId = optional($appointment->teleconsultation)->id; @endphp
+                                                    @if($salaId)
+                                                    <a href="/telemedicine/room/{{ $salaId }}"
                                                        class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;">
                                                         <i class="bx bx-video me-1"></i>Unirse a sala
                                                     </a>
+                                                    @else
+                                                    <span class="badge bg-secondary">Sin sala</span>
+                                                    @endif
                                                 @else
                                                     <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
                                                        class="btn btn-success waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;">
@@ -587,7 +592,12 @@
                                 if (apptType === 'vacunacion') {
                                     actionBtn = '<div class="mt-2"><a href="/vaccines/records/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn waves-effect px-3 py-2 fw-bold" style="background:#198754;color:#fff;font-size:0.95rem;"><i class="bx bx-plus me-1"></i>Vacunaci\u00f3n</a></div>';
                                 } else if (apptType === 'telemedicine') {
-                                    actionBtn = '<div class="mt-2"><a href="/telemedicine/room/' + appointmentId + '" class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
+                                    var salaId = (apt.teleconsultation && apt.teleconsultation.id) ? apt.teleconsultation.id : null;
+                                    if (salaId) {
+                                        actionBtn = '<div class="mt-2"><a href="/telemedicine/room/' + salaId + '" class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
+                                    } else {
+                                        actionBtn = '<div class="mt-2"><span class="badge bg-secondary">Sin sala</span></div>';
+                                    }
                                 } else {
                                     actionBtn = '<div class="mt-2"><a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-success waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-plus me-1"></i>Consulta</a></div>';
                                 }

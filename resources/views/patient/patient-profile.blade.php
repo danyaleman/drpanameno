@@ -754,7 +754,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white text-end py-2 px-3">
-                        <a href="{{ route('vaccines.patient.history', $patient->id) }}" class="btn btn-sm btn-outline-warning">
+                        <a href="{{ route('vaccines.patient-history', $patient->id) }}" class="btn btn-sm btn-outline-warning">
                             <i class="fas fa-syringe me-1"></i> Ver historial completo
                         </a>
                     </div>

@@ -254,10 +254,17 @@
                         </ul>
                     </li>
                     <li>
-                        <a href="{{ url('prescription') }}" class="waves-effect">
+                        <a href="javascript: void(0);" class="has-arrow waves-effect">
                             <i class="bx bx-notepad"></i>
                             <span>{{ __('translation.prescription') }}</span>
                         </a>
+                        <ul class="sub-menu" aria-expanded="true">
+                            <li><a href="{{ url('prescription') }}">{{ __('translation.list-of-prescription') }}</a>
+                            </li>
+                            <li><a
+                                    href="{{ route('prescription.create') }}">{{ __('translation.create-prescription') }}</a>
+                            </li>
+                        </ul>
                     </li>
                     
                     <li class="menu-title" key="t-menu">💉 Inmunización</li>

@@ -61,6 +61,15 @@
                                     <button type="button" class="btn btn-info btn-sm waves-effect waves-light" onclick="copyToClipboard('{{ $tel->daily_room_url }}')">
                                         <i class="bx bx-share-alt"></i> Compartir Link
                                     </button>
+                                    @if($role != 'patient')
+                                    <form action="{{ route('telemedicine.destroy', $tel->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta teleconsulta y la sala en Daily.co?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm waves-effect waves-light">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

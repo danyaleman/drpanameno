@@ -165,6 +165,7 @@ Route::middleware('sentinel.auth')->group(function () {
     // ─── Módulo de Telemedicina ───────────────────────────────────────────────
     Route::get('telemedicine', 'TelemedicineController@index')->name('telemedicine.index');
     Route::get('telemedicine/room/{id}', 'TelemedicineController@room')->name('telemedicine.room');
+    Route::delete('telemedicine/{id}', 'TelemedicineController@destroy')->name('telemedicine.destroy');
     // ─────────────────────────────────────────────────────────────────────────
 
     // Secure Storage Access Route

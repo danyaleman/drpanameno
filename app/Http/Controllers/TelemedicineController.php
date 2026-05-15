@@ -89,4 +89,33 @@ class TelemedicineController extends Controller
 
         return view('telemedicine.room', compact('teleconsultation', 'role'));
     }
+
+    public function destroy($id)
+    {
+        $user = Sentinel::getUser();
+        $role = $user->roles[0]->slug;
+
+        // Solo admin o doctor pueden borrar (o ajustarlo según necesidades)
+        if (!in_array($role, ['admin', 'doctor', 'receptionist'])) {
+            return redirect()->back()->with('error', 'No tienes permiso para eliminar esta sala.');
+        }
+
+        $teleconsultation = Teleconsultation::findOrFail($id);
+
+        // Eliminar sala en Daily.co
+        if ($teleconsultation->daily_room_name) {
+            $dailyService = new \App\Services\DailyService();
+            $deleted = $dailyService->deleteRoom($teleconsultation->daily_room_name);
+            if ($deleted) {
+                \Log::info("Sala Daily.co eliminada: {$teleconsultation->daily_room_name}");
+            } else {
+                \Log::warning("No se pudo eliminar o ya no existía la sala en Daily.co: {$teleconsultation->daily_room_name}");
+            }
+        }
+
+        // Eliminar registro de BD
+        $teleconsultation->delete();
+
+        return redirect()->route('telemedicine.index')->with('success', 'Sala de telemedicina eliminada correctamente.');
+    }
 }

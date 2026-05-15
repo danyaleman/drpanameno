@@ -234,6 +234,14 @@
                         </a>
                     </li>
 
+                    <li class="menu-title" key="t-menu">💻 Telemedicina</li>
+                    <li>
+                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                            <i class="bx bx-laptop"></i>
+                            <span>Mis Teleconsultas</span>
+                        </a>
+                    </li>
+
                     <li>
                         <a href="javascript: void(0);" class="has-arrow waves-effect">
                             <i class='bx bxs-user-detail'></i>

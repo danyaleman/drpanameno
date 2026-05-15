@@ -20,7 +20,7 @@ class TelemedicineController extends Controller
         $role = $user->roles[0]->slug;
 
         // Limitar roles que pueden ver (Opcional, middleware también serviría)
-        if (!in_array($role, ['admin', 'doctor', 'patient'])) {
+        if (!in_array($role, ['admin', 'doctor', 'patient', 'receptionist'])) {
             return redirect('/')->with('error', 'No tienes permiso para acceder a Telemedicina.');
         }
 

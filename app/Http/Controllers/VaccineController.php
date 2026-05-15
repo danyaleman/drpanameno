@@ -69,14 +69,12 @@ class VaccineController extends Controller
         // Guardar esquema de dosis si viene
         if ($request->has('doses') && is_array($request->doses)) {
             foreach ($request->doses as $dose) {
-                if (!empty($dose['label'])) {
+                if (!empty($dose['dose_label'])) {
                     VaccineSchedule::create([
                         'vaccine_catalog_id'  => $vaccine->id,
                         'dose_number'         => $dose['dose_number'],
-                        'dose_label'          => $dose['label'],
-                        'interval_days'       => $dose['interval_days'] ?? null,
-                        'recommended_age_min' => $dose['age_min'] ?? null,
-                        'recommended_age_max' => $dose['age_max'] ?? null,
+                        'dose_label'          => $dose['dose_label'],
+                        'days_after_previous' => $dose['days_after_previous'] ?? 0,
                         'notes'               => $dose['notes'] ?? null,
                     ]);
                 }
@@ -118,14 +116,12 @@ class VaccineController extends Controller
         if ($request->has('doses') && is_array($request->doses)) {
             $vaccine->schedules()->delete();
             foreach ($request->doses as $dose) {
-                if (!empty($dose['label'])) {
+                if (!empty($dose['dose_label'])) {
                     VaccineSchedule::create([
                         'vaccine_catalog_id'  => $vaccine->id,
                         'dose_number'         => $dose['dose_number'],
-                        'dose_label'          => $dose['label'],
-                        'interval_days'       => $dose['interval_days'] ?? null,
-                        'recommended_age_min' => $dose['age_min'] ?? null,
-                        'recommended_age_max' => $dose['age_max'] ?? null,
+                        'dose_label'          => $dose['dose_label'],
+                        'days_after_previous' => $dose['days_after_previous'] ?? 0,
                         'notes'               => $dose['notes'] ?? null,
                     ]);
                 }

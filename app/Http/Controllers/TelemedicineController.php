@@ -49,7 +49,7 @@ class TelemedicineController extends Controller
         $user = Sentinel::getUser();
         $role = $user->roles[0]->slug;
 
-        $teleconsultation = Teleconsultation::with('appointment')->findOrFail($id);
+        $teleconsultation = Teleconsultation::with(['appointment', 'appointment.patient', 'appointment.patient.patient_info'])->findOrFail($id);
 
         // Seguridad: verificar si el usuario es parte de la cita (omitido para admin)
         if ($role == 'patient') {

@@ -154,6 +154,7 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::post('vaccines/records',                 'VaccineController@recordsStore')->name('vaccines.records.store');
     Route::post('vaccines/records/{id}/apply',      'VaccineController@recordsApply')->name('vaccines.records.apply');
     Route::post('vaccines/records/{id}/cancel',     'VaccineController@recordsCancel')->name('vaccines.records.cancel');
+    Route::delete('vaccines/records/{id}',          'VaccineController@recordsDestroy')->name('vaccines.records.destroy');
 
     // Historial por paciente
     Route::get('vaccines/patient/{patientId}',      'VaccineController@patientHistory')->name('vaccines.patient-history');

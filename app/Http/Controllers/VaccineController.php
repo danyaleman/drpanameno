@@ -277,6 +277,13 @@ class VaccineController extends Controller
         return redirect()->back()->with('success', 'Registro cancelado.');
     }
 
+    public function recordsDestroy($id)
+    {
+        VaccineRecord::findOrFail($id)->delete();
+
+        return redirect()->back()->with('success', 'Registro de vacuna eliminado correctamente.');
+    }
+
     public function patientHistory($patientId)
     {
         ['user' => $user, 'role' => $role] = $this->authData();

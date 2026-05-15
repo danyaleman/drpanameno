@@ -258,8 +258,19 @@
                                    class="btn btn-sm btn-outline-primary waves-effect" title="Ver historial">
                                     <i class="bx bx-user"></i>
                                 </a>
+                                <form action="{{ route('vaccines.records.destroy', $record->id) }}"
+                                      method="POST" class="d-inline"
+                                      onsubmit="return confirm('¿Eliminar este registro de vacuna permanentemente? Esta acción no se puede deshacer.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger waves-effect"
+                                            title="Eliminar registro">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
+
                     </tr>
 
                     {{-- Modal para marcar como aplicada --}}

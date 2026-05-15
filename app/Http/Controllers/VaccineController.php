@@ -91,6 +91,21 @@ class VaccineController extends Controller
 
         $vaccine = VaccineCatalog::with('schedules')->findOrFail($id);
 
+        // Si la vacuna no tiene esquema guardado, generar filas vacías
+        // según total_doses para que el usuario pueda completarlas.
+        if ($vaccine->schedules->isEmpty()) {
+            $placeholders = collect();
+            for ($i = 1; $i <= $vaccine->total_doses; $i++) {
+                $placeholders->push(new VaccineSchedule([
+                    'dose_number'         => $i,
+                    'dose_label'          => "Dosis $i",
+                    'days_after_previous' => 0,
+                    'notes'               => null,
+                ]));
+            }
+            $vaccine->setRelation('schedules', $placeholders);
+        }
+
         return view('vaccines.catalog.edit', compact('user', 'role', 'vaccine'));
     }
 

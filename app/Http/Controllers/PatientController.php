@@ -285,7 +285,7 @@ class PatientController extends Controller
                 $signos = $patient->signos;
 
                 // Vacunas registradas en el módulo de vacunación
-                $vaccineRecords = \App\VaccineRecord::where('patient_id', $patient->id)->with('vaccine')->orderBy('id', 'desc')->take(20)->get();
+                $vaccineRecords = \App\VaccineRecord::where('patient_id', $patient->id)->with('vaccine')->orderBy('scheduled_date', 'desc')->take(20)->get();
 
                 // Contar todas las citas (nuevas + antiguas)
                 $tot_appointment = Appointment::where('patient_id', $patient->id);

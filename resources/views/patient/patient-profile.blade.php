@@ -696,7 +696,10 @@
                                         <th>#</th>
                                         <th>Vacuna</th>
                                         <th>Dosis</th>
-                                        <th>Fecha Admin.</th>
+                                        <th>F. Programada</th>
+                                        <th>F. Aplicada</th>
+                                        <th>Lote</th>
+                                        <th>Aplicada por</th>
                                         <th>Estado</th>
                                     </tr>
                                 </thead>
@@ -704,23 +707,56 @@
                                     @foreach($vaccineRecords as $vr)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td class="fw-semibold">{{ optional($vr->vaccine)->name ?? $vr->vaccine_name ?? '—' }}</td>
-                                        <td class="text-muted">{{ $vr->dose ?? '—' }}</td>
-                                        <td>{{ $vr->administered_at ? \Carbon\Carbon::parse($vr->administered_at)->format('d/m/Y') : '—' }}</td>
+                                        <td class="fw-semibold">{{ optional($vr->vaccine)->name ?? '—' }}</td>
                                         <td>
-                                            @if(($vr->status ?? '') == 'completed')
+                                            @if($vr->dose_label)
+                                                <span class="badge bg-primary-subtle text-primary">{{ $vr->dose_label }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-muted" style="font-size:13px;">
+                                            {{ $vr->scheduled_date ? \Carbon\Carbon::parse($vr->scheduled_date)->format('d/m/Y') : '—' }}
+                                        </td>
+                                        <td style="font-size:13px;">
+                                            {{ $vr->applied_date ? \Carbon\Carbon::parse($vr->applied_date)->format('d/m/Y') : '—' }}
+                                        </td>
+                                        <td>
+                                            @if($vr->lot_number)
+                                                <span class="badge bg-warning-subtle text-warning fw-semibold" style="font-size:11px;">{{ $vr->lot_number }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-muted" style="font-size:13px;">{{ $vr->applied_by ?? '—' }}</td>
+                                        <td>
+                                            @if(($vr->status ?? '') == 'applied')
                                                 <span class="badge bg-success-subtle text-success">Aplicada</span>
                                             @elseif(($vr->status ?? '') == 'pending')
                                                 <span class="badge bg-warning-subtle text-warning">Pendiente</span>
+                                            @elseif(($vr->status ?? '') == 'cancelled')
+                                                <span class="badge bg-danger-subtle text-danger">Cancelada</span>
                                             @else
                                                 <span class="badge bg-secondary-subtle text-secondary">{{ $vr->status ?? '—' }}</span>
                                             @endif
                                         </td>
                                     </tr>
+                                    @if($vr->notes)
+                                    <tr class="table-light">
+                                        <td colspan="8" class="py-1 px-3" style="font-size:12px; color:#6c757d;">
+                                            <i class="bx bx-comment-detail me-1"></i> <em>{{ $vr->notes }}</em>
+                                        </td>
+                                    </tr>
+                                    @endif
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                    <div class="card-footer bg-white text-end py-2 px-3">
+                        <a href="{{ route('vaccines.patient.history', $patient->id) }}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-syringe me-1"></i> Ver historial completo
+                        </a>
                     </div>
                 </div>
             </div>

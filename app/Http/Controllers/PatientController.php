@@ -368,12 +368,15 @@ class PatientController extends Controller
 
         // Opción predeterminada y opción "Sin Cita"
         $options = '<option value="" selected disabled>Seleccionar Cita</option>';
-        $options .= '<option value="0">⚠️ Sin Cita (Atención Inmediata)</option>';
+        $options .= '<option value="0">⚠️ Sin Cita Presencial (Atención Inmediata)</option>';
+        $options .= '<option value="0">💻 Sin Cita Teleconsulta (Atención Inmediata)</option>';
 
         foreach ($appointments as $appointment) {
+            $isTelemed = $appointment->is_telemedicine ? ' 💻 (Teleconsulta)' : '';
             $options .= '<option value="' . $appointment->id . '">'
                 . \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') . ' ' .
                 ($appointment->AvailableTime ? ' - ' . $appointment->AvailableTime->from . ' a ' . $appointment->AvailableTime->to : '') .
+                $isTelemed .
                 '</option>';
         }
 

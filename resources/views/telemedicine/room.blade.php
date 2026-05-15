@@ -46,6 +46,26 @@
                 alert("Ocurrió un error al cargar la sala de videollamada. Revisa la consola.");
             });
 
+            callFrame.on('joined-meeting', (event) => {
+                @if($role == 'doctor')
+                    // Iniciar grabación automáticamente si es el doctor
+                    callFrame.startRecording().then(() => {
+                        console.log("Grabación en la nube iniciada.");
+                    }).catch((err) => {
+                        console.error("Error al iniciar grabación:", err);
+                    });
+
+                    // Iniciar transcripción por IA (si está soportado en la cuenta Daily)
+                    if (typeof callFrame.startTranscription === 'function') {
+                        callFrame.startTranscription().then(() => {
+                            console.log("Transcripción iniciada.");
+                        }).catch((err) => {
+                            console.error("Error al iniciar transcripción:", err);
+                        });
+                    }
+                @endif
+            });
+
             callFrame.on('left-meeting', (event) => {
                 window.location.href = "{{ route('telemedicine.index') }}";
             });

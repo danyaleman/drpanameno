@@ -288,10 +288,16 @@
                                                 @elseif($tipo === 'telemedicine')
                                                     @php $salaId = optional($appointment->teleconsultation)->id; @endphp
                                                     @if($salaId)
-                                                    <a href="/telemedicine/room/{{ $salaId }}"
-                                                       class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;">
-                                                        <i class="bx bx-video me-1"></i>Unirse a sala
-                                                    </a>
+                                                    <div class="d-flex justify-content-end mt-2" style="gap: 5px;">
+                                                        <a href="/telemedicine/room/{{ $salaId }}"
+                                                           class="btn btn-primary waves-effect px-2 py-1 fw-bold" style="font-size:0.85rem;" title="Unirse a videollamada">
+                                                            <i class="bx bx-video"></i> Sala
+                                                        </a>
+                                                        <a href="/prescription/create?patient_id={{ $appointment->patient_id }}&appointment_id={{ $appointment->id }}"
+                                                           class="btn btn-success waves-effect px-2 py-1 fw-bold" style="font-size:0.85rem;" title="Llenar expediente / consulta" target="_blank">
+                                                            <i class="bx bx-notepad"></i> Ficha
+                                                        </a>
+                                                    </div>
                                                     @else
                                                     <span class="badge bg-secondary">Sin sala</span>
                                                     @endif
@@ -594,7 +600,10 @@
                                 } else if (apptType === 'telemedicine') {
                                     var salaId = (apt.teleconsultation && apt.teleconsultation.id) ? apt.teleconsultation.id : null;
                                     if (salaId) {
-                                        actionBtn = '<div class="mt-2"><a href="/telemedicine/room/' + salaId + '" class="btn btn-primary waves-effect px-3 py-2 fw-bold" style="font-size:0.95rem;"><i class="bx bx-video me-1"></i>Unirse a sala</a></div>';
+                                        actionBtn = '<div class="d-flex justify-content-end mt-2" style="gap: 5px;">' +
+                                                        '<a href="/telemedicine/room/' + salaId + '" class="btn btn-primary waves-effect px-2 py-1 fw-bold" style="font-size:0.85rem;" title="Unirse a videollamada"><i class="bx bx-video"></i> Sala</a>' +
+                                                        '<a href="/prescription/create?patient_id=' + patientId + '&appointment_id=' + appointmentId + '" class="btn btn-success waves-effect px-2 py-1 fw-bold" style="font-size:0.85rem;" title="Llenar expediente / consulta" target="_blank"><i class="bx bx-notepad"></i> Ficha</a>' +
+                                                    '</div>';
                                     } else {
                                         actionBtn = '<div class="mt-2"><span class="badge bg-secondary">Sin sala</span></div>';
                                     }

@@ -98,10 +98,16 @@
                                                                 💉 Registrar Vacuna
                                                             </a>
                                                         @elseif($tipo === 'telemedicine')
-                                                            <a href="{{ url('telemedicine/room/' . $item->id) }}"
-                                                               class="btn btn-sm btn-primary fw-bold">
-                                                                📹 Unirse a sala
-                                                            </a>
+                                                            <div class="d-inline-flex gap-1">
+                                                                <a href="{{ url('telemedicine/room/' . $item->id) }}"
+                                                                   class="btn btn-sm btn-primary fw-bold" title="Unirse a sala">
+                                                                    📹 Sala
+                                                                </a>
+                                                                <a href="{{ url('prescription/create?patient_id=' . optional($item->patient)->id . '&appointment_id=' . $item->id) }}"
+                                                                   class="btn btn-sm btn-success fw-bold" title="Llenar Expediente/Consulta" target="_blank">
+                                                                    <i class="bx bx-notepad"></i> Ficha
+                                                                </a>
+                                                            </div>
                                                         @else
                                                             <a href="{{ url('prescription/create?patient_id=' . optional($item->patient)->id . '&appointment_id=' . $item->id) }}"
                                                                class="btn btn-sm btn-primary fw-bold">

@@ -29,12 +29,13 @@
             <div class="card-body">
                 @php 
                     $patient = $teleconsultation->appointment->patient; 
-                    $patientInfo = $patient ? $patient->patient_info : null;
+                    // No hay patient_info en Patient, los datos están en el mismo modelo o en medicalInfo
+                    $medicalInfo = $patient ? $patient->medicalInfo : null;
                 @endphp
                 
                 @if($patient)
                     <div class="text-center mb-4">
-                        <img src="{{ $patient->profile_photo ? url('storage/images/users/' . $patient->profile_photo) : url('assets/images/users/m-0.jpg') }}" 
+                        <img src="{{ $patient->photo ? url('storage/images/users/' . $patient->photo) : url('assets/images/users/m-0.jpg') }}" 
                              alt="Profile" 
                              class="rounded-circle avatar-lg img-thumbnail mb-2"
                              style="width: 100px; height: 100px; object-fit: cover;">
@@ -51,7 +52,7 @@
                                 </tr>
                                 <tr>
                                     <th scope="row"><i class="bx bx-phone text-muted"></i> Tel:</th>
-                                    <td>{{ $patient->mobile ?? 'N/A' }}</td>
+                                    <td>{{ $patient->phone_primary ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><i class="bx bx-envelope text-muted"></i> Correo:</th>
@@ -59,13 +60,13 @@
                                 </tr>
                                 <tr>
                                     <th scope="row"><i class="bx bx-donate-blood text-muted"></i> Sangre:</th>
-                                    <td>{{ $patientInfo && $patientInfo->blood_group ? $patientInfo->blood_group : 'N/A' }}</td>
+                                    <td>{{ $medicalInfo && $medicalInfo->blood_group ? $medicalInfo->blood_group : 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><i class="bx bx-calendar text-muted"></i> Edad:</th>
                                     <td>
-                                        @if($patientInfo && $patientInfo->dob)
-                                            {{ \Carbon\Carbon::parse($patientInfo->dob)->age }} años
+                                        @if($patient->birth_date)
+                                            {{ \Carbon\Carbon::parse($patient->birth_date)->age }} años
                                         @else
                                             N/A
                                         @endif
@@ -73,7 +74,7 @@
                                 </tr>
                                 <tr>
                                     <th scope="row"><i class="bx bx-body text-muted"></i> Género:</th>
-                                    <td>{{ $patientInfo && $patientInfo->gender ? ucfirst($patientInfo->gender) : 'N/A' }}</td>
+                                    <td>{{ $patient->gender ? ucfirst($patient->gender) : 'N/A' }}</td>
                                 </tr>
                             </tbody>
                         </table>

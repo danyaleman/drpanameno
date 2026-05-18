@@ -404,8 +404,21 @@
             });
 
             // Pacientes nuevos este mes — consulta ligera independiente
-            $.get('{{ route("patient.index") }}', { stat: 'new_this_month' }, function(r) {
-                if (r.new_this_month !== undefined) $('#stat-new').text(r.new_this_month.toLocaleString());
+            $.ajax({
+                url: '{{ route("patient.index") }}',
+                type: 'GET',
+                data: { stat: 'new_this_month' },
+                dataType: 'json',
+                cache: false,
+                success: function(r) {
+                    if (r && r.new_this_month !== undefined) {
+                        $('#stat-new').text(r.new_this_month.toLocaleString());
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al cargar pacientes nuevos:", error);
+                    $('#stat-new').text('Error');
+                }
             });
         });
 

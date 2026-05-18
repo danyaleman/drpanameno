@@ -639,12 +639,12 @@
         });
 
         function days(disabledDays) {
+            // Se elimina la restricción de días para permitir agendar cualquier fecha normal
             var todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
            $('#datepicker').datepicker('destroy');
             $('#datepicker').datepicker({
                 startDate: todayStart,
-                daysOfWeekDisabled: disabledDays,
                 autoclose: true,
                 todayHighlight: true,
                 language: 'es',

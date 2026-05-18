@@ -59,19 +59,19 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const pesoLbInput = document.getElementById('peso_lb');
-        const pesoKgDisplay = document.getElementById('peso_kg_display');
-
-        if (pesoLbInput) {
-            pesoLbInput.addEventListener('input', function () {
-                let lbs = parseFloat(this.value);
-                if (!isNaN(lbs) && lbs > 0) {
-                    let kgs = lbs / 2.20462;
-                    pesoKgDisplay.textContent = kgs.toFixed(2) + ' kg';
-                } else {
-                    pesoKgDisplay.textContent = '0.00 kg';
-                }
-            });
+        $(document).on('input', '#peso_lb', function() {
+            let lbs = parseFloat($(this).val());
+            if (!isNaN(lbs) && lbs > 0) {
+                let kgs = lbs / 2.20462;
+                $('#peso_kg_display').text(kgs.toFixed(2) + ' kg');
+            } else {
+                $('#peso_kg_display').text('0.00 kg');
+            }
+        });
+        
+        // Trigger on load in case it has a value already (e.g. from old data)
+        if ($('#peso_lb').val()) {
+            $('#peso_lb').trigger('input');
         }
     });
 </script>

@@ -459,6 +459,35 @@
         </div>
     </div>
 </div>
+
+{{-- ================= HISTORIAL DE VACUNACIONES ================= --}}
+<div class="row mt-3" id="vaccine-history-section" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-header text-white" style="background: linear-gradient(90deg, #fd7e14, #d6630d); border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16"><i class="fas fa-syringe me-2"></i><strong>Historial de Vacunaciones</strong></h5>
+            </div>
+            <div class="card-body p-0" style="border-radius: 0 0 10px 10px;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="vaccineHistoryTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Vacuna</th>
+                                <th>Dosis</th>
+                                <th>Estado</th>
+                                <th>Fecha Aplicada</th>
+                                <th>Fecha Programada</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
@@ -588,8 +617,15 @@ $(document).ready(function () {
                         res.patient.historial.forEach(function(item, index) {
                             let vacunasHtml = '';
                             if (item.vacunas && item.vacunas.length > 0) {
-                                vacunasHtml = '<div class="mt-2 text-primary"><strong>Vacunas:</strong><ul class="mb-0 ps-3">';
-                                item.vacunas.forEach(function(v) { vacunasHtml += `<li>${v.name || 'N/A'}</li>`; });
+                                vacunasHtml = '<div class="mt-2 text-primary"><strong><i class="fas fa-syringe me-1"></i>Vacunas / Inyecciones:</strong><ul class="mb-0 ps-3">';
+                                item.vacunas.forEach(function(v) {
+                                    let label = v.name || 'N/A';
+                                    if (v.dosis) label += ' — ' + v.dosis;
+                                    if (v.status === 'applied') label += ' <span class="badge bg-success-subtle text-success" style="font-size:10px;">Aplicada</span>';
+                                    else if (v.status === 'pending') label += ' <span class="badge bg-warning-subtle text-warning" style="font-size:10px;">Pendiente</span>';
+                                    if (v.applied_date) label += ' <small class="text-muted">(' + v.applied_date + ')</small>';
+                                    vacunasHtml += `<li>${label}</li>`;
+                                });
                                 vacunasHtml += '</ul></div>';
                             }
 
@@ -653,6 +689,30 @@ $(document).ready(function () {
                         $('#historyAccordion').hide();
                         $('#no-history-msg').show();
                         $('#clinical-history-section').slideDown();
+                    }
+
+                    // Cargar Historial de Vacunaciones
+                    if (res.patient.vacunas_historial && res.patient.vacunas_historial.length > 0) {
+                        let vRows = '';
+                        res.patient.vacunas_historial.forEach(function(v, i) {
+                            let statusBadge = '';
+                            if (v.status === 'applied') statusBadge = '<span class="badge bg-success">Aplicada</span>';
+                            else if (v.status === 'pending') statusBadge = '<span class="badge bg-warning text-dark">Pendiente</span>';
+                            else if (v.status === 'cancelled') statusBadge = '<span class="badge bg-danger">Cancelada</span>';
+                            else statusBadge = '<span class="badge bg-secondary">' + (v.status || '—') + '</span>';
+
+                            vRows += '<tr>' +
+                                '<td>' + (i + 1) + '</td>' +
+                                '<td class="fw-semibold">' + (v.name || '—') + '</td>' +
+                                '<td>' + (v.dosis || '—') + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td>' + (v.applied_date || '—') + '</td>' +
+                                '<td>' + (v.scheduled_date || '—') + '</td>' +
+                                '<td class="text-muted">' + (v.notes || '—') + '</td>' +
+                            '</tr>';
+                        });
+                        $('#vaccineHistoryTable tbody').html(vRows);
+                        $('#vaccine-history-section').slideDown();
                     }
 
                     // Actualizar campos hidden

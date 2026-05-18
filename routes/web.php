@@ -123,6 +123,7 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('prescription-list', 'PrescriptionController@prescription_list');
     Route::get('prescription-view/{id}', 'PrescriptionController@prescription_view');
     Route::delete('archivo/{id}', [ArchivoController::class, 'destroy'])->name('archivo.destroy');
+    Route::post('prescription/{prescription}/autosave', 'PrescriptionController@autoSave')->name('prescription.autosave');
 
     // Pagination
     Route::post('per-page-item', 'HomeController@per_page_item');
@@ -166,6 +167,8 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('telemedicine', 'TelemedicineController@index')->name('telemedicine.index');
     Route::get('telemedicine/room/{id}', 'TelemedicineController@room')->name('telemedicine.room');
     Route::delete('telemedicine/{id}', 'TelemedicineController@destroy')->name('telemedicine.destroy');
+    Route::get('telemedicine/recordings', 'TelemedicineController@recordings')->name('telemedicine.recordings');
+    Route::get('telemedicine/recording/{id}', 'TelemedicineController@recordingPlay')->name('telemedicine.recording.play');
     // ─────────────────────────────────────────────────────────────────────────
 
     // Secure Storage Access Route

@@ -431,6 +431,27 @@
 
                 <hr class="text-muted mb-4">
 
+                {{-- TOGGLE AUTO-GUARDADO --}}
+                <div class="autosave-panel mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="autosave-icon me-2">
+                                <i class="bx bx-sync" id="autosave-icon"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold text-dark" style="font-size: 13px;">Auto-guardado</span>
+                                <div id="autosave-status" class="autosave-status-text">Inactivo</div>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input autosave-toggle" type="checkbox" role="switch" id="autosaveToggle" checked>
+                        </div>
+                    </div>
+                    <div id="autosave-progress" class="autosave-progress mt-2" style="display:none;">
+                        <div class="autosave-progress-bar"></div>
+                    </div>
+                </div>
+
                 <div class="d-grid mt-2">
                     <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 8px; font-weight: bold;">
                         <i class="bx bx-save me-1 font-size-18 align-middle"></i> Actualizar Consulta
@@ -458,6 +479,35 @@
                 <div id="no-history-msg" class="text-center text-muted" style="display: none;">
                     <i class="bx bx-info-circle font-size-24 mb-2"></i>
                     <p>No se encontraron consultas previas para este paciente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ================= HISTORIAL DE VACUNACIONES ================= --}}
+<div class="row mt-3" id="vaccine-history-section" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-header text-white" style="background: linear-gradient(90deg, #fd7e14, #d6630d); border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16"><i class="fas fa-syringe me-2"></i><strong>Historial de Vacunaciones</strong></h5>
+            </div>
+            <div class="card-body p-0" style="border-radius: 0 0 10px 10px;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="vaccineHistoryTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Vacuna</th>
+                                <th>Dosis</th>
+                                <th>Estado</th>
+                                <th>Fecha Aplicada</th>
+                                <th>Fecha Programada</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -587,8 +637,15 @@ $(document).ready(function () {
                         res.patient.historial.forEach(function(item, index) {
                             let vacunasHtml = '';
                             if (item.vacunas && item.vacunas.length > 0) {
-                                vacunasHtml = '<div class="mt-2 text-primary"><strong>Vacunas:</strong><ul class="mb-0 ps-3">';
-                                item.vacunas.forEach(function(v) { vacunasHtml += `<li>${v.name || 'N/A'}</li>`; });
+                                vacunasHtml = '<div class="mt-2 text-primary"><strong><i class="fas fa-syringe me-1"></i>Vacunas / Inyecciones:</strong><ul class="mb-0 ps-3">';
+                                item.vacunas.forEach(function(v) {
+                                    let label = v.name || 'N/A';
+                                    if (v.dosis) label += ' — ' + v.dosis;
+                                    if (v.status === 'applied') label += ' <span class="badge bg-success-subtle text-success" style="font-size:10px;">Aplicada</span>';
+                                    else if (v.status === 'pending') label += ' <span class="badge bg-warning-subtle text-warning" style="font-size:10px;">Pendiente</span>';
+                                    if (v.applied_date) label += ' <small class="text-muted">(' + v.applied_date + ')</small>';
+                                    vacunasHtml += `<li>${label}</li>`;
+                                });
                                 vacunasHtml += '</ul></div>';
                             }
 
@@ -632,9 +689,19 @@ $(document).ready(function () {
                                             ${vacunasHtml}
                                             ${archivosHtml}
                                         </div>
+                                        <div class="col-md-12 mt-3 pt-3 border-top text-end">
+                                            ${item.is_old ? 
+                                                '<span class="badge bg-secondary-subtle text-secondary font-size-12"><i class="bx bx-archive"></i> Registro Antiguo (Detalles limitados)</span>' 
+                                                : 
+                                                `<a href="{{ url('prescription') }}/${item.id}" target="_blank" class="btn btn-sm btn-primary fw-bold shadow-sm" style="border-radius: 6px;">
+                                                    <i class="bx bx-link-external me-1"></i> Más Detalle
+                                                </a>`
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>`;
+
                         });
                         $('#historyAccordion').html(html).show();
                         $('#no-history-msg').hide();
@@ -643,6 +710,30 @@ $(document).ready(function () {
                         $('#historyAccordion').hide();
                         $('#no-history-msg').show();
                         $('#clinical-history-section').slideDown();
+                    }
+
+                    // Cargar Historial de Vacunaciones
+                    if (res.patient.vacunas_historial && res.patient.vacunas_historial.length > 0) {
+                        let vRows = '';
+                        res.patient.vacunas_historial.forEach(function(v, i) {
+                            let statusBadge = '';
+                            if (v.status === 'applied') statusBadge = '<span class="badge bg-success">Aplicada</span>';
+                            else if (v.status === 'pending') statusBadge = '<span class="badge bg-warning text-dark">Pendiente</span>';
+                            else if (v.status === 'cancelled') statusBadge = '<span class="badge bg-danger">Cancelada</span>';
+                            else statusBadge = '<span class="badge bg-secondary">' + (v.status || '—') + '</span>';
+
+                            vRows += '<tr>' +
+                                '<td>' + (i + 1) + '</td>' +
+                                '<td class="fw-semibold">' + (v.name || '—') + '</td>' +
+                                '<td>' + (v.dosis || '—') + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td>' + (v.applied_date || '—') + '</td>' +
+                                '<td>' + (v.scheduled_date || '—') + '</td>' +
+                                '<td class="text-muted">' + (v.notes || '—') + '</td>' +
+                            '</tr>';
+                        });
+                        $('#vaccineHistoryTable tbody').html(vRows);
+                        $('#vaccine-history-section').slideDown();
                     }
 
                     // Actualizar campos hidden
@@ -1215,6 +1306,295 @@ $(document).ready(function () {
         btn.querySelector('.mic-label').textContent = 'Dictar';
         setTimeout(() => statusEl.classList.add('d-none'), 4500);
     }
+})();
+</script>
+
+{{-- ══ AUTO-GUARDADO — Styles & Logic ══ --}}
+<style>
+/* ── Toggle Switch ── */
+.autosave-toggle {
+    width: 44px !important;
+    height: 22px !important;
+    cursor: pointer;
+    border: 2px solid #ced4da;
+    transition: all 0.3s ease;
+}
+.autosave-toggle:checked {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+.autosave-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25) !important;
+}
+
+/* ── Panel ── */
+.autosave-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+    border: 1px solid rgba(25, 135, 84, 0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: all 0.4s ease;
+}
+.autosave-panel.inactive {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+    border-color: #dee2e6;
+}
+.autosave-panel.saving {
+    border-color: rgba(85, 110, 230, 0.4);
+    box-shadow: 0 0 0 3px rgba(85, 110, 230, 0.08);
+}
+.autosave-panel.error {
+    border-color: rgba(220, 53, 69, 0.3);
+    background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+}
+
+/* ── Icon ── */
+.autosave-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    transition: all 0.3s ease;
+}
+.autosave-panel.inactive .autosave-icon {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+.autosave-panel.saving .autosave-icon {
+    background: rgba(85, 110, 230, 0.12);
+    color: #556ee6;
+}
+.autosave-panel.saving .autosave-icon i {
+    animation: spin-save 1s linear infinite;
+}
+@keyframes spin-save {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ── Status text ── */
+.autosave-status-text {
+    font-size: 11px;
+    color: #6c757d;
+    line-height: 1.3;
+    transition: color 0.3s ease;
+}
+.autosave-status-text.success { color: #198754; font-weight: 600; }
+.autosave-status-text.error   { color: #dc3545; font-weight: 600; }
+.autosave-status-text.saving  { color: #556ee6; font-weight: 600; }
+
+/* ── Progress bar ── */
+.autosave-progress {
+    height: 3px;
+    background: rgba(25, 135, 84, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.autosave-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #198754, #20c997);
+    border-radius: 3px;
+    transition: width 1s linear;
+}
+</style>
+
+<script>
+(function() {
+    const AUTOSAVE_INTERVAL = 30000; // 30 seconds
+    const PRESCRIPTION_ID = '{{ $prescription->id }}';
+    const AUTOSAVE_URL = '{{ route("prescription.autosave", $prescription->id) }}';
+    const CSRF_TOKEN = '{{ csrf_token() }}';
+    const STORAGE_KEY = 'autosave_enabled_' + PRESCRIPTION_ID;
+
+    const toggle     = document.getElementById('autosaveToggle');
+    const statusEl   = document.getElementById('autosave-status');
+    const iconEl     = document.getElementById('autosave-icon');
+    const panel      = toggle.closest('.autosave-panel');
+    const progressEl = document.getElementById('autosave-progress');
+    const progressBar = progressEl.querySelector('.autosave-progress-bar');
+
+    let autosaveTimer = null;
+    let countdownTimer = null;
+    let isSaving = false;
+    let lastSnapshot = '';
+
+    // Restore toggle state from localStorage (default: ON)
+    const savedState = localStorage.getItem(STORAGE_KEY);
+    toggle.checked = savedState === null ? true : savedState === 'true';
+
+    // Initialize
+    updateUI();
+    if (toggle.checked) startAutoSave();
+
+    // Toggle event
+    toggle.addEventListener('change', function() {
+        localStorage.setItem(STORAGE_KEY, this.checked);
+        if (this.checked) {
+            startAutoSave();
+        } else {
+            stopAutoSave();
+        }
+        updateUI();
+    });
+
+    function updateUI() {
+        if (toggle.checked) {
+            panel.classList.remove('inactive', 'error');
+            if (!isSaving) {
+                statusEl.textContent = 'Activo — guardando cada 30s';
+                statusEl.className = 'autosave-status-text';
+            }
+        } else {
+            panel.classList.add('inactive');
+            panel.classList.remove('saving', 'error');
+            statusEl.textContent = 'Desactivado';
+            statusEl.className = 'autosave-status-text';
+            progressEl.style.display = 'none';
+        }
+    }
+
+    function getFormSnapshot() {
+        const form = document.getElementById('prescription-form');
+        const data = new FormData(form);
+        // Remove file inputs from snapshot comparison
+        const entries = [];
+        for (let [key, value] of data.entries()) {
+            if (!(value instanceof File)) {
+                entries.push(key + '=' + value);
+            }
+        }
+        return entries.sort().join('&');
+    }
+
+    function startAutoSave() {
+        stopAutoSave();
+        lastSnapshot = getFormSnapshot();
+        // Start countdown progress bar
+        startProgressBar();
+        autosaveTimer = setInterval(function() {
+            performAutoSave();
+        }, AUTOSAVE_INTERVAL);
+    }
+
+    function stopAutoSave() {
+        if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        progressEl.style.display = 'none';
+    }
+
+    function startProgressBar() {
+        progressEl.style.display = 'block';
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+        // Force reflow
+        void progressBar.offsetWidth;
+        progressBar.style.transition = 'width ' + (AUTOSAVE_INTERVAL / 1000) + 's linear';
+        progressBar.style.width = '100%';
+    }
+
+    function performAutoSave() {
+        if (isSaving || !toggle.checked) return;
+
+        const currentSnapshot = getFormSnapshot();
+        if (currentSnapshot === lastSnapshot) {
+            // No changes — skip save but reset timer visually
+            statusEl.textContent = 'Sin cambios — esperando...';
+            statusEl.className = 'autosave-status-text';
+            startProgressBar();
+            return;
+        }
+
+        isSaving = true;
+        panel.classList.add('saving');
+        statusEl.textContent = 'Guardando...';
+        statusEl.className = 'autosave-status-text saving';
+
+        const form = document.getElementById('prescription-form');
+        const formData = new FormData(form);
+
+        // Remove file inputs — autosave only handles text
+        const keysToRemove = [];
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(k => formData.delete(k));
+
+        // Remove _method PATCH (autosave endpoint is POST)
+        formData.delete('_method');
+
+        fetch(AUTOSAVE_URL, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.success) {
+                lastSnapshot = currentSnapshot;
+                statusEl.textContent = '✓ Guardado a las ' + data.saved_at;
+                statusEl.className = 'autosave-status-text success';
+                panel.classList.remove('saving', 'error');
+                // Flash effect
+                panel.style.borderColor = 'rgba(25, 135, 84, 0.5)';
+                setTimeout(() => { panel.style.borderColor = ''; }, 1500);
+            } else {
+                throw new Error(data.message || 'Error desconocido');
+            }
+        })
+        .catch(err => {
+            console.error('Autosave error:', err);
+            statusEl.textContent = '✗ Error: ' + err.message;
+            statusEl.className = 'autosave-status-text error';
+            panel.classList.remove('saving');
+            panel.classList.add('error');
+            setTimeout(() => { panel.classList.remove('error'); }, 5000);
+        })
+        .finally(() => {
+            isSaving = false;
+            if (toggle.checked) startProgressBar();
+        });
+    }
+
+    // Save on tab/window blur (user navigates away)
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden' && toggle.checked && !isSaving) {
+            const currentSnapshot = getFormSnapshot();
+            if (currentSnapshot !== lastSnapshot) {
+                performAutoSave();
+            }
+        }
+    });
+
+    // Warn before unload if there are unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (!toggle.checked) return;
+        const currentSnapshot = getFormSnapshot();
+        if (currentSnapshot !== lastSnapshot) {
+            // Try a final save via sendBeacon
+            const form = document.getElementById('prescription-form');
+            const formData = new FormData(form);
+            const keysToRemove = [];
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) keysToRemove.push(key);
+            }
+            keysToRemove.forEach(k => formData.delete(k));
+            formData.delete('_method');
+            formData.append('_token', CSRF_TOKEN);
+            navigator.sendBeacon(AUTOSAVE_URL, formData);
+        }
+    });
 })();
 </script>
 @endsection

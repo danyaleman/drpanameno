@@ -180,7 +180,16 @@ class VaccineController extends Controller
             $query->where('vaccine_catalog_id', $request->vaccine_id);
         }
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'upcoming') {
+                // Special filter: pending + scheduled within next 7 days
+                $query->where('status', 'pending')
+                      ->whereBetween('scheduled_date', [
+                          Carbon::today()->toDateString(),
+                          Carbon::today()->addDays(7)->toDateString(),
+                      ]);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         if ($request->filled('date_from')) {
             $query->whereDate('scheduled_date', '>=', $request->date_from);

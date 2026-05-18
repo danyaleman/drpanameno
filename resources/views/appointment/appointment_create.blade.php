@@ -627,18 +627,24 @@
         var roles = '{{ $role }}';
         let datep = $('#datepicker');
 
+        // Use midnight of today to prevent timezone/hour issues in production
+        var todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
+
         datep.datepicker({
-            startDate: new Date(),
+            startDate: todayMidnight,
             autoclose: true,
             todayHighlight: true,
             language: 'es',
         });
 
         function days(disabledDays) {
+            var todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
            $('#datepicker').datepicker('destroy');
             $('#datepicker').datepicker({
-                startDate: new Date(),
-                daysOfWeekDisabled: [0, 6],
+                startDate: todayStart,
+                daysOfWeekDisabled: disabledDays,
                 autoclose: true,
                 todayHighlight: true,
                 language: 'es',

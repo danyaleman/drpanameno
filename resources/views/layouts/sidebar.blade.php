@@ -102,10 +102,14 @@
 
                     <li class="menu-title" key="t-menu">💻 Telemedicina</li>
                     <li>
-                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                        <a href="javascript: void(0);" class="has-arrow waves-effect">
                             <i class="bx bx-laptop"></i>
-                            <span>Mis Teleconsultas</span>
+                            <span>Teleconsultas</span>
                         </a>
+                        <ul class="sub-menu" aria-expanded="true">
+                            <li><a href="{{ route('telemedicine.index') }}">Mis Teleconsultas</a></li>
+                            <li><a href="{{ route('telemedicine.recordings') }}">Grabaciones</a></li>
+                        </ul>
                     </li>
 
                     <li class="menu-title" key="t-menu">💉 Inmunización</li>
@@ -160,10 +164,14 @@
 
                     <li class="menu-title" key="t-menu">💻 Telemedicina</li>
                     <li>
-                        <a href="{{ route('telemedicine.index') }}" class="waves-effect">
+                        <a href="javascript: void(0);" class="has-arrow waves-effect">
                             <i class="bx bx-laptop"></i>
-                            <span>Mis Teleconsultas</span>
+                            <span>Teleconsultas</span>
                         </a>
+                        <ul class="sub-menu" aria-expanded="true">
+                            <li><a href="{{ route('telemedicine.index') }}">Mis Teleconsultas</a></li>
+                            <li><a href="{{ route('telemedicine.recordings') }}">Grabaciones</a></li>
+                        </ul>
                     </li>
 
                     <li>

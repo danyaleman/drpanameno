@@ -686,6 +686,61 @@
     </div>{{-- end col-lg-4 --}}
 
 </div>{{-- end row --}}
+
+{{-- ================= HISTORIA CLÍNICA (CONSULTAS PREVIAS) ================= --}}
+<div class="row mt-4" id="clinical-history-section" style="display: none;">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+            <div class="card-header" style="background: linear-gradient(90deg, #343a40, #495057); border-radius: 12px 12px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16 fw-bold">
+                    <i class="bx bx-list-ul me-2"></i>Historia Clínica (Últimas Consultas del Paciente)
+                </h5>
+            </div>
+            <div class="card-body p-4" style="border-radius: 0 0 12px 12px;">
+                <div class="accordion accordion-flush" id="historyAccordion">
+                    {{-- Se llenará vía AJAX --}}
+                </div>
+                <div id="no-history-msg" class="text-center text-muted py-4" style="display: none;">
+                    <i class="bx bx-info-circle font-size-24 mb-2 d-block opacity-50"></i>
+                    <p class="mb-0">No se encontraron consultas previas para este paciente.</p>
+                </div>
+                <div id="history-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                    <span class="ms-2 text-muted">Cargando historial...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ================= HISTORIAL DE VACUNACIONES ================= --}}
+<div class="row mt-3" id="vaccine-history-section" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 12px;">
+            <div class="card-header text-white" style="background: linear-gradient(90deg, #fd7e14, #d6630d); border-radius: 12px 12px 0 0; padding: 15px 20px;">
+                <h5 class="mb-0 text-white font-size-16 fw-bold"><i class="fas fa-syringe me-2"></i>Historial de Vacunaciones</h5>
+            </div>
+            <div class="card-body p-0" style="border-radius: 0 0 12px 12px;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="vaccineHistoryTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Vacuna</th>
+                                <th>Dosis</th>
+                                <th>Estado</th>
+                                <th>Fecha Aplicada</th>
+                                <th>Fecha Programada</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 @section('script')
 <script>
@@ -768,5 +823,143 @@
         printWindow.document.write(htmlContent);
         printWindow.document.close();
     };
+
+    // ── Cargar Historia Clínica del Paciente ──────────────────────────
+    $(document).ready(function() {
+        var patientId = '{{ $prescription->patient_id }}';
+        var currentPrescriptionId = '{{ $prescription->id }}';
+
+        if (patientId) {
+            $.ajax({
+                url: "{{ route('patient_clinical_info') }}",
+                type: "POST",
+                data: {
+                    patient_id: patientId,
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function(res) {
+                    $('#history-loading').hide();
+
+                    if (res.isSuccess && res.patient.historial && res.patient.historial.length > 0) {
+                        // Filter out the current consultation from the history
+                        var historial = res.patient.historial.filter(function(item) {
+                            return !(!item.is_old && item.id == currentPrescriptionId);
+                        });
+
+                        if (historial.length === 0) {
+                            $('#no-history-msg').show();
+                            $('#clinical-history-section').slideDown();
+                            return;
+                        }
+
+                        var html = '';
+                        historial.forEach(function(item, index) {
+                            var oldBadge = item.is_old ? '<span class="badge bg-secondary ms-2" style="font-size:10px;">Sistema Anterior</span>' : '';
+
+                            var vacunasHtml = '';
+                            if (item.vacunas && item.vacunas.length > 0) {
+                                vacunasHtml = '<div class="mt-2 text-primary"><strong><i class="fas fa-syringe me-1"></i>Vacunas / Inyecciones:</strong><ul class="mb-0 ps-3">';
+                                item.vacunas.forEach(function(v) {
+                                    var label = v.name || 'N/A';
+                                    if (v.dosis) label += ' — ' + v.dosis;
+                                    if (v.status === 'applied') label += ' <span class="badge bg-success-subtle text-success" style="font-size:10px;">Aplicada</span>';
+                                    else if (v.status === 'pending') label += ' <span class="badge bg-warning-subtle text-warning" style="font-size:10px;">Pendiente</span>';
+                                    if (v.applied_date) label += ' <small class="text-muted">(' + v.applied_date + ')</small>';
+                                    vacunasHtml += '<li>' + label + '</li>';
+                                });
+                                vacunasHtml += '</ul></div>';
+                            }
+
+                            var examenesHtml = '';
+                            if (item.evaluacion && item.evaluacion.estudios_laboratorios) {
+                                examenesHtml = '<div class="mt-2 text-info"><strong>Laboratorios recomendados:</strong> <p class="mb-0">' + item.evaluacion.estudios_laboratorios + '</p></div>';
+                            }
+
+                            var archivosHtml = '';
+                            if (item.archivos && item.archivos.length > 0) {
+                                archivosHtml = '<div class="mt-2 text-secondary"><strong>Imágenes o Archivos:</strong><ul class="mb-0 ps-3">';
+                                item.archivos.forEach(function(a) {
+                                    if (a.url_file) {
+                                        var fileName = a.observaciones || a.url_file.split('/').pop() || 'Archivo Adjunto';
+                                        archivosHtml += '<li><a href="/storage/' + a.url_file + '" target="_blank" class="text-decoration-none"><i class="bx bx-image"></i> ' + fileName + '</a></li>';
+                                    } else {
+                                        archivosHtml += '<li><i class="bx bx-image"></i> ' + (a.observaciones || 'Archivo Adjunto') + '</li>';
+                                    }
+                                });
+                                archivosHtml += '</ul></div>';
+                            }
+
+                            html += '<div class="accordion-item shadow-sm border mb-2" style="border-radius: 8px; overflow: hidden;">' +
+                                '<h2 class="accordion-header" id="heading-' + index + '">' +
+                                    '<button class="accordion-button fw-bold text-dark bg-white ' + (index !== 0 ? 'collapsed' : '') + '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' + index + '" aria-expanded="' + (index === 0 ? 'true' : 'false') + '">' +
+                                        '<i class="bx bx-calendar-event text-primary me-2"></i> Consulta del ' + item.date + ' ' + oldBadge +
+                                        '<span class="badge bg-primary-subtle text-primary ms-auto" style="font-size: 11px;">#' + item.id + '</span>' +
+                                    '</button>' +
+                                '</h2>' +
+                                '<div id="collapse-' + index + '" class="accordion-collapse collapse ' + (index === 0 ? 'show' : '') + '" data-bs-parent="#historyAccordion">' +
+                                    '<div class="accordion-body bg-light-subtle row p-4">' +
+                                        '<div class="col-md-6 border-end">' +
+                                            '<strong class="text-muted text-uppercase font-size-11"><i class="bx bx-message-rounded-dots"></i> Consulta Por:</strong>' +
+                                            '<p class="mt-1">' + (item.consulta_por || 'No especificado') + '</p>' +
+                                        '</div>' +
+                                        '<div class="col-md-6">' +
+                                            '<strong class="text-muted text-uppercase font-size-11"><i class="bx bx-file"></i> Evaluación / Diagnóstico:</strong>' +
+                                            '<p class="mt-1 mb-0">' + (item.diagnostico || 'No especificado') + '</p>' +
+                                            examenesHtml + vacunasHtml + archivosHtml +
+                                        '</div>' +
+                                        '<div class="col-md-12 mt-3 pt-3 border-top text-end">' +
+                                            (item.is_old ? 
+                                                '<span class="badge bg-secondary-subtle text-secondary font-size-12"><i class="bx bx-archive"></i> Registro Antiguo (Detalles limitados)</span>' 
+                                                : 
+                                                '<a href="{{ url("prescription") }}/' + item.id + '" target="_blank" class="btn btn-sm btn-primary fw-bold shadow-sm" style="border-radius: 6px;">' +
+                                                    '<i class="bx bx-link-external me-1"></i> Más Detalle' +
+                                                '</a>'
+                                            ) +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>';
+                        });
+
+                        $('#historyAccordion').html(html).show();
+                        $('#no-history-msg').hide();
+                        $('#clinical-history-section').slideDown();
+                    } else {
+                        $('#historyAccordion').hide();
+                        $('#no-history-msg').show();
+                        $('#clinical-history-section').slideDown();
+                    }
+
+                    // Cargar Historial de Vacunaciones
+                    if (res.patient.vacunas_historial && res.patient.vacunas_historial.length > 0) {
+                        var vRows = '';
+                        res.patient.vacunas_historial.forEach(function(v, i) {
+                            var statusBadge = '';
+                            if (v.status === 'applied') statusBadge = '<span class="badge bg-success">Aplicada</span>';
+                            else if (v.status === 'pending') statusBadge = '<span class="badge bg-warning text-dark">Pendiente</span>';
+                            else if (v.status === 'cancelled') statusBadge = '<span class="badge bg-danger">Cancelada</span>';
+                            else statusBadge = '<span class="badge bg-secondary">' + (v.status || '—') + '</span>';
+
+                            vRows += '<tr>' +
+                                '<td>' + (i + 1) + '</td>' +
+                                '<td class="fw-semibold">' + (v.name || '—') + '</td>' +
+                                '<td>' + (v.dosis || '—') + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td>' + (v.applied_date || '—') + '</td>' +
+                                '<td>' + (v.scheduled_date || '—') + '</td>' +
+                                '<td class="text-muted">' + (v.notes || '—') + '</td>' +
+                            '</tr>';
+                        });
+                        $('#vaccineHistoryTable tbody').html(vRows);
+                        $('#vaccine-history-section').slideDown();
+                    }
+                },
+                error: function(err) {
+                    console.error('Error cargando historial:', err);
+                    $('#history-loading').html('<span class="text-danger"><i class="bx bx-error me-1"></i>Error al cargar historial</span>');
+                }
+            });
+        }
+    });
 </script>
 @endsection

@@ -54,6 +54,16 @@ class PatientController extends Controller
         if ($user->hasAccess('patient.list')) {
             $role = $user->roles[0]->slug;
 
+            // Endpoint ligero para estadísticas (no DataTables)
+            if ($request->has('stat') && $request->stat === 'new_this_month') {
+                return response()->json([
+                    'new_this_month' => Patient::where('is_deleted', 0)
+                        ->whereYear('created_at', now()->year)
+                        ->whereMonth('created_at', now()->month)
+                        ->count()
+                ]);
+            }
+
             // Load Datatables — Server-Side Processing (solo carga la página actual)
             if ($request->ajax()) {
                 $patients = Patient::select([
@@ -122,15 +132,6 @@ class PatientController extends Controller
                                 </div>';
                         return $option;
                     })->rawColumns(['option'])->make(true);
-            }
-            // Endpoint ligero para estadísticas (no DataTables)
-            if ($request->has('stat') && $request->stat === 'new_this_month') {
-                return response()->json([
-                    'new_this_month' => Patient::where('is_deleted', 0)
-                        ->whereYear('created_at', now()->year)
-                        ->whereMonth('created_at', now()->month)
-                        ->count()
-                ]);
             }
 
             // Para carga inicial (no AJAX), pasar datos vacíos
@@ -384,7 +385,7 @@ class PatientController extends Controller
 
                 // 1. Nuevas consultas (Prescriptions)
                 $appointmentIds = $appointments->pluck('id')->toArray();
-                $newHistorial = Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos'])
+                $newHistorial = Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos', 'vaccineRecords.vaccine'])
                 ->where('is_deleted', 0)
                 ->where(function ($q) use ($patient, $appointmentIds) {
                     $q->where('patient_id', $patient->id);
@@ -396,6 +397,20 @@ class PatientController extends Controller
                 ->take(10)
                 ->get()
                 ->map(function ($presc) {
+                    // Merge old Vacuna records + new VaccineRecord records into unified format
+                    $oldVacunas = $presc->vacunas->map(function($v) {
+                        return ['name' => $v->tipo, 'dosis' => $v->dosis];
+                    });
+                    $newVacunas = $presc->vaccineRecords->map(function($v) {
+                        return [
+                            'name' => $v->vaccine ? $v->vaccine->name : 'Vacuna',
+                            'dosis' => $v->dose_label,
+                            'status' => $v->status,
+                            'applied_date' => $v->applied_date ? $v->applied_date->format('d/m/Y') : null,
+                        ];
+                    });
+                    $allVacunas = $oldVacunas->concat($newVacunas)->values();
+
                     return [
                         'id' => $presc->id,
                         'is_old' => false,
@@ -403,7 +418,7 @@ class PatientController extends Controller
                         'consulta_por' => $presc->consulta_por,
                         'diagnostico' => $presc->diagnosis,
                         'evaluacion' => $presc->evaluacion,
-                        'vacunas' => $presc->vacunas,
+                        'vacunas' => $allVacunas,
                         'archivos' => $presc->archivos,
                         'medicinas' => $presc->medicines
                     ];
@@ -495,7 +510,25 @@ class PatientController extends Controller
                     ] : null,
     
                     // Historia Clínica (Últimas 10 consultas unidas)
-                    'historial' => $historial
+                    'historial' => $historial,
+
+                    // Historial completo de vacunación del paciente (por patient_id, independiente de prescripciones)
+                    'vacunas_historial' => \App\VaccineRecord::where('patient_id', $patient->id)
+                        ->with('vaccine')
+                        ->orderBy('applied_date', 'desc')
+                        ->orderBy('scheduled_date', 'desc')
+                        ->get()
+                        ->map(function ($v) {
+                            return [
+                                'name' => $v->vaccine ? $v->vaccine->name : 'Vacuna',
+                                'dosis' => $v->dose_label,
+                                'status' => $v->status,
+                                'applied_date' => $v->applied_date ? $v->applied_date->format('d/m/Y') : null,
+                                'scheduled_date' => $v->scheduled_date ? $v->scheduled_date->format('d/m/Y') : null,
+                                'lot_number' => $v->lot_number,
+                                'notes' => $v->notes,
+                            ];
+                        })
                 ]
             ]);
     }

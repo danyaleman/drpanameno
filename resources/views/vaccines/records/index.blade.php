@@ -2,6 +2,47 @@
 
 @section('title') Registros de Vacunación @endsection
 
+@section('css')
+<style>
+    /* ── Stat Filter Cards ── */
+    .stat-card {
+        border: 2px solid transparent !important;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+    }
+    .stat-total:hover { border-color: #1a73e8 !important; }
+    .stat-applied:hover { border-color: #28a745 !important; }
+    .stat-pending:hover { border-color: #fd7e14 !important; }
+    .stat-upcoming:hover { border-color: #dc3545 !important; }
+
+    /* Active filter state */
+    .active-filter .stat-total {
+        border-color: #1a73e8 !important;
+        box-shadow: 0 0 0 3px rgba(26,115,232,0.2), 0 4px 15px rgba(26,115,232,0.15) !important;
+    }
+    .active-filter .stat-applied {
+        border-color: #28a745 !important;
+        box-shadow: 0 0 0 3px rgba(40,167,69,0.2), 0 4px 15px rgba(40,167,69,0.15) !important;
+    }
+    .active-filter .stat-pending {
+        border-color: #fd7e14 !important;
+        box-shadow: 0 0 0 3px rgba(253,126,20,0.2), 0 4px 15px rgba(253,126,20,0.15) !important;
+    }
+    .active-filter .stat-upcoming {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 3px rgba(220,53,69,0.2), 0 4px 15px rgba(220,53,69,0.15) !important;
+    }
+
+    /* Pulse animation for urgent cards */
+    @keyframes pulse-border {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); }
+        50% { box-shadow: 0 0 0 6px rgba(220,53,69,0); }
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="row">
     <div class="col-12">
@@ -24,63 +65,94 @@
     </div>
 @endif
 
-{{-- Tarjetas de estadísticas --}}
+@php
+    $activeFilter = request('status', '');
+@endphp
+
+{{-- Tarjetas de estadísticas — filtros interactivos --}}
 <div class="row g-3 mb-4">
+    {{-- Total Registros --}}
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:52px;height:52px;background:linear-gradient(135deg,#1a73e8,#0d47a1);">
-                    <i class="bx bx-injection text-white font-size-22"></i>
-                </div>
-                <div>
-                    <p class="text-muted mb-1 small fw-semibold">TOTAL REGISTROS</p>
-                    <h4 class="mb-0 fw-bold">{{ $stats['total'] }}</h4>
+        <a href="{{ route('vaccines.records.index') }}" class="text-decoration-none stat-filter-card {{ $activeFilter === '' ? 'active-filter' : '' }}" data-filter="">
+            <div class="card border-0 shadow-sm h-100 stat-card stat-total" style="border-radius: 14px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-0">
+                    <div class="d-flex align-items-stretch">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 90px; background: linear-gradient(180deg, #1a73e8, #0d47a1);">
+                            <i class="bx bx-injection text-white" style="font-size: 36px;"></i>
+                        </div>
+                        <div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
+                            <p class="text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 1.5px; color: #1a73e8;">Total Registros</p>
+                            <h3 class="mb-0 fw-bold" style="color: #0d47a1; font-size: 1.8rem; line-height: 1;">{{ $stats['total'] }}</h3>
+                            <small class="text-muted" style="font-size: 0.72rem;">Todos los registros</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
+    {{-- Aplicadas --}}
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:52px;height:52px;background:linear-gradient(135deg,#28a745,#1e7e34);">
-                    <i class="bx bx-check-circle text-white font-size-22"></i>
-                </div>
-                <div>
-                    <p class="text-muted mb-1 small fw-semibold">APLICADAS</p>
-                    <h4 class="mb-0 fw-bold text-success">{{ $stats['applied'] }}</h4>
+        <a href="{{ route('vaccines.records.index', ['status' => 'applied']) }}" class="text-decoration-none stat-filter-card {{ $activeFilter === 'applied' ? 'active-filter' : '' }}" data-filter="applied">
+            <div class="card border-0 shadow-sm h-100 stat-card stat-applied" style="border-radius: 14px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-0">
+                    <div class="d-flex align-items-stretch">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 90px; background: linear-gradient(180deg, #28a745, #1e7e34);">
+                            <i class="bx bx-check-circle text-white" style="font-size: 36px;"></i>
+                        </div>
+                        <div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
+                            <p class="text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 1.5px; color: #28a745;">Aplicadas</p>
+                            <h3 class="mb-0 fw-bold" style="color: #1e7e34; font-size: 1.8rem; line-height: 1;">{{ $stats['applied'] }}</h3>
+                            <small class="text-muted" style="font-size: 0.72rem;">Dosis completadas</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
+    {{-- Pendientes --}}
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:52px;height:52px;background:linear-gradient(135deg,#fd7e14,#e55a00);">
-                    <i class="bx bx-time text-white font-size-22"></i>
-                </div>
-                <div>
-                    <p class="text-muted mb-1 small fw-semibold">PENDIENTES</p>
-                    <h4 class="mb-0 fw-bold text-warning">{{ $stats['pending'] }}</h4>
+        <a href="{{ route('vaccines.records.index', ['status' => 'pending']) }}" class="text-decoration-none stat-filter-card {{ $activeFilter === 'pending' ? 'active-filter' : '' }}" data-filter="pending">
+            <div class="card border-0 shadow-sm h-100 stat-card stat-pending" style="border-radius: 14px; overflow: hidden; transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-0">
+                    <div class="d-flex align-items-stretch">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 90px; background: linear-gradient(180deg, #fd7e14, #e55a00);">
+                            <i class="bx bx-time text-white" style="font-size: 36px;"></i>
+                        </div>
+                        <div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
+                            <p class="text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 1.5px; color: #fd7e14;">Pendientes</p>
+                            <h3 class="mb-0 fw-bold" style="color: #e55a00; font-size: 1.8rem; line-height: 1;">{{ $stats['pending'] }}</h3>
+                            <small class="text-muted" style="font-size: 0.72rem;">Dosis por aplicar</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
+    {{-- Próximos 7 días --}}
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:52px;height:52px;background:linear-gradient(135deg,#dc3545,#a71d2a);">
-                    <i class="bx bx-bell text-white font-size-22"></i>
-                </div>
-                <div>
-                    <p class="text-muted mb-1 small fw-semibold">PRÓXIMOS 7 DÍAS</p>
-                    <h4 class="mb-0 fw-bold text-danger">{{ $stats['upcoming'] }}</h4>
+        <a href="{{ route('vaccines.records.index', ['status' => 'upcoming']) }}" class="text-decoration-none stat-filter-card {{ $activeFilter === 'upcoming' ? 'active-filter' : '' }}" data-filter="upcoming">
+            <div class="card border-0 shadow-sm h-100 stat-card stat-upcoming" style="border-radius: 14px; overflow: hidden; transition: all 0.3s ease; cursor: pointer; {{ $stats['upcoming'] > 0 ? 'animation: pulse-border 2s infinite;' : '' }}">
+                <div class="card-body p-0">
+                    <div class="d-flex align-items-stretch">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 90px; background: linear-gradient(180deg, #dc3545, #a71d2a);">
+                            <i class="bx bx-bell text-white" style="font-size: 36px;"></i>
+                        </div>
+                        <div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
+                            <p class="text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 1.5px; color: #dc3545;">Próximos 7 Días</p>
+                            <h3 class="mb-0 fw-bold" style="color: #a71d2a; font-size: 1.8rem; line-height: 1;">{{ $stats['upcoming'] }}</h3>
+                            <small class="text-muted" style="font-size: 0.72rem;">Vacunas por vencer</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -111,6 +183,7 @@
                     <option value="pending"   {{ request('status') == 'pending'   ? 'selected' : '' }}>Pendiente</option>
                     <option value="applied"   {{ request('status') == 'applied'   ? 'selected' : '' }}>Aplicada</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelada</option>
+                    <option value="upcoming"  {{ request('status') == 'upcoming'  ? 'selected' : '' }}>Próximos 7 días</option>
                 </select>
             </div>
             <div class="col-md-2">

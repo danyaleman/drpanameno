@@ -537,6 +537,84 @@ class PrescriptionController extends Controller
             ], 409);
         }
     }
+    /**
+     * Auto-save prescription via AJAX (text fields only, no file uploads).
+     */
+    public function autoSave(Request $request, Prescription $prescription)
+    {
+        $user = Sentinel::getUser();
+        if (!$user->hasAccess('prescription.update')) {
+            return response()->json(['success' => false, 'message' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $prescription = Prescription::find($prescription->id);
+            if (!$prescription) {
+                return response()->json(['success' => false, 'message' => 'Consulta no encontrada'], 404);
+            }
+
+            // Save prescription main fields
+            $prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
+            $prescription->codigo_id        = $request->codigo_id ?: null;
+            $prescription->precio_consulta  = $request->precio_consulta ?: null;
+            $prescription->consulta_por     = $request->consulta_por;
+            $prescription->diagnosis        = $request->diagnosis;
+            $prescription->updated_by       = $user->id;
+            $prescription->save();
+
+            // Save Signos Vitales
+            if ($request->patient_id_hidden) {
+                Signos::updateOrCreate(
+                    ['patient_id' => $request->patient_id_hidden],
+                    [
+                        'peso' => $request->peso,
+                        'talla' => $request->talla,
+                        'frec_respiratoria' => $request->frec_respiratoria,
+                        'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
+                        'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
+                        'temperatura' => $request->temperatura,
+                        'frec_cardiaca' => $request->frec_cardiaca,
+                        'spo' => $request->spo,
+                        'examen' => $request->examen,
+                        'observaciones_adicionales' => $request->observaciones_adicionales,
+                    ]
+                );
+            }
+
+            // Save Evaluación
+            \App\Evaluacion::updateOrCreate(
+                ['prescription_id' => $prescription->id],
+                [
+                    'diagnostico' => $request->diagnostico,
+                    'estudios_laboratorios' => $request->estudios_laboratorios,
+                    'medicamentos' => $request->tratamiento
+                ]
+            );
+
+            // Save Antecedentes del paciente
+            if ($request->patient_id_hidden) {
+                $patient = Patient::find($request->patient_id_hidden);
+                if ($patient) {
+                    $patient->pathological_history     = $request->pathological_history;
+                    $patient->non_pathological_history  = $request->non_pathological_history;
+                    $patient->medications_allergies     = $request->medications_allergies;
+                    $patient->save();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Guardado automático exitoso',
+                'saved_at' => now()->format('h:i:s A')
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al autoguardar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function prescription_list()
     {
         $user = Sentinel::getUser();

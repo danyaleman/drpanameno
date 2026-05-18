@@ -97,6 +97,14 @@ class Prescription extends Model
         return $this->hasMany(Medicine::class , 'prescription_id');
     }
 
+    /**
+     * Registros de vacunación del módulo nuevo (VaccineRecord)
+     */
+    public function vaccineRecords()
+    {
+        return $this->hasMany(VaccineRecord::class, 'prescription_id');
+    }
+
     public function testReports()
     {
         return $this->hasMany(TestReport::class , 'prescription_id');

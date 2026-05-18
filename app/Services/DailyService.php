@@ -114,4 +114,130 @@ class DailyService
             return false;
         }
     }
+
+    /**
+     * List recordings from Daily.co
+     *
+     * @param int $limit
+     * @return array|null
+     */
+    public function getRecordings($limit = 100)
+    {
+        try {
+            $http = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ]);
+
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->get($this->baseUrl . '/recordings', [
+                'limit' => $limit,
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Daily.co API Failed to get recordings: ' . $response->body());
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Daily.co getRecordings Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get a single recording by ID
+     *
+     * @param string $recordingId
+     * @return array|null
+     */
+    public function getRecording($recordingId)
+    {
+        try {
+            $http = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ]);
+
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->get($this->baseUrl . '/recordings/' . $recordingId);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Daily.co API Failed to get recording: ' . $response->body());
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Daily.co getRecording Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get a temporary access link for a recording (playback/download)
+     *
+     * @param string $recordingId
+     * @return array|null Returns ['download_link' => '...'] or null
+     */
+    public function getRecordingAccessLink($recordingId)
+    {
+        try {
+            $http = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ]);
+
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->get($this->baseUrl . '/recordings/' . $recordingId . '/access-link');
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Daily.co API Failed to get access link: ' . $response->body());
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Daily.co getRecordingAccessLink Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get transcript for a recording
+     *
+     * @param string $recordingId
+     * @return array|null
+     */
+    public function getTranscript($recordingId)
+    {
+        try {
+            $http = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ]);
+
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->get($this->baseUrl . '/recordings/' . $recordingId . '/transcript');
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            // Transcript may not exist for all recordings
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Daily.co getTranscript Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
 }

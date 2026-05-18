@@ -118,4 +118,127 @@ class TelemedicineController extends Controller
 
         return redirect()->route('telemedicine.index')->with('success', 'Sala de telemedicina eliminada correctamente.');
     }
+
+    /**
+     * Listado de grabaciones de teleconsultas desde Daily.co API
+     */
+    public function recordings()
+    {
+        $user = Sentinel::getUser();
+        $role = $user->roles[0]->slug;
+
+        if (!in_array($role, ['admin', 'doctor'])) {
+            return redirect('/')->with('error', 'No tienes permiso para ver grabaciones.');
+        }
+
+        $dailyService = new \App\Services\DailyService();
+        $apiResponse = $dailyService->getRecordings(100);
+
+        $recordings = [];
+
+        if ($apiResponse && isset($apiResponse['data'])) {
+            // Pre-load all teleconsultations with their appointments for cross-referencing
+            $teleconsultations = Teleconsultation::with(['appointment', 'appointment.patient', 'appointment.doctor', 'appointment.doctor.user'])
+                ->get()
+                ->keyBy('daily_room_name');
+
+            foreach ($apiResponse['data'] as $rec) {
+                $roomName = $rec['room_name'] ?? '';
+                $teleconsultation = $teleconsultations->get($roomName);
+
+                // If doctor, only show their own recordings
+                if ($role === 'doctor' && $teleconsultation) {
+                    if ($user->doctor && $teleconsultation->appointment->appointment_with != $user->doctor->id) {
+                        continue;
+                    }
+                }
+
+                $patientName = 'Paciente desconocido';
+                $doctorName = '';
+                $appointmentDate = null;
+                $appointmentTime = null;
+                $appointmentId = null;
+
+                if ($teleconsultation && $teleconsultation->appointment) {
+                    $apt = $teleconsultation->appointment;
+                    if ($apt->patient) {
+                        $patientName = trim(($apt->patient->first_name ?? '') . ' ' . ($apt->patient->last_name ?? ''));
+                    }
+                    if ($apt->doctor && $apt->doctor->user) {
+                        $doctorName = 'Dr. ' . trim(($apt->doctor->user->first_name ?? '') . ' ' . ($apt->doctor->user->last_name ?? ''));
+                    }
+                    $appointmentDate = $apt->appointment_date;
+                    $appointmentId = $apt->id;
+                }
+
+                $recordings[] = [
+                    'id' => $rec['id'],
+                    'room_name' => $roomName,
+                    'duration' => $rec['duration'] ?? 0,
+                    'status' => $rec['status'] ?? 'unknown',
+                    'created_at' => $rec['start_ts'] ?? ($rec['created_at'] ?? null),
+                    'patient_name' => $patientName,
+                    'doctor_name' => $doctorName,
+                    'appointment_date' => $appointmentDate,
+                    'appointment_id' => $appointmentId,
+                    'tracks' => $rec['tracks'] ?? [],
+                ];
+            }
+        }
+
+        return view('telemedicine.recordings', compact('recordings', 'role'));
+    }
+
+    /**
+     * Reproducir/ver una grabación específica
+     */
+    public function recordingPlay($recordingId)
+    {
+        $user = Sentinel::getUser();
+        $role = $user->roles[0]->slug;
+
+        if (!in_array($role, ['admin', 'doctor'])) {
+            return redirect('/')->with('error', 'No tienes permiso para ver grabaciones.');
+        }
+
+        $dailyService = new \App\Services\DailyService();
+
+        // Get recording details
+        $recording = $dailyService->getRecording($recordingId);
+        if (!$recording) {
+            return redirect()->route('telemedicine.recordings')->with('error', 'No se pudo cargar la grabación.');
+        }
+
+        // Get temporary access link for playback
+        $accessLink = $dailyService->getRecordingAccessLink($recordingId);
+
+        // Try to get transcript
+        $transcript = $dailyService->getTranscript($recordingId);
+
+        // Cross-reference with local teleconsultation
+        $roomName = $recording['room_name'] ?? '';
+        $teleconsultation = Teleconsultation::with(['appointment', 'appointment.patient', 'appointment.doctor', 'appointment.doctor.user'])
+            ->where('daily_room_name', $roomName)
+            ->first();
+
+        $patientName = 'Paciente desconocido';
+        $doctorName = '';
+        $appointmentDate = null;
+
+        if ($teleconsultation && $teleconsultation->appointment) {
+            $apt = $teleconsultation->appointment;
+            if ($apt->patient) {
+                $patientName = trim(($apt->patient->first_name ?? '') . ' ' . ($apt->patient->last_name ?? ''));
+            }
+            if ($apt->doctor && $apt->doctor->user) {
+                $doctorName = 'Dr. ' . trim(($apt->doctor->user->first_name ?? '') . ' ' . ($apt->doctor->user->last_name ?? ''));
+            }
+            $appointmentDate = $apt->appointment_date;
+        }
+
+        return view('telemedicine.recording-play', compact(
+            'recording', 'accessLink', 'transcript',
+            'patientName', 'doctorName', 'appointmentDate', 'role'
+        ));
+    }
 }

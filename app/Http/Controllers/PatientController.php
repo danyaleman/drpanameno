@@ -385,7 +385,7 @@ class PatientController extends Controller
 
                 // 1. Nuevas consultas (Prescriptions)
                 $appointmentIds = $appointments->pluck('id')->toArray();
-                $newHistorial = Prescription::with(['evaluacion', 'medicines', 'vacunas', 'archivos', 'vaccineRecords.vaccine'])
+                $newHistorial = Prescription::with(['appointment', 'evaluacion', 'medicines', 'vacunas', 'archivos', 'vaccineRecords.vaccine'])
                 ->where('is_deleted', 0)
                 ->where(function ($q) use ($patient, $appointmentIds) {
                     $q->where('patient_id', $patient->id);
@@ -420,7 +420,8 @@ class PatientController extends Controller
                         'evaluacion' => $presc->evaluacion,
                         'vacunas' => $allVacunas,
                         'archivos' => $presc->archivos,
-                        'medicinas' => $presc->medicines
+                        'medicinas' => $presc->medicines,
+                        'is_telemedicine' => $presc->appointment ? $presc->appointment->is_telemedicine : 0
                     ];
                 });
 
@@ -450,7 +451,8 @@ class PatientController extends Controller
                         'evaluacion' => null,
                         'vacunas' => [],
                         'archivos' => $oldArchivos,
-                        'medicinas' => []
+                        'medicinas' => [],
+                        'is_telemedicine' => 0
                     ];
                 });
 

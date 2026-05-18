@@ -892,7 +892,7 @@
                             html += '<div class="accordion-item shadow-sm border mb-2" style="border-radius: 8px; overflow: hidden;">' +
                                 '<h2 class="accordion-header" id="heading-' + index + '">' +
                                     '<button class="accordion-button fw-bold text-dark bg-white ' + (index !== 0 ? 'collapsed' : '') + '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' + index + '" aria-expanded="' + (index === 0 ? 'true' : 'false') + '">' +
-                                        '<i class="bx bx-calendar-event text-primary me-2"></i> Consulta del ' + item.date + ' ' + oldBadge +
+                                        (item.is_telemedicine == 1 ? '<i class="bx bx-video text-primary me-2"></i> Teleconsulta del ' : '<i class="bx bx-calendar-event text-primary me-2"></i> Consulta del ') + item.date + ' ' + oldBadge +
                                         '<span class="badge bg-primary-subtle text-primary ms-auto" style="font-size: 11px;">#' + item.id + '</span>' +
                                     '</button>' +
                                 '</h2>' +

@@ -8,6 +8,10 @@
 
 @section('content')
 
+@php
+    $isTele = isset($preloadAppointment) && $preloadAppointment->is_telemedicine == 1;
+@endphp
+
 {{-- CARD DE SELECCIÓN DE PACIENTE Y CITA --}}
 <div class="card mb-3" id="selection-card">
     <div class="card-header bg-primary text-white">
@@ -401,32 +405,66 @@
                 </div> <!-- End tab-content -->
             </div> <!-- End card-body -->
         </div> <!-- End card -->
-    </div>
 
-    {{-- ================= COLUMNA DERECHA ================= --}}
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+        @if($isTele)
+        <div class="card shadow-sm border-0 mt-4" style="border-radius: 10px;">
             <div class="card-header bg-primary text-white" style="border-radius: 10px 10px 0 0; padding: 15px 20px;">
                 <h5 class="mb-0 text-white font-size-16"><i class="bx bx-history me-2"></i><strong>Antecedentes y Alergias</strong></h5>
             </div>
             <div class="card-body p-4">
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Patológicos</label>
-                    <textarea id="patologicos" name="pathological_history" class="form-control" rows="3" placeholder="Antecedentes médicos, cirugías, etc."></textarea>
-                </div>
+                @include('prescription.partials.antecedentes_form')
+            </div>
+        </div>
+        @endif
+    </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Familiares</label>
-                    <textarea id="familiares" name="non_pathological_history" class="form-control" rows="3" placeholder="Enfermedades hereditarias, hábitos..."></textarea>
+    {{-- ================= COLUMNA DERECHA ================= --}}
+    <div class="col-lg-4">
+        @if($isTele)
+            {{-- Telemedicine Room iframe --}}
+            <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px;">
+                <div class="card-header text-white" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                    <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
                 </div>
-
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-danger"><i class="bx bx-error-circle"></i> Alergias</label>
-                    <textarea id="alergias" name="medications_allergies" class="form-control border-danger" rows="3" placeholder="Medicamentos, alimentos, etc."></textarea>
+                <div class="card-body p-0" style="height: 600px;">
+                    <iframe src="{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture"></iframe>
                 </div>
+                <div class="card-footer bg-light" style="border-radius: 0 0 10px 10px;">
+                    <label class="form-label font-size-12 text-muted mb-1">Enlace para el paciente</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" id="telemed-url" value="{{ optional(optional($preloadAppointment)->teleconsultation)->daily_room_url }}" readonly>
+                        <button class="btn btn-outline-primary" type="button" onclick="copyTelemedUrl()"><i class="bx bx-copy"></i> Copiar</button>
+                        <a href="https://wa.me/?text={{ urlencode('Únete a mi consulta médica en línea usando este enlace: ') }}" target="_blank" class="btn btn-success" id="telemed-wa" onclick="shareWa()"><i class="bx bxl-whatsapp font-size-16 align-middle"></i></a>
+                    </div>
+                    <script>
+                        function copyTelemedUrl() {
+                            var copyText = document.getElementById("telemed-url");
+                            copyText.select();
+                            copyText.setSelectionRange(0, 99999);
+                            document.execCommand("copy");
+                            toastr.success("URL copiada al portapapeles");
+                        }
+                        function shareWa() {
+                            var text = 'Únete a la consulta médica en línea usando este enlace: ' + document.getElementById("telemed-url").value;
+                            document.getElementById("telemed-wa").href = 'https://wa.me/?text=' + encodeURIComponent(text);
+                        }
+                    </script>
+                </div>
+            </div>
+        @else
+            <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px;">
+                <div class="card-header bg-primary text-white" style="border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                    <h5 class="mb-0 text-white font-size-16"><i class="bx bx-history me-2"></i><strong>Antecedentes y Alergias</strong></h5>
+                </div>
+                <div class="card-body p-4">
+                    @include('prescription.partials.antecedentes_form')
+                </div>
+            </div>
+        @endif
 
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-body p-4">
                 <hr class="text-muted mb-4">
-
                 <div class="d-grid mt-2">
                     <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 8px; font-weight: bold;">
                         <i class="bx bx-save me-1 font-size-18 align-middle"></i> Crear Consulta
@@ -652,7 +690,7 @@ $(document).ready(function () {
                             <div class="accordion-item shadow-sm border mb-2" style="border-radius: 8px; overflow: hidden;">
                                 <h2 class="accordion-header" id="heading-${index}">
                                     <button class="accordion-button fw-bold text-dark bg-white ${index !== 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse-${index}">
-                                        <i class="bx bx-calendar-event text-primary me-2"></i> Consulta del ${item.date} 
+                                        ${item.is_telemedicine == 1 ? '<i class="bx bx-video text-primary me-2"></i> Teleconsulta del ' : '<i class="bx bx-calendar-event text-primary me-2"></i> Consulta del '} ${item.date} 
                                         <span class="badge bg-primary-subtle text-primary ms-auto" style="font-size: 11px;">#${item.id}</span>
                                     </button>
                                 </h2>

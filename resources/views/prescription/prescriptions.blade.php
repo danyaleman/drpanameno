@@ -230,8 +230,13 @@
                                         {{-- Fecha Cita Programada --}}
                                         <td>
                                             <div class="d-flex align-items-center text-dark">
-                                                <i class="bx bx-calendar text-primary me-2 font-size-16"></i>
-                                                <span style="text-transform: capitalize;">{{ $prescription->appointment ? \Carbon\Carbon::parse($prescription->appointment->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') : 'N/A' }}</span>
+                                                @if($prescription->appointment && $prescription->appointment->is_telemedicine)
+                                                    <i class="bx bx-video text-primary me-2 font-size-16" title="Teleconsulta"></i>
+                                                    <span style="text-transform: capitalize;">{{ \Carbon\Carbon::parse($prescription->appointment->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') }} <span class="badge bg-primary-subtle text-primary ms-1">Teleconsulta</span></span>
+                                                @else
+                                                    <i class="bx bx-calendar text-primary me-2 font-size-16"></i>
+                                                    <span style="text-transform: capitalize;">{{ $prescription->appointment ? \Carbon\Carbon::parse($prescription->appointment->appointment_date)->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY') : 'N/A' }}</span>
+                                                @endif
                                             </div>
                                         </td>
 

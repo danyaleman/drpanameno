@@ -87,6 +87,10 @@ class TelemedicineController extends Controller
             $teleconsultation->save();
         }
 
+        if (request()->has('iframe')) {
+            return view('telemedicine.room-iframe', compact('teleconsultation', 'role'));
+        }
+
         return view('telemedicine.room', compact('teleconsultation', 'role'));
     }
 

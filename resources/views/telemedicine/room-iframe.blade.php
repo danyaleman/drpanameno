@@ -31,6 +31,7 @@
                 container, {
                     showLeaveButton: true,
                     showFullscreenButton: true,
+                    enable_pip_ui: true,
                     lang: 'es',
                     iframeStyle: {
                         width: '100%',

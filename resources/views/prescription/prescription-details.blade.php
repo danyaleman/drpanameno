@@ -423,8 +423,11 @@
         @if($isTele)
             {{-- Telemedicine Room iframe --}}
             <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px;">
-                <div class="card-header text-white" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 15px 20px;">
+                <div class="card-header text-white d-flex align-items-center justify-content-between" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 10px 20px;">
                     <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
+                    <button type="button" class="btn btn-sm btn-light text-primary border-0" onclick="openFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                        <i class="bx bx-window-open me-1"></i> Ventana Flotante
+                    </button>
                 </div>
                 <div class="card-body p-0" style="height: 600px;">
                     <iframe src="{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
@@ -437,6 +440,10 @@
                         <a href="https://wa.me/?text={{ urlencode('Únete a mi consulta médica en línea usando este enlace: ') }}" target="_blank" class="btn btn-success" id="telemed-wa" onclick="shareWa()"><i class="bx bxl-whatsapp font-size-16 align-middle"></i></a>
                     </div>
                     <script>
+                        function openFloatingWindow() {
+                            var url = "{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1";
+                            window.open(url, "telemed_window", "width=850,height=650,menubar=no,status=no,toolbar=no,resizable=yes");
+                        }
                         function copyTelemedUrl() {
                             var copyText = document.getElementById("telemed-url");
                             copyText.select();

@@ -114,6 +114,7 @@
                 container, {
                     showLeaveButton: true,
                     showFullscreenButton: true,
+                    enable_pip_ui: true,
                     lang: 'es', // Forzar el idioma español
                     iframeStyle: {
                         width: '100%',

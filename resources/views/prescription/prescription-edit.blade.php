@@ -432,7 +432,7 @@
                     <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
                 </div>
                 <div class="card-body p-0" style="height: 600px;">
-                    <iframe src="{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture"></iframe>
+                    <iframe src="{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
                 </div>
                 <div class="card-footer bg-light" style="border-radius: 0 0 10px 10px;">
                     <label class="form-label font-size-12 text-muted mb-1">Enlace para el paciente</label>

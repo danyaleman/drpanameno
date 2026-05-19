@@ -29,7 +29,8 @@
 
             var callFrame = window.DailyIframe.createFrame(
                 container, {
-                    showLeaveButton: false, // The doctor can just close the tab or use the normal save button
+                    showLeaveButton: true,
+                    showFullscreenButton: true,
                     lang: 'es',
                     iframeStyle: {
                         width: '100%',

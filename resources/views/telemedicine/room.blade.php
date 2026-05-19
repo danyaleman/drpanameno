@@ -113,6 +113,7 @@
             var callFrame = window.DailyIframe.createFrame(
                 container, {
                     showLeaveButton: true,
+                    showFullscreenButton: true,
                     lang: 'es', // Forzar el idioma español
                     iframeStyle: {
                         width: '100%',

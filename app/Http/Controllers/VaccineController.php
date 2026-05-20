@@ -125,6 +125,7 @@ class VaccineController extends Controller
             'description'  => $request->description,
             'manufacturer' => $request->manufacturer,
             'total_doses'  => $request->total_doses,
+            'is_active'    => $request->has('is_active'),
         ]);
 
         // Reemplazar esquema de dosis
@@ -198,7 +199,7 @@ class VaccineController extends Controller
             $query->whereDate('scheduled_date', '<=', $request->date_to);
         }
 
-        $records  = $query->orderBy('scheduled_date', 'asc')->paginate(20)->withQueryString();
+        $records  = $query->orderBy('scheduled_date', 'desc')->paginate(20)->withQueryString();
         $vaccines = VaccineCatalog::active()->orderBy('name')->get();
 
         // Stats

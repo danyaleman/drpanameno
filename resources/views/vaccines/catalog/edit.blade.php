@@ -117,3 +117,60 @@
     </div>
 </div>
 @endsection
+
+@section('script')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const totalDosesInput = document.getElementById('total_doses');
+    const container = document.getElementById('doses-container');
+
+    function adjustDoses(total) {
+        let rows = container.querySelectorAll('.dose-row');
+        let currentCount = rows.length;
+
+        if (total > currentCount) {
+            // Agregar más filas
+            for (let i = currentCount; i < total; i++) {
+                const doseNum = i + 1;
+                const defaultLabel = doseNum === total && total > 1 ? 'Refuerzo' : `Dosis ${doseNum}`;
+                const html = `
+                    <div class="dose-row border rounded p-3 mb-3 bg-white">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-primary rounded-pill me-2">Dosis ${doseNum}</span>
+                        </div>
+                        <div class="row g-2">
+                            <input type="hidden" name="doses[${i}][dose_number]" value="${doseNum}">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Etiqueta</label>
+                                <input type="text" name="doses[${i}][dose_label]" class="form-control form-control-sm"
+                                       value="${defaultLabel}" placeholder="Ej: Dosis ${doseNum}...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Días de espera</label>
+                                <input type="number" name="doses[${i}][days_after_previous]" class="form-control form-control-sm"
+                                       value="21" min="0">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold">Notas</label>
+                                <input type="text" name="doses[${i}][notes]" class="form-control form-control-sm"
+                                       placeholder="Opcional...">
+                            </div>
+                        </div>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        } else if (total < currentCount) {
+            // Eliminar filas sobrantes del final
+            for (let i = currentCount - 1; i >= total; i--) {
+                rows[i].remove();
+            }
+        }
+    }
+
+    totalDosesInput.addEventListener('input', function () {
+        const val = parseInt(this.value) || 1;
+        if (val >= 1 && val <= 20) adjustDoses(val);
+    });
+});
+</script>
+@endsection

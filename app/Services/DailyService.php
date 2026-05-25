@@ -211,6 +211,38 @@ class DailyService
     }
 
     /**
+     * Delete a recording from Daily.co
+     *
+     * @param string $recordingId
+     * @return bool
+     */
+    public function deleteRecording($recordingId): bool
+    {
+        try {
+            $http = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ]);
+
+            if (app()->environment('local', 'development')) {
+                $http = $http->withoutVerifying();
+            }
+
+            $response = $http->delete($this->baseUrl . '/recordings/' . $recordingId);
+
+            if ($response->successful()) {
+                Log::info("Daily.co recording deleted: {$recordingId}");
+                return true;
+            }
+
+            Log::error('Daily.co API Failed to delete recording: ' . $response->body());
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Daily.co deleteRecording Exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Get transcript for a recording
      *
      * @param string $recordingId

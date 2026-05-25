@@ -169,6 +169,8 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::delete('telemedicine/{id}', 'TelemedicineController@destroy')->name('telemedicine.destroy');
     Route::get('telemedicine/recordings', 'TelemedicineController@recordings')->name('telemedicine.recordings');
     Route::get('telemedicine/recording/{id}', 'TelemedicineController@recordingPlay')->name('telemedicine.recording.play');
+    Route::delete('telemedicine/recording/{id}', 'TelemedicineController@recordingDestroy')->name('telemedicine.recording.destroy');
+
     // ─────────────────────────────────────────────────────────────────────────
 
     // Secure Storage Access Route

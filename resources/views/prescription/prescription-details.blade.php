@@ -425,12 +425,26 @@
             <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px;">
                 <div class="card-header text-white d-flex align-items-center justify-content-between" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 10px 20px;">
                     <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
-                    <button type="button" class="btn btn-sm btn-light text-primary border-0" onclick="openFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                    <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
                         <i class="bx bx-window-open me-1"></i> Ventana Flotante
                     </button>
                 </div>
-                <div class="card-body p-0" style="height: 600px;">
-                    <iframe src="{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+                {{-- Iframe de teleconsulta (se oculta cuando la ventana flotante está abierta) --}}
+                <div id="telemed-iframe-container" class="card-body p-0" style="height: 600px;">
+                    <iframe id="telemed-iframe" src="{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+                </div>
+                {{-- Placeholder cuando la ventana flotante está activa --}}
+                <div id="telemed-floating-placeholder" style="display:none; height:600px; background:linear-gradient(135deg,#e8f4ff 0%,#dbeafe 100%); border-radius:0 0 10px 10px;">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
+                        <div style="width:80px;height:80px;background:rgba(26,115,232,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                            <i class="bx bx-window-open" style="font-size:40px;color:#1a73e8;"></i>
+                        </div>
+                        <h5 class="text-primary fw-bold mb-2">Teleconsulta en ventana flotante</h5>
+                        <p class="text-muted mb-4" style="font-size:14px;">La sesión de teleconsulta está activa en la ventana flotante.<br>Cierra esa ventana para volver a verla aquí.</p>
+                        <button type="button" class="btn btn-primary shadow-sm" onclick="restoreIframe()" style="border-radius:8px;font-weight:600;">
+                            <i class="bx bx-arrow-back me-1"></i> Restaurar aquí
+                        </button>
+                    </div>
                 </div>
                 <div class="card-footer bg-light" style="border-radius: 0 0 10px 10px;">
                     <label class="form-label font-size-12 text-muted mb-1">Enlace para el paciente</label>
@@ -440,10 +454,68 @@
                         <a href="https://wa.me/?text={{ urlencode('Únete a mi consulta médica en línea usando este enlace: ') }}" target="_blank" class="btn btn-success" id="telemed-wa" onclick="shareWa()"><i class="bx bxl-whatsapp font-size-16 align-middle"></i></a>
                     </div>
                     <script>
-                        function openFloatingWindow() {
-                            var url = "{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1";
-                            window.open(url, "telemed_window", "width=850,height=650,menubar=no,status=no,toolbar=no,resizable=yes");
+                        var telemedFloatingWindow = null;
+                        var telemedPollingInterval = null;
+                        var telemedRoomUrl = "{{ url('/telemedicine/room/' . optional(optional($preloadAppointment)->teleconsultation)->id) }}?iframe=1";
+
+                        function toggleFloatingWindow() {
+                            // Si la ventana ya está abierta, traerla al frente
+                            if (telemedFloatingWindow && !telemedFloatingWindow.closed) {
+                                telemedFloatingWindow.focus();
+                                return;
+                            }
+                            // Vaciar el src del iframe para liberar la sesión en la página principal
+                            document.getElementById('telemed-iframe').src = '';
+
+                            // Mostrar placeholder, ocultar iframe
+                            document.getElementById('telemed-iframe-container').style.display = 'none';
+                            document.getElementById('telemed-floating-placeholder').style.display = 'block';
+
+                            // Cambiar botón
+                            var btn = document.getElementById('btn-floating-window');
+                            btn.classList.remove('text-primary');
+                            btn.classList.add('text-warning');
+                            btn.innerHTML = '<i class="bx bx-window me-1"></i> Flotante activa';
+
+                            // Abrir ventana flotante
+                            telemedFloatingWindow = window.open(telemedRoomUrl, 'telemed_window', 'width=900,height=680,menubar=no,status=no,toolbar=no,resizable=yes');
+
+                            // Polling para detectar cuando se cierre la ventana flotante
+                            telemedPollingInterval = setInterval(function() {
+                                if (telemedFloatingWindow && telemedFloatingWindow.closed) {
+                                    clearInterval(telemedPollingInterval);
+                                    telemedPollingInterval = null;
+                                    restoreIframe();
+                                }
+                            }, 800);
                         }
+
+                        function restoreIframe() {
+                            // Cerrar ventana flotante si sigue abierta
+                            if (telemedFloatingWindow && !telemedFloatingWindow.closed) {
+                                telemedFloatingWindow.close();
+                            }
+                            telemedFloatingWindow = null;
+
+                            if (telemedPollingInterval) {
+                                clearInterval(telemedPollingInterval);
+                                telemedPollingInterval = null;
+                            }
+
+                            // Restaurar iframe con la URL
+                            document.getElementById('telemed-iframe').src = telemedRoomUrl;
+
+                            // Ocultar placeholder, mostrar iframe
+                            document.getElementById('telemed-floating-placeholder').style.display = 'none';
+                            document.getElementById('telemed-iframe-container').style.display = 'block';
+
+                            // Restaurar botón
+                            var btn = document.getElementById('btn-floating-window');
+                            btn.classList.remove('text-warning');
+                            btn.classList.add('text-primary');
+                            btn.innerHTML = '<i class="bx bx-window-open me-1"></i> Ventana Flotante';
+                        }
+
                         function copyTelemedUrl() {
                             var copyText = document.getElementById("telemed-url");
                             copyText.select();

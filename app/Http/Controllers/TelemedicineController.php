@@ -245,4 +245,26 @@ class TelemedicineController extends Controller
             'patientName', 'doctorName', 'appointmentDate', 'role'
         ));
     }
+
+    /**
+     * Eliminar una grabación desde Daily.co API
+     */
+    public function recordingDestroy($recordingId)
+    {
+        $user = Sentinel::getUser();
+        $role = $user->roles[0]->slug;
+
+        if (!in_array($role, ['admin', 'doctor'])) {
+            return response()->json(['success' => false, 'message' => 'No tienes permiso para eliminar grabaciones.'], 403);
+        }
+
+        $dailyService = new \App\Services\DailyService();
+        $deleted = $dailyService->deleteRecording($recordingId);
+
+        if ($deleted) {
+            return response()->json(['success' => true, 'message' => 'Grabación eliminada correctamente.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'No se pudo eliminar la grabación. Intenta de nuevo.'], 500);
+    }
 }

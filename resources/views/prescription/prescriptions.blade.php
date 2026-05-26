@@ -272,7 +272,7 @@
                                                 </a>
                                             @endif
                                             
-                                            @if ($role == 'doctor')
+                                            @if ($role == 'doctor' || $role == 'receptionist')
                                                 <button class="btn-action btn-delete" id="delete-prescription" data-id="{{ $prescription->id }}" title="Borrar">
                                                     <i class="bx bx-trash font-size-18"></i>
                                                 </button>

@@ -273,7 +273,7 @@
                                             @endif
                                             
                                             @if ($role == 'doctor' || $role == 'receptionist')
-                                                <button class="btn-action btn-delete" id="delete-prescription" data-id="{{ $prescription->id }}" title="Borrar">
+                                                <button class="btn-action btn-delete btn-delete-prescription" data-id="{{ $prescription->id }}" title="Borrar">
                                                     <i class="bx bx-trash font-size-18"></i>
                                                 </button>
                                             @endif
@@ -316,7 +316,7 @@
 @section('script')
     <script>
         // Delete
-        $(document).on('click', '#delete-prescription', function() {
+        $(document).on('click', '.btn-delete-prescription', function() {
             var id = $(this).data('id');
             if (confirm('¿Estás seguro de que deseas eliminar esta consulta?')) {
                 $('#pageloader').fadeIn();
@@ -325,12 +325,17 @@
                     url: 'prescription/' + id,
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(data) {
-                        toastr.success(data.message);
+                        toastr.success('Consulta eliminada correctamente.');
                         setTimeout(function(){ location.reload(); }, 1000);
                     },
-                    error: function(data) {
+                    error: function(xhr) {
                         $('#pageloader').fadeOut();
-                        toastr.error('Error al eliminar');
+                        var msg = 'Error al eliminar';
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (resp.message) msg = resp.message;
+                        } catch(e) {}
+                        toastr.error(msg + ' (código ' + xhr.status + ')');
                     }
                 });
             }

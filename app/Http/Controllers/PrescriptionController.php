@@ -305,7 +305,36 @@ class PrescriptionController extends Controller
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $signos = Signos::where('patient_id', $prescription->patient_id)->first();
                 $evaluacion = $user_details->evaluacion;
-                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas', 'evaluacion'));
+
+                // Cargar datos de teleconsulta y grabaciones para la vista de detalle
+                $prescription->load('appointment', 'appointment.teleconsultation');
+                $isTele = optional($prescription->appointment)->is_telemedicine == 1;
+                $teleRecordings = [];
+                $teleconsultation = optional($prescription->appointment)->teleconsultation;
+                if ($teleconsultation && $teleconsultation->daily_room_name) {
+                    try {
+                        $dailyService = new \App\Services\DailyService();
+                        $apiResponse = $dailyService->getRecordings(100);
+                        if ($apiResponse && isset($apiResponse['data'])) {
+                            foreach ($apiResponse['data'] as $rec) {
+                                if (($rec['room_name'] ?? '') === $teleconsultation->daily_room_name) {
+                                    $linkRes = $dailyService->getRecordingAccessLink($rec['id']);
+                                    $teleRecordings[] = [
+                                        'id'          => $rec['id'],
+                                        'duration'    => $rec['duration'] ?? 0,
+                                        'status'      => $rec['status'] ?? 'unknown',
+                                        'created_at'  => $rec['start_ts'] ?? ($rec['created_at'] ?? null),
+                                        'playback_url'=> $linkRes ? ($linkRes['download_link'] ?? null) : null,
+                                    ];
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("Error loading teleconsultation recordings for prescription show: " . $e->getMessage());
+                    }
+                }
+
+                return view('prescription.view-prescription', compact('user', 'role', 'prescription', 'medicines', 'test_reports', 'user_details', 'signos', 'vacunas', 'evaluacion', 'isTele', 'teleRecordings'));
             }
             else {
                 return redirect('/dashboard')->with('error', 'prescription not found');

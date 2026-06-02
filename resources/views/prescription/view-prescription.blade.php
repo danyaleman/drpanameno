@@ -111,12 +111,22 @@
         color: #adb5bd;
     }
     .empty-state i { font-size: 40px; display: block; margin-bottom: 8px; }
-    /* ── Print ── */
-    @media print {
-        .d-print-none { display: none !important; }
-        .consult-hero { background: #556ee6 !important; -webkit-print-color-adjust: exact; }
-        .view-tabs { display: none !important; }
-        .tab-pane { display: block !important; opacity: 1 !important; }
+    /* ── Telemedicine Tab Styles ── */
+    #telemedTabs .nav-link {
+        color: rgba(255,255,255,0.75) !important;
+        border-radius: 8px 8px 0 0;
+        border: none !important;
+        padding: 8px 16px;
+        transition: all 0.2s ease;
+    }
+    #telemedTabs .nav-link.active {
+        background-color: #fff !important;
+        color: #1a73e8 !important;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+    #telemedTabs .nav-link:not(.active):hover {
+        background-color: rgba(255,255,255,0.1) !important;
+        color: #fff !important;
     }
 </style>
 @endsection
@@ -563,6 +573,113 @@
     {{-- ─── RIGHT SIDEBAR ─── --}}
     <div class="col-lg-4">
 
+        @if(isset($isTele) && $isTele)
+            {{-- Telemedicine Room card --}}
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; overflow: hidden;">
+                @if(isset($teleRecordings) && count($teleRecordings) > 0)
+                    <div class="card-header text-white d-flex align-items-center justify-content-between pb-0" style="background-color: #1a73e8; border-radius: 12px 12px 0 0; padding: 10px 20px 0 20px;">
+                        <ul class="nav nav-tabs card-header-tabs border-bottom-0" id="telemedTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-white active border-0 fw-bold" id="live-tab" data-bs-toggle="tab" data-bs-target="#telemed-live-content" type="button" role="tab" style="background: transparent; padding: 8px 12px;">
+                                    <i class="bx bx-broadcast me-1"></i> En Vivo
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-white border-0 fw-bold" id="recording-tab" data-bs-toggle="tab" data-bs-target="#telemed-recording-content" type="button" role="tab" style="background: transparent; padding: 8px 12px;">
+                                    <i class="bx bx-play-circle me-1"></i> Grabaciones ({{ count($teleRecordings) }})
+                                </button>
+                            </li>
+                        </ul>
+                        <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0 mb-2" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                            <i class="bx bx-window-open me-1"></i> Ventana Flotante
+                        </button>
+                    </div>
+                @else
+                    <div class="card-header text-white d-flex align-items-center justify-content-between" style="background-color: #1a73e8; border-radius: 12px 12px 0 0; padding: 14px 20px;">
+                        <h6 class="mb-0 text-white fw-bold"><i class="bx bx-video me-2"></i>Sala de Teleconsulta</h6>
+                        <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                            <i class="bx bx-window-open me-1"></i> Ventana Flotante
+                        </button>
+                    </div>
+                @endif
+
+                <div class="tab-content" id="telemedTabContent">
+                    {{-- TAB LIVE --}}
+                    <div class="tab-pane fade show active" id="telemed-live-content" role="tabpanel">
+                        {{-- Iframe de teleconsulta --}}
+                        <div id="telemed-iframe-container" class="card-body p-0" style="height: 500px;">
+                            <iframe id="telemed-iframe" src="{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
+                        </div>
+                        {{-- Placeholder cuando la ventana flotante está activa --}}
+                        <div id="telemed-floating-placeholder" style="display:none; height:500px; background:linear-gradient(135deg,#e8f4ff 0%,#dbeafe 100%); border-radius:0 0 12px 12px;">
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
+                                <div style="width:70px;height:70px;background:rgba(26,115,232,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:15px;">
+                                    <i class="bx bx-window-open" style="font-size:36px;color:#1a73e8;"></i>
+                                </div>
+                                <h5 class="text-primary fw-bold mb-2" style="font-size:15px;">Teleconsulta en ventana flotante</h5>
+                                <p class="text-muted mb-3" style="font-size:13px;">La sesión de teleconsulta está activa en la ventana flotante.<br>Cierra esa ventana para volver a verla aquí.</p>
+                                <button type="button" class="btn btn-primary btn-sm shadow-sm" onclick="restoreIframe()" style="border-radius:8px;font-weight:600;">
+                                    <i class="bx bx-arrow-back me-1"></i> Restaurar aquí
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if(isset($teleRecordings) && count($teleRecordings) > 0)
+                        {{-- TAB RECORDINGS --}}
+                        <div class="tab-pane fade" id="telemed-recording-content" role="tabpanel">
+                            <div class="card-body p-3 bg-light" style="height: 500px; overflow-y: auto;">
+                                @foreach($teleRecordings as $index => $rec)
+                                    <div class="card shadow-sm border-0 mb-3" style="border-radius: 8px; overflow: hidden;">
+                                        <div class="card-header bg-dark text-white py-2 px-3 d-flex align-items-center justify-content-between">
+                                            <span class="fw-bold font-size-13">
+                                                🎬 Grabación #{{ $index + 1 }}
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                @php
+                                                    $durMin = floor(($rec['duration'] ?? 0) / 60);
+                                                    $durSec = ($rec['duration'] ?? 0) % 60;
+                                                @endphp
+                                                {{ $durMin }}:{{ str_pad($durSec, 2, '0', STR_PAD_LEFT) }} min
+                                            </span>
+                                        </div>
+                                        <div class="card-body p-2 bg-black">
+                                            @if($rec['playback_url'])
+                                                <div class="ratio ratio-16x9">
+                                                    <video controls preload="metadata" style="width:100%; border-radius: 4px; background:#000;">
+                                                        <source src="{{ $rec['playback_url'] }}" type="video/mp4">
+                                                        Tu navegador no soporta el reproductor de video.
+                                                    </video>
+                                                </div>
+                                            @else
+                                                <div class="text-center py-4 text-white">
+                                                    <i class="bx bx-video-off font-size-24 mb-1"></i>
+                                                    <p class="mb-0 font-size-12">Grabación no procesada o expirada</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if(isset($rec['created_at']))
+                                            <div class="card-footer bg-white py-1 px-3 d-flex align-items-center justify-content-between font-size-11 text-muted" style="border-top: 1px solid #eee;">
+                                                <span>
+                                                    <i class="bx bx-calendar me-1"></i>
+                                                    {{ \Carbon\Carbon::createFromTimestamp($rec['created_at'])->timezone('America/El_Salvador')->format('d/m/Y h:i A') }}
+                                                </span>
+                                                @if($rec['playback_url'])
+                                                    <a href="{{ $rec['playback_url'] }}" target="_blank" class="text-primary fw-semibold">
+                                                        <i class="bx bx-download me-1"></i>Descargar
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         {{-- Datos del doctor --}}
         <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
             <div class="card-header bg-primary text-white" style="border-radius:12px 12px 0 0; padding:14px 20px;">
@@ -961,5 +1078,78 @@
             });
         }
     });
+
+    @if(isset($isTele) && $isTele)
+    var telemedFloatingWindow = null;
+    var telemedPollingInterval = null;
+    var telemedRoomUrl = "{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1";
+
+    window.toggleFloatingWindow = function() {
+        // Si la ventana ya está abierta, traerla al frente
+        if (telemedFloatingWindow && !telemedFloatingWindow.closed) {
+            telemedFloatingWindow.focus();
+            return;
+        }
+        // Vaciar el src del iframe para liberar la sesión en la página principal
+        var iframe = document.getElementById('telemed-iframe');
+        if (iframe) iframe.src = '';
+
+        // Mostrar placeholder, ocultar iframe
+        var container = document.getElementById('telemed-iframe-container');
+        if (container) container.style.display = 'none';
+        var placeholder = document.getElementById('telemed-floating-placeholder');
+        if (placeholder) placeholder.style.display = 'block';
+
+        // Cambiar botón
+        var btn = document.getElementById('btn-floating-window');
+        if (btn) {
+            btn.classList.remove('text-primary');
+            btn.classList.add('text-warning');
+            btn.innerHTML = '<i class="bx bx-window me-1"></i> Flotante activa';
+        }
+
+        // Abrir ventana flotante
+        telemedFloatingWindow = window.open(telemedRoomUrl, 'telemed_window', 'width=900,height=680,menubar=no,status=no,toolbar=no,resizable=yes');
+
+        // Polling para detectar cuando se cierre la ventana flotante
+        telemedPollingInterval = setInterval(function() {
+            if (telemedFloatingWindow && telemedFloatingWindow.closed) {
+                clearInterval(telemedPollingInterval);
+                telemedPollingInterval = null;
+                restoreIframe();
+            }
+        }, 800);
+    };
+
+    window.restoreIframe = function() {
+        // Cerrar ventana flotante si sigue abierta
+        if (telemedFloatingWindow && !telemedFloatingWindow.closed) {
+            telemedFloatingWindow.close();
+        }
+        telemedFloatingWindow = null;
+
+        if (telemedPollingInterval) {
+            clearInterval(telemedPollingInterval);
+            telemedPollingInterval = null;
+        }
+
+        // Restaurar iframe con la URL
+        var iframe = document.getElementById('telemed-iframe');
+        if (iframe) iframe.src = telemedRoomUrl;
+
+        // Ocultar placeholder, mostrar iframe
+        var container = document.getElementById('telemed-iframe-container');
+        if (container) container.style.display = '';
+        var placeholder = document.getElementById('telemed-floating-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
+
+        var btn = document.getElementById('btn-floating-window');
+        if (btn) {
+            btn.classList.remove('text-warning');
+            btn.classList.add('text-primary');
+            btn.innerHTML = '<i class="bx bx-window-open me-1"></i> Ventana Flotante';
+        }
+    };
+    @endif
 </script>
 @endsection

@@ -346,7 +346,34 @@ class PrescriptionController extends Controller
                 $vaccines = \App\VaccineCatalog::active()->orderBy('name')->get();
                 $tipoConsultas = \App\TipoConsulta::where('estado', 1)->orderBy('nombre')->get();
                 $signos = Signos::where('patient_id', $prescription->patient_id)->first();
-                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas', 'vaccines', 'tipoConsultas'));
+
+                // Obtener grabaciones si es una teleconsulta
+                $teleconsultation = optional($prescription->appointment)->teleconsultation;
+                $teleRecordings = [];
+                if ($teleconsultation && $teleconsultation->daily_room_name) {
+                    try {
+                        $dailyService = new \App\Services\DailyService();
+                        $apiResponse = $dailyService->getRecordings(100);
+                        if ($apiResponse && isset($apiResponse['data'])) {
+                            foreach ($apiResponse['data'] as $rec) {
+                                if (($rec['room_name'] ?? '') === $teleconsultation->daily_room_name) {
+                                    $linkRes = $dailyService->getRecordingAccessLink($rec['id']);
+                                    $teleRecordings[] = [
+                                        'id'          => $rec['id'],
+                                        'duration'    => $rec['duration'] ?? 0,
+                                        'status'      => $rec['status'] ?? 'unknown',
+                                        'created_at'  => $rec['start_ts'] ?? ($rec['created_at'] ?? null),
+                                        'playback_url'=> $linkRes ? ($linkRes['download_link'] ?? null) : null,
+                                    ];
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("Error loading teleconsultation recordings for prescription edit: " . $e->getMessage());
+                    }
+                }
+
+                return view('prescription.prescription-edit', compact('user', 'prescription', 'medicines', 'test_reports', 'role', 'patients', 'appointment', 'signos', 'vacunas', 'vaccines', 'tipoConsultas', 'teleRecordings'));
             }
             else {
                 return redirect('/dashboard')->with('error', 'Prescription not found');
@@ -553,17 +580,71 @@ class PrescriptionController extends Controller
                 return response()->json(['success' => false, 'message' => 'Consulta no encontrada'], 404);
             }
 
-            // Save prescription main fields
-            $prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
-            $prescription->codigo_id        = $request->codigo_id ?: null;
-            $prescription->precio_consulta  = $request->precio_consulta ?: null;
-            $prescription->consulta_por     = $request->consulta_por;
-            $prescription->diagnosis        = $request->diagnosis;
-            $prescription->updated_by       = $user->id;
-            $prescription->save();
+            $hasChanges = false;
 
-            // Save Signos Vitales
-            if ($request->patient_id_hidden) {
+            // Save prescription main fields (only if present in request)
+            if ($request->has('tipo_consulta_id')) {
+                $prescription->tipo_consulta_id = $request->tipo_consulta_id ?: null;
+                $hasChanges = true;
+            }
+            if ($request->has('codigo_id')) {
+                $prescription->codigo_id = $request->codigo_id ?: null;
+                $hasChanges = true;
+            }
+            if ($request->has('precio_consulta')) {
+                $prescription->precio_consulta = $request->precio_consulta ?: null;
+                $hasChanges = true;
+            }
+            if ($request->has('consulta_por')) {
+                $prescription->consulta_por = $request->consulta_por;
+                $hasChanges = true;
+            }
+            if ($request->has('diagnosis')) {
+                $prescription->diagnosis = $request->diagnosis;
+                $hasChanges = true;
+            }
+
+            if ($hasChanges) {
+                $prescription->updated_by = $user->id;
+                $prescription->save();
+            }
+
+            // Save Evaluación (only if present in request)
+            if ($request->has('diagnostico') || $request->has('estudios_laboratorios') || $request->has('tratamiento')) {
+                $evalData = [];
+                if ($request->has('diagnostico'))           $evalData['diagnostico'] = $request->diagnostico;
+                if ($request->has('estudios_laboratorios'))  $evalData['estudios_laboratorios'] = $request->estudios_laboratorios;
+                if ($request->has('tratamiento'))            $evalData['medicamentos'] = $request->tratamiento;
+
+                \App\Evaluacion::updateOrCreate(
+                    ['prescription_id' => $prescription->id],
+                    $evalData
+                );
+                
+                // Forzar actualización del timestamp de la consulta para activar el polling
+                $prescription->touch();
+                $prescription->updated_by = $user->id;
+                $prescription->save();
+            }
+
+            // Save Antecedentes del paciente (only if present in request)
+            if ($request->patient_id_hidden && ($request->has('pathological_history') || $request->has('non_pathological_history') || $request->has('medications_allergies'))) {
+                $patient = Patient::find($request->patient_id_hidden);
+                if ($patient) {
+                    if ($request->has('pathological_history'))     $patient->pathological_history     = $request->pathological_history;
+                    if ($request->has('non_pathological_history'))  $patient->non_pathological_history  = $request->non_pathological_history;
+                    if ($request->has('medications_allergies'))     $patient->medications_allergies     = $request->medications_allergies;
+                    $patient->save();
+                }
+                
+                // Forzar actualización del timestamp de la consulta para activar el polling
+                $prescription->touch();
+                $prescription->updated_by = $user->id;
+                $prescription->save();
+            }
+
+            // Guardar Signos Vitales (si están presentes en el request)
+            if ($request->has('peso') || $request->has('talla') || $request->has('temperatura')) {
                 Signos::updateOrCreate(
                     ['patient_id' => $request->patient_id_hidden],
                     [
@@ -579,27 +660,36 @@ class PrescriptionController extends Controller
                         'observaciones_adicionales' => $request->observaciones_adicionales,
                     ]
                 );
+
+                // Forzar actualización del timestamp de la consulta para activar el polling
+                $prescription->touch();
+                $prescription->updated_by = $user->id;
+                $prescription->save();
             }
 
-            // Save Evaluación
-            \App\Evaluacion::updateOrCreate(
-                ['prescription_id' => $prescription->id],
-                [
-                    'diagnostico' => $request->diagnostico,
-                    'estudios_laboratorios' => $request->estudios_laboratorios,
-                    'medicamentos' => $request->tratamiento
-                ]
-            );
-
-            // Save Antecedentes del paciente
-            if ($request->patient_id_hidden) {
-                $patient = Patient::find($request->patient_id_hidden);
-                if ($patient) {
-                    $patient->pathological_history     = $request->pathological_history;
-                    $patient->non_pathological_history  = $request->non_pathological_history;
-                    $patient->medications_allergies     = $request->medications_allergies;
-                    $patient->save();
+            // Guardar Vacuna si fue seleccionada
+            if ($request->has('vaccine_catalog_id')) {
+                \App\VaccineRecord::where('prescription_id', $prescription->id)->delete();
+                if (!empty($request->vaccine_catalog_id)) {
+                    \App\VaccineRecord::create([
+                        'patient_id'         => $request->patient_id_hidden,
+                        'prescription_id'    => $prescription->id,
+                        'vaccine_catalog_id' => $request->vaccine_catalog_id,
+                        'dose_number'        => $request->dose_number ?? 1,
+                        'dose_label'         => $request->dose_label ?? 'Dosis',
+                        'status'             => 'applied',
+                        'applied_date'       => $request->applied_date ?? date('Y-m-d'),
+                        'scheduled_date'     => $request->applied_date ?? date('Y-m-d'),
+                        'lot_number'         => $request->lot_number,
+                        'applied_by'         => $request->applied_by,
+                        'notes'              => $request->vaccine_notes,
+                    ]);
                 }
+
+                // Forzar actualización del timestamp de la consulta para activar el polling
+                $prescription->touch();
+                $prescription->updated_by = $user->id;
+                $prescription->save();
             }
 
             return response()->json([
@@ -613,6 +703,83 @@ class PrescriptionController extends Controller
                 'message' => 'Error al autoguardar: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Polling endpoint — returns updated_at + nurse-editable sections so the
+     * doctor's browser can refresh without a full page reload.
+     */
+    public function pollUpdates(Prescription $prescription)
+    {
+        $user = Sentinel::getUser();
+        if (!$user->hasAccess('prescription.update') && !$user->hasAccess('prescription.show')) {
+            return response()->json(['success' => false], 403);
+        }
+
+        $prescription = Prescription::with('archivos')->find($prescription->id);
+        if (!$prescription) {
+            return response()->json(['success' => false, 'message' => 'Not found'], 404);
+        }
+
+        // Signos vitales del paciente
+        $signos = Signos::where('patient_id', $prescription->patient_id)->first();
+
+        // Archivos clínicos
+        $archivos = $prescription->archivos->map(function ($a) {
+            return [
+                'id'           => $a->id,
+                'url'          => asset('storage/' . $a->url_file),
+                'nombre'       => basename($a->url_file),
+                'observaciones'=> $a->observaciones,
+                'delete_url'   => route('archivo.destroy', $a->id),
+            ];
+        });
+
+        // Vacuna registrada en esta consulta
+        $vaccineRecord = \App\VaccineRecord::where('prescription_id', $prescription->id)->first();
+
+        // Vacunas (new module)
+        $vaccineRecords = \App\VaccineRecord::with('vaccine')
+            ->where('prescription_id', $prescription->id)
+            ->get()
+            ->map(function ($v) {
+                return [
+                    'nombre'        => $v->vaccine ? $v->vaccine->name : 'Vacuna',
+                    'dose_label'    => $v->dose_label,
+                    'status'        => $v->status,
+                    'applied_date'  => $v->applied_date,
+                    'notes'         => $v->notes,
+                ];
+            });
+
+        return response()->json([
+            'success'          => true,
+            'updated_at'       => $prescription->updated_at ? $prescription->updated_at->toISOString() : null,
+            'updated_by'       => $prescription->updated_by,
+            'archivos'         => $archivos,
+            'signos'           => $signos ? [
+                'peso'                       => $signos->peso,
+                'talla'                      => $signos->talla,
+                'frec_respiratoria'          => $signos->frec_respiratoria,
+                'temperatura'               => $signos->temperatura,
+                'presion_arterial_sistolica' => $signos->presion_arterial_sistolica,
+                'presion_arterial_diastolica'=> $signos->presion_arterial_diastolica,
+                'frec_cardiaca'              => $signos->frec_cardiaca,
+                'spo'                        => $signos->spo,
+                'examen'                     => $signos->examen,
+                'observaciones_adicionales'  => $signos->observaciones_adicionales,
+            ] : null,
+            'vaccine_record'   => $vaccineRecord ? [
+                'vaccine_catalog_id' => $vaccineRecord->vaccine_catalog_id,
+                'dose_number'        => $vaccineRecord->dose_number,
+                'dose_label'         => $vaccineRecord->dose_label,
+                'applied_date'       => $vaccineRecord->applied_date ? $vaccineRecord->applied_date->format('Y-m-d') : null,
+                'lot_number'         => $vaccineRecord->lot_number,
+                'applied_by'         => $vaccineRecord->applied_by,
+                'notes'              => $vaccineRecord->notes,
+            ] : null,
+            'vaccine_records'  => $vaccineRecords,
+        ]);
     }
 
     public function prescription_list()

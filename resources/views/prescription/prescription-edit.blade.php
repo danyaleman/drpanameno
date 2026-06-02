@@ -426,28 +426,109 @@
     {{-- ================= COLUMNA DERECHA ================= --}}
     <div class="col-lg-4">
         @if($isTele)
-            {{-- Telemedicine Room iframe --}}
-            <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px;">
-                <div class="card-header text-white d-flex align-items-center justify-content-between" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 10px 20px;">
-                    <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
-                    <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
-                        <i class="bx bx-window-open me-1"></i> Ventana Flotante
-                    </button>
-                </div>
-                {{-- Iframe de teleconsulta (se oculta cuando la ventana flotante está abierta) --}}
-                <div id="telemed-iframe-container" class="card-body p-0" style="height: 600px;">
-                    <iframe id="telemed-iframe" src="{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
-                </div>
-                {{-- Placeholder cuando la ventana flotante está activa --}}
-                <div id="telemed-floating-placeholder" style="display:none; height:600px; background:linear-gradient(135deg,#e8f4ff 0%,#dbeafe 100%); border-radius:0 0 10px 10px;">
-                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
-                        <div style="width:80px;height:80px;background:rgba(26,115,232,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
-                            <i class="bx bx-window-open" style="font-size:40px;color:#1a73e8;"></i>
+            {{-- Telemedicine Room card --}}
+            <div class="card shadow-sm border-0 mb-3" style="border-radius: 10px; overflow: hidden;">
+                @if(isset($teleRecordings) && count($teleRecordings) > 0)
+                    <div class="card-header text-white d-flex align-items-center justify-content-between pb-0" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 10px 20px 0 20px;">
+                        <ul class="nav nav-tabs card-header-tabs border-bottom-0" id="telemedTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-white active border-0 fw-bold" id="live-tab" data-bs-toggle="tab" data-bs-target="#telemed-live-content" type="button" role="tab" style="background: transparent;">
+                                    <i class="bx bx-broadcast me-1"></i> En Vivo
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-white border-0 fw-bold" id="recording-tab" data-bs-toggle="tab" data-bs-target="#telemed-recording-content" type="button" role="tab" style="background: transparent;">
+                                    <i class="bx bx-play-circle me-1"></i> Grabaciones ({{ count($teleRecordings) }})
+                                </button>
+                            </li>
+                        </ul>
+                        <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0 mb-2" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                            <i class="bx bx-window-open me-1"></i> Ventana Flotante
+                        </button>
+                    </div>
+                @else
+                    <div class="card-header text-white d-flex align-items-center justify-content-between" style="background-color: #1a73e8; border-radius: 10px 10px 0 0; padding: 10px 20px;">
+                        <h5 class="mb-0 text-white font-size-16"><i class="bx bx-video me-2"></i><strong>Sala de Teleconsulta</strong></h5>
+                        <button type="button" id="btn-floating-window" class="btn btn-sm btn-light text-primary border-0" onclick="toggleFloatingWindow()" style="border-radius: 6px; font-weight: 500;">
+                            <i class="bx bx-window-open me-1"></i> Ventana Flotante
+                        </button>
+                    </div>
+                @endif
+
+                <div class="tab-content" id="telemedTabContent">
+                    {{-- TAB LIVE --}}
+                    <div class="tab-pane fade show active" id="telemed-live-content" role="tabpanel">
+                        {{-- Iframe de teleconsulta --}}
+                        <div id="telemed-iframe-container" class="card-body p-0" style="height: 600px;">
+                            <iframe id="telemed-iframe" src="{{ url('/telemedicine/room/' . optional(optional($prescription->appointment)->teleconsultation)->id) }}?iframe=1" width="100%" height="100%" style="border:0;" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
                         </div>
-                        <h5 class="text-primary fw-bold mb-2">Teleconsulta en ventana flotante</h5>
-                        <p class="text-muted mb-4" style="font-size:14px;">La sesión de teleconsulta está activa en la ventana flotante.<br>Cierra esa ventana para volver a verla aquí.</p>
-                        <button type="button" class="btn btn-primary shadow-sm" onclick="restoreIframe()" style="border-radius:8px;font-weight:600;">
-                            <i class="bx bx-arrow-back me-1"></i> Restaurar aquí
+                        {{-- Placeholder cuando la ventana flotante está activa --}}
+                        <div id="telemed-floating-placeholder" style="display:none; height:600px; background:linear-gradient(135deg,#e8f4ff 0%,#dbeafe 100%); border-radius:0 0 10px 10px;">
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
+                                <div style="width:80px;height:80px;background:rgba(26,115,232,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                                    <i class="bx bx-window-open" style="font-size:40px;color:#1a73e8;"></i>
+                                </div>
+                                <h5 class="text-primary fw-bold mb-2">Teleconsulta en ventana flotante</h5>
+                                <p class="text-muted mb-4" style="font-size:14px;">La sesión de teleconsulta está activa en la ventana flotante.<br>Cierra esa ventana para volver a verla aquí.</p>
+                                <button type="button" class="btn btn-primary shadow-sm" onclick="restoreIframe()" style="border-radius:8px;font-weight:600;">
+                                    <i class="bx bx-arrow-back me-1"></i> Restaurar aquí
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if(isset($teleRecordings) && count($teleRecordings) > 0)
+                        {{-- TAB RECORDINGS --}}
+                        <div class="tab-pane fade" id="telemed-recording-content" role="tabpanel">
+                            <div class="card-body p-3 bg-light" style="height: 600px; overflow-y: auto;">
+                                @foreach($teleRecordings as $index => $rec)
+                                    <div class="card shadow-sm border-0 mb-3" style="border-radius: 8px; overflow: hidden;">
+                                        <div class="card-header bg-dark text-white py-2 px-3 d-flex align-items-center justify-content-between">
+                                            <span class="fw-bold font-size-13">
+                                                🎬 Grabación #{{ $index + 1 }}
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                @php
+                                                    $durMin = floor(($rec['duration'] ?? 0) / 60);
+                                                    $durSec = ($rec['duration'] ?? 0) % 60;
+                                                @endphp
+                                                {{ $durMin }}:{{ str_pad($durSec, 2, '0', STR_PAD_LEFT) }} min
+                                            </span>
+                                        </div>
+                                        <div class="card-body p-2 bg-black">
+                                            @if($rec['playback_url'])
+                                                <div class="ratio ratio-16x9">
+                                                    <video controls preload="metadata" style="width:100%; border-radius: 4px; background:#000;">
+                                                        <source src="{{ $rec['playback_url'] }}" type="video/mp4">
+                                                        Tu navegador no soporta el reproductor de video.
+                                                    </video>
+                                                </div>
+                                            @else
+                                                <div class="text-center py-4 text-white">
+                                                    <i class="bx bx-video-off font-size-24 mb-1"></i>
+                                                    <p class="mb-0 font-size-12">Grabación no procesada o expirada</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if(isset($rec['created_at']))
+                                            <div class="card-footer bg-white py-1 px-3 d-flex align-items-center justify-content-between font-size-11 text-muted">
+                                                <span>
+                                                    <i class="bx bx-calendar me-1"></i>
+                                                    {{ \Carbon\Carbon::createFromTimestamp($rec['created_at'])->timezone('America/El_Salvador')->format('d/m/Y h:i A') }}
+                                                </span>
+                                                @if($rec['playback_url'])
+                                                    <a href="{{ $rec['playback_url'] }}" target="_blank" class="text-primary fw-semibold">
+                                                        <i class="bx bx-download me-1"></i>Descargar
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
                         </button>
                     </div>
                 </div>
@@ -550,23 +631,20 @@
             <div class="card-body p-4">
 
                 {{-- TOGGLE AUTO-GUARDADO --}}
-                <div class="autosave-panel mb-3">
+                <div class="autosave-panel mb-3" id="autosave-panel">
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <div class="autosave-icon me-2">
-                                <i class="bx bx-sync" id="autosave-icon"></i>
+                                <i class="bx bx-check-circle" id="autosave-icon"></i>
                             </div>
                             <div>
                                 <span class="fw-bold text-dark" style="font-size: 13px;">Auto-guardado</span>
-                                <div id="autosave-status" class="autosave-status-text">Inactivo</div>
+                                <div id="autosave-status" class="autosave-status-text">Activo</div>
                             </div>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input autosave-toggle" type="checkbox" role="switch" id="autosaveToggle" checked>
                         </div>
-                    </div>
-                    <div id="autosave-progress" class="autosave-progress mt-2" style="display:none;">
-                        <div class="autosave-progress-bar"></div>
                     </div>
                 </div>
 
@@ -663,7 +741,7 @@ $(document).ready(function () {
     // Verificar si hay precarga de paciente (viniendo desde calendario)
     var preloadPatientId = '{{ $prescription->patient_id }}';
     var preloadAppointmentId = '{{ $prescription->appointment_id }}';
-    
+
     if (preloadPatientId) {
         // Si viene precargado, cargar automáticamente la información (NO es manual)
         loadPatientInfo(preloadPatientId, false);
@@ -728,21 +806,27 @@ $(document).ready(function () {
                     $('#alergias').val(res.patient.medications_allergies ?? '');
 
                     // Signos Vitales (Examen Físico)
-                    if (res.patient.signos) {
-                        $('input[name="peso"]').val(res.patient.signos.peso ?? '').trigger('input'); // Trigger input for kg calculation
-                        $('input[name="talla"]').val(res.patient.signos.talla ?? '');
-                        $('input[name="frec_respiratoria"]').val(res.patient.signos.frec_respiratoria ?? '');
-                        $('input[name="temperatura"]').val(res.patient.signos.temperatura ?? '');
-                        $('input[name="presion_arterial_sistolica"]').val(res.patient.signos.presion_arterial_sistolica ?? '');
-                        $('input[name="presion_arterial_diastolica"]').val(res.patient.signos.presion_arterial_diastolica ?? '');
-                        $('input[name="frec_cardiaca"]').val(res.patient.signos.frec_cardiaca ?? '');
-                        $('input[name="spo"]').val(res.patient.signos.spo ?? '');
-                        $('textarea[name="examen"]').val('');
-                        $('textarea[name="observaciones_adicionales"]').val('');
+                    if (isManualSelection) {
+                        // Selección manual: usar los signos del AJAX
+                        if (res.patient.signos) {
+                            $('input[name="peso"]').val(res.patient.signos.peso ?? '').trigger('input');
+                            $('input[name="talla"]').val(res.patient.signos.talla ?? '');
+                            $('input[name="frec_respiratoria"]').val(res.patient.signos.frec_respiratoria ?? '');
+                            $('input[name="temperatura"]').val(res.patient.signos.temperatura ?? '');
+                            $('input[name="presion_arterial_sistolica"]').val(res.patient.signos.presion_arterial_sistolica ?? '');
+                            $('input[name="presion_arterial_diastolica"]').val(res.patient.signos.presion_arterial_diastolica ?? '');
+                            $('input[name="frec_cardiaca"]').val(res.patient.signos.frec_cardiaca ?? '');
+                            $('input[name="spo"]').val(res.patient.signos.spo ?? '');
+                            $('textarea[name="examen"]').val(res.patient.signos.examen ?? '');
+                            $('textarea[name="observaciones_adicionales"]').val(res.patient.signos.observaciones_adicionales ?? '');
+                        } else {
+                            // No hay signos previos: limpiar campos
+                            $('#tab-exploracion input, #tab-exploracion textarea').val('');
+                            $('#peso_kg_display').text('0.00 kg');
+                        }
                     } else {
-                        // Limpiar si no hay previos
-                        $('#tab-exploracion input, #tab-exploracion textarea').val('');
-                        $('#peso_kg_display').text('0.00 kg');
+                        // Modo edición: NO hacer nada con los signos vitales, ya que Blade los renderizó
+                        // y no queremos sobrescribir cambios reales o de polling en tiempo real.
                     }
 
                     // Mostrar formulario y header
@@ -1427,7 +1511,7 @@ $(document).ready(function () {
 })();
 </script>
 
-{{-- ══ AUTO-GUARDADO — Styles & Logic ══ --}}
+{{-- ══ AUTO-GUARDADO SILENCIOSO + POLLING EN TIEMPO REAL ══ --}}
 <style>
 /* ── Toggle Switch ── */
 .autosave-toggle {
@@ -1503,216 +1587,575 @@ $(document).ready(function () {
 .autosave-status-text.error   { color: #dc3545; font-weight: 600; }
 .autosave-status-text.saving  { color: #556ee6; font-weight: 600; }
 
-/* ── Progress bar ── */
-.autosave-progress {
-    height: 3px;
-    background: rgba(25, 135, 84, 0.1);
-    border-radius: 3px;
-    overflow: hidden;
+/* ── Icono guardando (spinner suave) ── */
+.autosave-icon i.spinning {
+    animation: spin-save 1s linear infinite;
 }
-.autosave-progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #198754, #20c997);
-    border-radius: 3px;
-    transition: width 1s linear;
+@keyframes spin-save {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ── Toast de actualización en tiempo real ── */
+#live-update-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    min-width: 280px;
+    background: #fff;
+    border-left: 4px solid #198754;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    transform: translateX(120%);
+    transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+#live-update-toast.show {
+    transform: translateX(0);
+}
+#live-update-toast .toast-icon {
+    font-size: 22px;
+    color: #198754;
+    flex-shrink: 0;
+}
+#live-update-toast .toast-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #adb5bd;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+/* ── Telemedicine Tabs styling ── */
+.card-header-tabs .nav-link {
+    border-radius: 6px 6px 0 0 !important;
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    border: none !important;
+    padding: 8px 16px !important;
+}
+.card-header-tabs .nav-link:hover {
+    opacity: 1;
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.card-header-tabs .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    opacity: 1;
+    color: #fff !important;
+    border-bottom: 2px solid #fff !important;
 }
 </style>
 
+{{-- Toast HTML para notificaciones en tiempo real --}}
+<div id="live-update-toast" role="alert" aria-live="polite">
+    <i class="bx bx-sync toast-icon" id="live-toast-icon"></i>
+    <span id="live-toast-msg">La enfermera actualizó la consulta</span>
+    <button class="toast-close" onclick="hideLiveToast()" aria-label="Cerrar">✕</button>
+</div>
+
 <script>
+const CURRENT_USER_ROLE = '{{ $role }}';
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-GUARDADO SILENCIOSO — debounce 2s
+// ═══════════════════════════════════════════════════════════
 (function() {
-    const AUTOSAVE_INTERVAL = 30000; // 30 seconds
     const PRESCRIPTION_ID = '{{ $prescription->id }}';
-    const AUTOSAVE_URL = '{{ route("prescription.autosave", $prescription->id) }}';
-    const CSRF_TOKEN = '{{ csrf_token() }}';
-    const STORAGE_KEY = 'autosave_enabled_' + PRESCRIPTION_ID;
+    const AUTOSAVE_URL    = '{{ route("prescription.autosave", $prescription->id) }}';
+    const CSRF_TOKEN      = '{{ csrf_token() }}';
+    const STORAGE_KEY     = 'autosave_enabled_' + PRESCRIPTION_ID;
+    const DEBOUNCE_MS     = 2000; // guardar 2s después del último cambio
 
-    const toggle     = document.getElementById('autosaveToggle');
-    const statusEl   = document.getElementById('autosave-status');
-    const iconEl     = document.getElementById('autosave-icon');
-    const panel      = toggle.closest('.autosave-panel');
-    const progressEl = document.getElementById('autosave-progress');
-    const progressBar = progressEl.querySelector('.autosave-progress-bar');
+    const toggle   = document.getElementById('autosaveToggle');
+    const statusEl = document.getElementById('autosave-status');
+    const iconEl   = document.getElementById('autosave-icon');
+    const panel    = document.getElementById('autosave-panel');
 
-    let autosaveTimer = null;
-    let countdownTimer = null;
-    let isSaving = false;
-    let lastSnapshot = '';
+    let debounceTimer = null;
+    let isSaving      = false;
+    let lastSnapshot  = '';
 
-    // Restore toggle state from localStorage (default: ON)
+    // Restaurar estado del toggle (default: ON)
     const savedState = localStorage.getItem(STORAGE_KEY);
     toggle.checked = savedState === null ? true : savedState === 'true';
-
-    // Initialize
     updateUI();
-    if (toggle.checked) startAutoSave();
 
-    // Toggle event
+    // Toggle on/off
     toggle.addEventListener('change', function() {
         localStorage.setItem(STORAGE_KEY, this.checked);
-        if (this.checked) {
-            startAutoSave();
-        } else {
-            stopAutoSave();
-        }
         updateUI();
+        if (!this.checked && debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
     });
 
     function updateUI() {
         if (toggle.checked) {
             panel.classList.remove('inactive', 'error');
-            if (!isSaving) {
-                statusEl.textContent = 'Activo — guardando cada 30s';
-                statusEl.className = 'autosave-status-text';
+            if (!isSaving && !statusEl.textContent.includes('Guardado')) {
+                statusEl.textContent = 'Activo';
+                statusEl.className   = 'autosave-status-text';
             }
         } else {
             panel.classList.add('inactive');
             panel.classList.remove('saving', 'error');
             statusEl.textContent = 'Desactivado';
-            statusEl.className = 'autosave-status-text';
-            progressEl.style.display = 'none';
+            statusEl.className   = 'autosave-status-text';
         }
     }
 
     function getFormSnapshot() {
-        const form = document.getElementById('prescription-form');
-        const data = new FormData(form);
-        // Remove file inputs from snapshot comparison
+        const form    = document.getElementById('prescription-form');
+        if (!form) return '';
+        const data    = new FormData(form);
         const entries = [];
         for (let [key, value] of data.entries()) {
-            if (!(value instanceof File)) {
-                entries.push(key + '=' + value);
+            if (value instanceof File) continue;
+
+            // Para el snapshot, solo considerar campos relevantes al rol del usuario
+            if (CURRENT_USER_ROLE === 'doctor') {
+                const nurseFields = [
+                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
+                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
+                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
+                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
+                    'lot_number', 'applied_by', 'vaccine_notes'
+                ];
+                if (nurseFields.includes(key) || key.startsWith('archivos')) continue;
+            } else {
+                // Enfermera/Recepcionista: solo guardar campos del Examen Físico/Vacunas
+                const doctorFields = [
+                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
+                    'tipo_consulta_id', 'codigo_id'
+                ];
+                if (doctorFields.includes(key)) continue;
             }
+
+            entries.push(key + '=' + value);
         }
         return entries.sort().join('&');
     }
 
-    function startAutoSave() {
-        stopAutoSave();
-        lastSnapshot = getFormSnapshot();
-        // Start countdown progress bar
-        startProgressBar();
-        autosaveTimer = setInterval(function() {
-            performAutoSave();
-        }, AUTOSAVE_INTERVAL);
+    // Escuchar cambios en todos los inputs/textareas/selects del formulario
+    const form = document.getElementById('prescription-form');
+    if (form) {
+        form.addEventListener('input',  scheduleAutoSave);
+        form.addEventListener('change', scheduleAutoSave);
     }
 
-    function stopAutoSave() {
-        if (autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
-        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-        progressEl.style.display = 'none';
-    }
-
-    function startProgressBar() {
-        progressEl.style.display = 'block';
-        progressBar.style.transition = 'none';
-        progressBar.style.width = '0%';
-        // Force reflow
-        void progressBar.offsetWidth;
-        progressBar.style.transition = 'width ' + (AUTOSAVE_INTERVAL / 1000) + 's linear';
-        progressBar.style.width = '100%';
+    function scheduleAutoSave() {
+        if (!toggle.checked || isSaving) return;
+        clearTimeout(debounceTimer);
+        // Icono de reloj — indica que se va a guardar pronto
+        iconEl.className = 'bx bx-time-five';
+        debounceTimer = setTimeout(performAutoSave, DEBOUNCE_MS);
     }
 
     function performAutoSave() {
         if (isSaving || !toggle.checked) return;
 
         const currentSnapshot = getFormSnapshot();
-        if (currentSnapshot === lastSnapshot) {
-            // No changes — skip save but reset timer visually
-            statusEl.textContent = 'Sin cambios — esperando...';
-            statusEl.className = 'autosave-status-text';
-            startProgressBar();
-            return;
-        }
+        if (currentSnapshot === lastSnapshot) return; // sin cambios, nada que hacer
 
         isSaving = true;
         panel.classList.add('saving');
+        iconEl.className = 'bx bx-sync spinning';
         statusEl.textContent = 'Guardando...';
-        statusEl.className = 'autosave-status-text saving';
+        statusEl.className   = 'autosave-status-text saving';
 
-        const form = document.getElementById('prescription-form');
         const formData = new FormData(form);
-
-        // Remove file inputs — autosave only handles text
+        // Solo texto, sin archivos y filtrando campos según el rol
         const keysToRemove = [];
         for (let [key, value] of formData.entries()) {
             if (value instanceof File) {
                 keysToRemove.push(key);
+                continue;
+            }
+
+            // Si el usuario es Doctor, NO enviar campos de signos vitales (Examen Físico) o vacunas
+            // para evitar sobrescribir lo que la enfermera haya guardado.
+            if (CURRENT_USER_ROLE === 'doctor') {
+                const nurseFields = [
+                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
+                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
+                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
+                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
+                    'lot_number', 'applied_by', 'vaccine_notes'
+                ];
+                if (nurseFields.includes(key) || key.startsWith('archivos')) {
+                    keysToRemove.push(key);
+                }
+            }
+
+            // Si el usuario es Enfermera/Recepción, NO enviar campos del doctor
+            if (CURRENT_USER_ROLE !== 'doctor') {
+                const doctorFields = [
+                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
+                    'tipo_consulta_id', 'codigo_id'
+                ];
+                if (doctorFields.includes(key)) {
+                    keysToRemove.push(key);
+                }
             }
         }
         keysToRemove.forEach(k => formData.delete(k));
-
-        // Remove _method PATCH (autosave endpoint is POST)
         formData.delete('_method');
 
         fetch(AUTOSAVE_URL, {
-            method: 'POST',
+            method:  'POST',
             headers: {
-                'X-CSRF-TOKEN': CSRF_TOKEN,
+                'X-CSRF-TOKEN':     CSRF_TOKEN,
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+                'Accept':           'application/json'
             },
             body: formData
         })
-        .then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(data => {
-            if (data.success) {
-                lastSnapshot = currentSnapshot;
-                statusEl.textContent = '✓ Guardado a las ' + data.saved_at;
-                statusEl.className = 'autosave-status-text success';
-                panel.classList.remove('saving', 'error');
-                // Flash effect
-                panel.style.borderColor = 'rgba(25, 135, 84, 0.5)';
-                setTimeout(() => { panel.style.borderColor = ''; }, 1500);
-            } else {
-                throw new Error(data.message || 'Error desconocido');
-            }
+            if (!data.success) throw new Error(data.message || 'Error');
+            lastSnapshot = currentSnapshot;
+            iconEl.className = 'bx bx-check-circle';
+            statusEl.textContent = '✓ Guardado a las ' + data.saved_at;
+            statusEl.className   = 'autosave-status-text success';
+            panel.classList.remove('saving', 'error');
+            // Flash verde suave
+            panel.style.borderColor = 'rgba(25,135,84,0.5)';
+            setTimeout(() => { panel.style.borderColor = ''; }, 1200);
         })
         .catch(err => {
             console.error('Autosave error:', err);
-            statusEl.textContent = '✗ Error: ' + err.message;
-            statusEl.className = 'autosave-status-text error';
+            iconEl.className = 'bx bx-error-circle';
+            statusEl.textContent = '✗ Error al guardar';
+            statusEl.className   = 'autosave-status-text error';
             panel.classList.remove('saving');
             panel.classList.add('error');
-            setTimeout(() => { panel.classList.remove('error'); }, 5000);
+            setTimeout(() => {
+                panel.classList.remove('error');
+                iconEl.className = 'bx bx-check-circle';
+                statusEl.textContent = 'Activo';
+                statusEl.className   = 'autosave-status-text';
+            }, 5000);
         })
-        .finally(() => {
-            isSaving = false;
-            if (toggle.checked) startProgressBar();
+        .finally(() => { isSaving = false; });
+    }
+
+    // Guardar al salir de la pestaña/ventana
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden' && toggle.checked && !isSaving) {
+            clearTimeout(debounceTimer);
+            const snap = getFormSnapshot();
+            if (snap !== lastSnapshot) performAutoSave();
+        }
+    });
+
+    // Beacon al cerrar la ventana
+    window.addEventListener('beforeunload', function() {
+        if (!toggle.checked) return;
+        const snap = getFormSnapshot();
+        if (snap === lastSnapshot) return;
+        const fd = new FormData(form);
+        const remove = [];
+        for (let [k, v] of fd.entries()) {
+            if (v instanceof File) {
+                remove.push(k);
+                continue;
+            }
+            if (CURRENT_USER_ROLE === 'doctor') {
+                const nurseFields = [
+                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
+                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
+                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
+                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
+                    'lot_number', 'applied_by', 'vaccine_notes'
+                ];
+                if (nurseFields.includes(k) || k.startsWith('archivos')) remove.push(k);
+            }
+            if (CURRENT_USER_ROLE !== 'doctor') {
+                const doctorFields = [
+                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
+                    'tipo_consulta_id', 'codigo_id'
+                ];
+                if (doctorFields.includes(k)) remove.push(k);
+            }
+        }
+        remove.forEach(k => fd.delete(k));
+        fd.delete('_method');
+        fd.append('_token', CSRF_TOKEN);
+        navigator.sendBeacon(AUTOSAVE_URL, fd);
+    });
+
+    // Inicializar snapshot
+    lastSnapshot = getFormSnapshot();
+})();
+
+// ═══════════════════════════════════════════════════════════
+// POLLING EN TIEMPO REAL — actualiza secciones de la enfermera
+// ═══════════════════════════════════════════════════════════
+(function() {
+    const POLL_URL      = '{{ route("prescription.poll", $prescription->id) }}';
+    const CSRF_TOKEN    = '{{ csrf_token() }}';
+    const POLL_INTERVAL = 8000; // cada 8 segundos
+    const CSRF_FOR_DEL  = '{{ csrf_token() }}';
+    const CURRENT_USER_ID = {{ Sentinel::getUser()->id ?? 'null' }}; // Para ignorar cambios propios
+
+    let lastUpdatedAt = '{{ $prescription->updated_at ? $prescription->updated_at->toISOString() : "" }}';
+    let toastTimer    = null;
+
+    // ── Toast helpers ──────────────────────────────────────────
+    function showLiveToast(msg, type) {
+        const toast   = document.getElementById('live-update-toast');
+        const msgEl   = document.getElementById('live-toast-msg');
+        const iconEl  = document.getElementById('live-toast-icon');
+        msgEl.textContent = msg;
+        toast.style.borderLeftColor = type === 'error' ? '#dc3545' : '#198754';
+        iconEl.className = type === 'error' ? 'bx bx-error-circle toast-icon' : 'bx bx-sync toast-icon';
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(hideLiveToast, 5000);
+    }
+    window.hideLiveToast = function() {
+        document.getElementById('live-update-toast').classList.remove('show');
+    };
+
+    // ── Archivos clínicos ──────────────────────────────────────
+    function renderArchivos(archivos) {
+        // Si no existe la tabla, crearla
+        let tbody = document.querySelector('#tabla-archivos-guardados tbody');
+        if (!tbody) {
+            // Buscar el contenedor del tab de imágenes
+            const imgTab = document.getElementById('tab-imagenes');
+            if (!imgTab) return;
+            // Crear tabla completa si no existe
+            const wrapper = document.createElement('div');
+            wrapper.id = 'archivos-guardados-wrapper';
+            wrapper.innerHTML = `
+                <hr>
+                <h5>Archivos Clínicos Guardados</h5>
+                <table class="table table-bordered" id="tabla-archivos-guardados">
+                    <thead>
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Observaciones</th>
+                            <th width="120">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>`;
+            // Insertar antes del include de archivos nuevos
+            const uploaderDiv = imgTab.querySelector('.repeater-wrapper');
+            if (uploaderDiv) imgTab.insertBefore(wrapper, uploaderDiv);
+            else imgTab.prepend(wrapper);
+            tbody = wrapper.querySelector('tbody');
+        }
+
+        if (archivos.length === 0) {
+            // Ocultar toda la tabla si no hay archivos
+            const wrapper = document.getElementById('archivos-guardados-wrapper') ||
+                            document.querySelector('#tabla-archivos-guardados')?.closest('div');
+            if (wrapper) wrapper.style.display = 'none';
+            return;
+        }
+
+        // Sincronizar filas sin perder las que ya existen
+        const currentIds = new Set(
+            Array.from(tbody.querySelectorAll('tr[id^="fila-archivo-"]'))
+                 .map(tr => parseInt(tr.id.replace('fila-archivo-', '')))
+        );
+        const serverIds = new Set(archivos.map(a => a.id));
+
+        // Eliminar filas que ya no existen en el servidor
+        currentIds.forEach(id => {
+            if (!serverIds.has(id)) {
+                const row = document.getElementById('fila-archivo-' + id);
+                if (row) row.remove();
+            }
+        });
+
+        // Agregar filas nuevas
+        archivos.forEach(a => {
+            if (!currentIds.has(a.id)) {
+                const tr = document.createElement('tr');
+                tr.id = 'fila-archivo-' + a.id;
+                tr.style.animation = 'fadeInRow 0.4s ease';
+                tr.innerHTML = `
+                    <td><a href="${a.url}" target="_blank">${a.nombre}</a></td>
+                    <td>${a.observaciones || ''}</td>
+                    <td>
+                        <button type="button"
+                            class="btn btn-danger btn-sm btn-eliminar-archivo"
+                            data-id="${a.id}"
+                            data-url="${a.delete_url}"
+                            data-token="${CSRF_FOR_DEL}">
+                            Eliminar
+                        </button>
+                    </td>`;
+                tbody.appendChild(tr);
+            }
+        });
+
+        // Asegurarse de que el wrapper esté visible
+        const wrapper = document.getElementById('archivos-guardados-wrapper');
+        if (wrapper) wrapper.style.display = '';
+    }
+
+    // ── Signos vitales ─────────────────────────────────────────
+    function renderSignos(signos) {
+        if (!signos) return;
+        const fields = [
+            'talla', 'frec_respiratoria', 'temperatura',
+            'presion_arterial_sistolica', 'presion_arterial_diastolica',
+            'frec_cardiaca', 'spo'
+        ];
+        fields.forEach(f => {
+            const el = document.querySelector('input[name="' + f + '"]');
+            if (el && document.activeElement !== el) {
+                el.value = signos[f] ?? '';
+            }
+        });
+        // Peso: actualizar y refrescar cálculo de kg
+        const pesoEl = document.getElementById('peso_lb');
+        if (pesoEl && document.activeElement !== pesoEl) {
+            pesoEl.value = signos.peso ?? '';
+            pesoEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        // Textareas
+        const examenEl = document.querySelector('textarea[name="examen"]');
+        if (examenEl && document.activeElement !== examenEl) {
+            examenEl.value = signos.examen ?? '';
+        }
+        const obsEl = document.querySelector('textarea[name="observaciones_adicionales"]');
+        if (obsEl && document.activeElement !== obsEl) {
+            obsEl.value = signos.observaciones_adicionales ?? '';
+        }
+    }
+
+    // ── Vacunas ────────────────────────────────────────────────
+    function renderVacunas(record) {
+        // Vacuna catalog
+        const catalogEl = document.getElementById('vaccine_catalog_id');
+        if (catalogEl && document.activeElement !== catalogEl) {
+            const currentVal = catalogEl.value;
+            const newVal = record ? record.vaccine_catalog_id : '';
+            if (currentVal != newVal) {
+                $(catalogEl).val(newVal).trigger('change');
+            }
+        }
+
+        if (!record) {
+            // Limpiar otros campos si no hay registro
+            const fields = ['applied_date', 'lot_number', 'applied_by', 'vaccine_notes'];
+            fields.forEach(name => {
+                const el = document.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+                if (el && document.activeElement !== el) el.value = '';
+            });
+            const doseEl = document.getElementById('dose_number');
+            if (doseEl && document.activeElement !== doseEl) {
+                $(doseEl).val('').trigger('change');
+            }
+            return;
+        }
+
+        // Dosis (esperar un poco a que cargue la lista o poblarla si el select2 cambia)
+        setTimeout(() => {
+            const doseEl = document.getElementById('dose_number');
+            if (doseEl && document.activeElement !== doseEl) {
+                const currentDose = doseEl.value;
+                const newDose = record.dose_number;
+                if (currentDose != newDose) {
+                    $(doseEl).val(newDose).trigger('change');
+                }
+            }
+        }, 800);
+
+        // Otros campos
+        const fields = {
+            'applied_date': record.applied_date,
+            'lot_number': record.lot_number,
+            'applied_by': record.applied_by,
+            'vaccine_notes': record.notes
+        };
+
+        for (const [name, val] of Object.entries(fields)) {
+            const el = document.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+            if (el && document.activeElement !== el) {
+                el.value = val ?? '';
+            }
+        }
+    }
+
+    // ── Polling principal ──────────────────────────────────────
+    function poll() {
+        fetch(POLL_URL, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept':           'application/json',
+                'X-CSRF-TOKEN':     CSRF_TOKEN
+            }
+        })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(data => {
+            if (!data.success) return;
+
+            const serverTime = data.updated_at;
+            if (!serverTime) return;
+
+            // ¿Hubo cambios desde el último poll?
+            if (serverTime !== lastUpdatedAt) {
+                lastUpdatedAt = serverTime;
+
+                // Siempre actualizar archivos clínicos (independientemente de quién guardó)
+                renderArchivos(data.archivos || []);
+
+                // Siempre actualizar signos vitales
+                renderSignos(data.signos);
+
+                // Siempre actualizar vacunas
+                renderVacunas(data.vaccine_record);
+
+                // Solo mostrar toast si el cambio NO lo hizo el mismo usuario
+                if (data.updated_by !== CURRENT_USER_ID) {
+                    const numArchivos = data.archivos ? data.archivos.length : 0;
+                    let msg = '📋 La enfermera actualizó la consulta';
+                    if (numArchivos > 0) msg += ' · ' + numArchivos + ' archivo(s) clínico(s)';
+                    showLiveToast(msg, 'success');
+                }
+            }
+        })
+        .catch(err => {
+            // Silencioso — no molestar al usuario si hay error de red ocasional
+            console.debug('Poll error (ignorado):', err.message);
         });
     }
 
-    // Save on tab/window blur (user navigates away)
-    document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'hidden' && toggle.checked && !isSaving) {
-            const currentSnapshot = getFormSnapshot();
-            if (currentSnapshot !== lastSnapshot) {
-                performAutoSave();
-            }
-        }
-    });
+    // Iniciar polling después de 5s (dar tiempo a que la página cargue)
+    setTimeout(function() {
+        poll(); // poll inicial
+        setInterval(poll, POLL_INTERVAL);
+    }, 5000);
 
-    // Warn before unload if there are unsaved changes
-    window.addEventListener('beforeunload', function(e) {
-        if (!toggle.checked) return;
-        const currentSnapshot = getFormSnapshot();
-        if (currentSnapshot !== lastSnapshot) {
-            // Try a final save via sendBeacon
-            const form = document.getElementById('prescription-form');
-            const formData = new FormData(form);
-            const keysToRemove = [];
-            for (let [key, value] of formData.entries()) {
-                if (value instanceof File) keysToRemove.push(key);
-            }
-            keysToRemove.forEach(k => formData.delete(k));
-            formData.delete('_method');
-            formData.append('_token', CSRF_TOKEN);
-            navigator.sendBeacon(AUTOSAVE_URL, formData);
+    // ── CSS para animación de fila nueva ──────────────────────
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInRow {
+            from { opacity: 0; background: rgba(25,135,84,0.08); }
+            to   { opacity: 1; background: transparent; }
         }
-    });
+    `;
+    document.head.appendChild(style);
 })();
 </script>
 @endsection

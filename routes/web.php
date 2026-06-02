@@ -124,6 +124,7 @@ Route::middleware('sentinel.auth')->group(function () {
     Route::get('prescription-view/{id}', 'PrescriptionController@prescription_view');
     Route::delete('archivo/{id}', [ArchivoController::class, 'destroy'])->name('archivo.destroy');
     Route::post('prescription/{prescription}/autosave', 'PrescriptionController@autoSave')->name('prescription.autosave');
+    Route::get('prescription/{prescription}/poll', 'PrescriptionController@pollUpdates')->name('prescription.poll');
 
     // Pagination
     Route::post('per-page-item', 'HomeController@per_page_item');

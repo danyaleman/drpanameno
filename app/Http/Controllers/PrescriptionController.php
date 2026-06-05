@@ -457,28 +457,34 @@ class PrescriptionController extends Controller
                     }
                 }
 
+                // Preservar los signos vitales existentes si el campo viene vacío.
+                // Esto evita que el doctor (que no toca la pestaña de Examen Físico)
+                // sobrescriba con ceros los valores ingresados por la enfermera.
+                $signosExistentes = Signos::where('patient_id', $request->patient_id_hidden)->first();
+                $signosData = [
+                    'peso'                       => ($request->peso !== null && $request->peso !== '') ? $request->peso : optional($signosExistentes)->peso,
+                    'talla'                      => ($request->talla !== null && $request->talla !== '') ? $request->talla : optional($signosExistentes)->talla,
+                    'frec_respiratoria'          => ($request->frec_respiratoria !== null && $request->frec_respiratoria !== '') ? $request->frec_respiratoria : optional($signosExistentes)->frec_respiratoria,
+                    'presion_arterial_sistolica' => ($request->presion_arterial_sistolica !== null && $request->presion_arterial_sistolica !== '') ? $request->presion_arterial_sistolica : optional($signosExistentes)->presion_arterial_sistolica,
+                    'presion_arterial_diastolica'=> ($request->presion_arterial_diastolica !== null && $request->presion_arterial_diastolica !== '') ? $request->presion_arterial_diastolica : optional($signosExistentes)->presion_arterial_diastolica,
+                    'temperatura'               => ($request->temperatura !== null && $request->temperatura !== '') ? $request->temperatura : optional($signosExistentes)->temperatura,
+                    'frec_cardiaca'             => ($request->frec_cardiaca !== null && $request->frec_cardiaca !== '') ? $request->frec_cardiaca : optional($signosExistentes)->frec_cardiaca,
+                    'spo'                        => ($request->spo !== null && $request->spo !== '') ? $request->spo : optional($signosExistentes)->spo,
+                    'examen'                     => ($request->examen !== null && $request->examen !== '') ? $request->examen : optional($signosExistentes)->examen,
+                    'observaciones_adicionales'  => ($request->observaciones_adicionales !== null && $request->observaciones_adicionales !== '') ? $request->observaciones_adicionales : optional($signosExistentes)->observaciones_adicionales,
+                ];
                 Signos::updateOrCreate(
-                ['patient_id' => $request->patient_id_hidden],
-                [
-                    'peso' => $request->peso,
-                    'talla' => $request->talla,
-                    'frec_respiratoria' => $request->frec_respiratoria,
-                    'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
-                    'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
-                    'temperatura' => $request->temperatura,
-                    'frec_cardiaca' => $request->frec_cardiaca,
-                    'spo' => $request->spo,
-                    'examen' => $request->examen,
-                    'observaciones_adicionales' => $request->observaciones_adicionales,
-                ]
+                    ['patient_id' => $request->patient_id_hidden],
+                    $signosData
                 );
 
                 \App\Evaluacion::updateOrCreate(
                 ['prescription_id' => $prescription->id],
                 [
-                    'diagnostico' => $request->diagnostico,
-                    'estudios_laboratorios' => $request->estudios_laboratorios,
-                    'medicamentos' => $request->tratamiento
+                    'diagnostico'          => $request->diagnostico,
+                    'diagnostico_repor'    => $request->evaluacion_medica,
+                    'estudios_laboratorios'=> $request->estudios_laboratorios,
+                    'medicamentos'         => $request->tratamiento,
                 ]
                 );
 
@@ -639,11 +645,12 @@ class PrescriptionController extends Controller
             }
 
             // Save Evaluación (only if present in request)
-            if ($request->has('diagnostico') || $request->has('estudios_laboratorios') || $request->has('tratamiento')) {
+            if ($request->has('diagnostico') || $request->has('evaluacion_medica') || $request->has('estudios_laboratorios') || $request->has('tratamiento')) {
                 $evalData = [];
-                if ($request->has('diagnostico'))           $evalData['diagnostico'] = $request->diagnostico;
-                if ($request->has('estudios_laboratorios'))  $evalData['estudios_laboratorios'] = $request->estudios_laboratorios;
-                if ($request->has('tratamiento'))            $evalData['medicamentos'] = $request->tratamiento;
+                if ($request->has('diagnostico'))           $evalData['diagnostico']          = $request->diagnostico;
+                if ($request->has('evaluacion_medica'))     $evalData['diagnostico_repor']    = $request->evaluacion_medica;
+                if ($request->has('estudios_laboratorios')) $evalData['estudios_laboratorios'] = $request->estudios_laboratorios;
+                if ($request->has('tratamiento'))           $evalData['medicamentos']          = $request->tratamiento;
 
                 \App\Evaluacion::updateOrCreate(
                     ['prescription_id' => $prescription->id],
@@ -673,21 +680,25 @@ class PrescriptionController extends Controller
             }
 
             // Guardar Signos Vitales (si están presentes en el request)
+            // Preservar el valor existente en BD si el campo enviado viene vacío/null,
+            // para evitar sobreescribir con 0 datos ingresados por la enfermera.
             if ($request->has('peso') || $request->has('talla') || $request->has('temperatura')) {
+                $signosExistentesAuto = Signos::where('patient_id', $request->patient_id_hidden)->first();
+                $signosDataAuto = [
+                    'peso'                       => ($request->peso !== null && $request->peso !== '') ? $request->peso : optional($signosExistentesAuto)->peso,
+                    'talla'                      => ($request->talla !== null && $request->talla !== '') ? $request->talla : optional($signosExistentesAuto)->talla,
+                    'frec_respiratoria'          => ($request->frec_respiratoria !== null && $request->frec_respiratoria !== '') ? $request->frec_respiratoria : optional($signosExistentesAuto)->frec_respiratoria,
+                    'presion_arterial_sistolica' => ($request->presion_arterial_sistolica !== null && $request->presion_arterial_sistolica !== '') ? $request->presion_arterial_sistolica : optional($signosExistentesAuto)->presion_arterial_sistolica,
+                    'presion_arterial_diastolica'=> ($request->presion_arterial_diastolica !== null && $request->presion_arterial_diastolica !== '') ? $request->presion_arterial_diastolica : optional($signosExistentesAuto)->presion_arterial_diastolica,
+                    'temperatura'               => ($request->temperatura !== null && $request->temperatura !== '') ? $request->temperatura : optional($signosExistentesAuto)->temperatura,
+                    'frec_cardiaca'             => ($request->frec_cardiaca !== null && $request->frec_cardiaca !== '') ? $request->frec_cardiaca : optional($signosExistentesAuto)->frec_cardiaca,
+                    'spo'                        => ($request->spo !== null && $request->spo !== '') ? $request->spo : optional($signosExistentesAuto)->spo,
+                    'examen'                     => ($request->examen !== null && $request->examen !== '') ? $request->examen : optional($signosExistentesAuto)->examen,
+                    'observaciones_adicionales'  => ($request->observaciones_adicionales !== null && $request->observaciones_adicionales !== '') ? $request->observaciones_adicionales : optional($signosExistentesAuto)->observaciones_adicionales,
+                ];
                 Signos::updateOrCreate(
                     ['patient_id' => $request->patient_id_hidden],
-                    [
-                        'peso' => $request->peso,
-                        'talla' => $request->talla,
-                        'frec_respiratoria' => $request->frec_respiratoria,
-                        'presion_arterial_sistolica' => $request->presion_arterial_sistolica,
-                        'presion_arterial_diastolica' => $request->presion_arterial_diastolica,
-                        'temperatura' => $request->temperatura,
-                        'frec_cardiaca' => $request->frec_cardiaca,
-                        'spo' => $request->spo,
-                        'examen' => $request->examen,
-                        'observaciones_adicionales' => $request->observaciones_adicionales,
-                    ]
+                    $signosDataAuto
                 );
 
                 // Forzar actualización del timestamp de la consulta para activar el polling

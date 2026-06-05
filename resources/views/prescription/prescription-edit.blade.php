@@ -340,18 +340,23 @@
 
             {{-- EVALUACIÓN Y RECETA (MERGED) --}}
             <div class="tab-pane fade" id="tab-evaluacion">
+                @php $evaluacionRecord = \App\Evaluacion::where('prescription_id', $prescription->id)->first(); @endphp
                 <div class="row g-3">
                     <div class="col-md-12">
-                        <label class="fw-bold">Diagnóstico (Evaluación)</label>
-                        <textarea name="diagnostico" class="form-control" rows="3" placeholder="Describa el diagnóstico...">{{ old('diagnostico', $prescription->diagnosis) }}</textarea>
+                        <label class="fw-bold">Diagnóstico</label>
+                        <textarea name="diagnostico" class="form-control" rows="3" placeholder="Describa el diagnóstico...">{{ old('diagnostico', optional($evaluacionRecord)->diagnostico) }}</textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="fw-bold">Evaluación</label>
+                        <textarea name="evaluacion_medica" class="form-control" rows="3" placeholder="Escriba la evaluación médica...">{{ old('evaluacion_medica', optional($evaluacionRecord)->diagnostico_repor) }}</textarea>
                     </div>
                     <div class="col-md-12">
                         <label class="fw-bold">Estudios de Laboratorio</label>
-                        <textarea name="estudios_laboratorios" class="form-control" rows="3" placeholder="Exámenes a realizar...">{{ optional(\App\Evaluacion::where('prescription_id', $prescription->id)->first())->estudios_laboratorios }}</textarea>
+                        <textarea name="estudios_laboratorios" class="form-control" rows="3" placeholder="Exámenes a realizar...">{{ old('estudios_laboratorios', optional($evaluacionRecord)->estudios_laboratorios) }}</textarea>
                     </div>
                     <div class="col-md-12">
                         <label class="fw-bold">Tratamiento / Receta Médica</label>
-                        <textarea name="tratamiento" id="tratamiento_texto" class="form-control" rows="6" placeholder="Escriba aquí todo el tratamiento, medicamentos, indicaciones y dosis recomendadas...">{{ optional(\App\Evaluacion::where('prescription_id', $prescription->id)->first())->medicamentos }}</textarea>
+                        <textarea name="tratamiento" id="tratamiento_texto" class="form-control" rows="6" placeholder="Escriba aquí todo el tratamiento, medicamentos, indicaciones y dosis recomendadas...">{{ optional($evaluacionRecord)->medicamentos }}</textarea>
                         
                         <div class="mt-3 text-end">
                             <button type="button" class="btn btn-success fw-bold shadow-sm" style="border-radius: 6px;" onclick="generarRecetaPDF()">
@@ -716,6 +721,41 @@
 
 <script>
 $(document).ready(function () {
+
+    // ── Protección de signos vitales al hacer submit completo ────────────
+    // Si el usuario es doctor, excluimos los campos de Examen Físico del POST
+    // para no sobrescribir con 0 los valores registrados por la enfermera.
+    (function() {
+        const ROLE = '{{ $role }}';
+        const nurseFieldNames = [
+            'peso', 'talla', 'frec_respiratoria', 'temperatura',
+            'presion_arterial_sistolica', 'presion_arterial_diastolica',
+            'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales'
+        ];
+        if (ROLE === 'doctor') {
+            const form = document.getElementById('prescription-form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    nurseFieldNames.forEach(function(name) {
+                        const els = form.querySelectorAll('[name="' + name + '"]');
+                        els.forEach(function(el) {
+                            // Deshabilitar para excluir del POST; se re-habilita tras el submit
+                            el.disabled = true;
+                        });
+                    });
+                    // Re-habilitar tras un breve delay (por si el navegador cancela el submit o hay validación)
+                    setTimeout(function() {
+                        nurseFieldNames.forEach(function(name) {
+                            const els = form.querySelectorAll('[name="' + name + '"]');
+                            els.forEach(function(el) { el.disabled = false; });
+                        });
+                    }, 3000);
+                });
+            }
+        }
+    })();
+
+    // ── Funciones de Select2 y carga de paciente ──────────────────────
     function matchCustom(params, data) {
         if ($.trim(params.term) === '') { return data; }
         if (typeof data.text === 'undefined') { return null; }
@@ -1736,7 +1776,7 @@ const CURRENT_USER_ROLE = '{{ $role }}';
             } else {
                 // Enfermera/Recepcionista: solo guardar campos del Examen Físico/Vacunas
                 const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
                     'estudios_laboratorios', 'tratamiento', 'precio_consulta',
                     'tipo_consulta_id', 'codigo_id'
                 ];
@@ -1802,7 +1842,7 @@ const CURRENT_USER_ROLE = '{{ $role }}';
             // Si el usuario es Enfermera/Recepción, NO enviar campos del doctor
             if (CURRENT_USER_ROLE !== 'doctor') {
                 const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
                     'estudios_laboratorios', 'tratamiento', 'precio_consulta',
                     'tipo_consulta_id', 'codigo_id'
                 ];
@@ -1885,7 +1925,7 @@ const CURRENT_USER_ROLE = '{{ $role }}';
             }
             if (CURRENT_USER_ROLE !== 'doctor') {
                 const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico',
+                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
                     'estudios_laboratorios', 'tratamiento', 'precio_consulta',
                     'tipo_consulta_id', 'codigo_id'
                 ];

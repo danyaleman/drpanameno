@@ -398,18 +398,27 @@
             <div class="tab-pane fade" id="vt-evaluacion" role="tabpanel">
                 <div class="card border-0 shadow-sm" style="border-radius:12px;">
                     <div class="section-header" style="background: linear-gradient(90deg, #6f42c1, #5a30a8);">
-                        <i class="bx bx-file-medical"></i> Diagnóstico y Evaluación
+                        <i class="bx bx-file-medical"></i> Diagnóstico
                     </div>
                     <div class="card-body p-4">
                         @if($evaluacion && $evaluacion->diagnostico)
                             <p class="mb-0" style="font-size:15px; line-height:1.7; color:#343a40; white-space:pre-wrap;">{{ $evaluacion->diagnostico }}</p>
-                        @elseif($prescription->diagnosis)
-                            <p class="mb-0" style="font-size:15px; line-height:1.7; color:#343a40; white-space:pre-wrap;">{{ $prescription->diagnosis }}</p>
                         @else
                             <div class="empty-state"><i class="bx bx-file-blank opacity-50"></i><p class="mb-0 small">Sin diagnóstico registrado</p></div>
                         @endif
                     </div>
                 </div>
+
+                @if($evaluacion && $evaluacion->diagnostico_repor)
+                <div class="card border-0 shadow-sm mt-3" style="border-radius:12px;">
+                    <div class="section-header" style="background: linear-gradient(90deg, #5a30a8, #3d1f7a);">
+                        <i class="bx bx-clipboard"></i> Evaluación
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="mb-0" style="font-size:15px; line-height:1.7; color:#343a40; white-space:pre-wrap;">{{ $evaluacion->diagnostico_repor }}</p>
+                    </div>
+                </div>
+                @endif
 
                 @if($evaluacion && $evaluacion->medicamentos)
                 <div class="card border-0 shadow-sm mt-3" style="border-radius:12px;">

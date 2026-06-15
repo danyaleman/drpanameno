@@ -1,3 +1,17 @@
+@php
+    $isNurse = isset($role) && $role === 'receptionist';
+@endphp
+
+{{-- Aviso para enfermera --}}
+@if($isNurse)
+<div class="alert alert-info d-flex align-items-center mb-3" role="alert" style="border-radius: 8px; border-left: 4px solid #556ee6;">
+    <i class="bx bx-info-circle font-size-20 me-2"></i>
+    <div>
+        <strong>Enfermería:</strong> Solo puedes registrar <strong>Peso, Talla y Temperatura</strong>. Los demás campos son responsabilidad del médico.
+    </div>
+</div>
+@endif
+
 <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label>Peso (lb)</label>
@@ -15,9 +29,9 @@
                             </div>
 
                             <div class="col-md-3 mb-3">
-                                <label>Frecuencia Respiratoria</label>
+                                <label>Frecuencia Respiratoria @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
                                 <input type="number" name="frec_respiratoria" class="form-control"
-                                    value="{{ old('frec_respiratoria', $signos->frec_respiratoria ?? '') }}">
+                                    value="{{ old('frec_respiratoria', $signos->frec_respiratoria ?? '') }}" {{ $isNurse ? 'disabled' : '' }}>
                             </div>
 
                             <div class="col-md-3 mb-3">
@@ -29,39 +43,39 @@
 
 <div class="row">
                             <div class="col-md-3 mb-3">
-                                <label>Presión Sistólica</label>
+                                <label>Presión Sistólica @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
                                 <input type="number" name="presion_arterial_sistolica" class="form-control"
-                                    value="{{ old('presion_arterial_sistolica', $signos->presion_arterial_sistolica ?? '') }}">
+                                    value="{{ old('presion_arterial_sistolica', $signos->presion_arterial_sistolica ?? '') }}" {{ $isNurse ? 'disabled' : '' }}>
                             </div>
 
                             <div class="col-md-3 mb-3">
-                                <label>Presión Diastólica</label>
+                                <label>Presión Diastólica @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
                                 <input type="number" name="presion_arterial_diastolica" class="form-control"
-                                    value="{{ old('presion_arterial_diastolica', $signos->presion_arterial_diastolica ?? '') }}">
+                                    value="{{ old('presion_arterial_diastolica', $signos->presion_arterial_diastolica ?? '') }}" {{ $isNurse ? 'disabled' : '' }}>
                             </div>
 
                             <div class="col-md-3 mb-3">
-                                <label>Frecuencia Cardíaca</label>
+                                <label>Frecuencia Cardíaca @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
                                 <input type="number" name="frec_cardiaca" class="form-control"
-                                    value="{{ old('frec_cardiaca', $signos->frec_cardiaca ?? '') }}">
+                                    value="{{ old('frec_cardiaca', $signos->frec_cardiaca ?? '') }}" {{ $isNurse ? 'disabled' : '' }}>
                             </div>
 
                             <div class="col-md-3 mb-3">
-                                <label>SpO₂ (%)</label>
+                                <label>SpO₂ (%) @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
                                 <input type="number" name="spo" class="form-control"
-                                    value="{{ old('spo', $signos->spo ?? '') }}">
+                                    value="{{ old('spo', $signos->spo ?? '') }}" {{ $isNurse ? 'disabled' : '' }}>
                             </div>
 </div>
 
 <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Examen físico</label>
-                                <textarea name="examen" class="form-control">{{ old('examen', $signos->examen ?? '') }}</textarea>
+                                <label>Examen físico @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
+                                <textarea name="examen" class="form-control" {{ $isNurse ? 'disabled' : '' }}>{{ old('examen', $signos->examen ?? '') }}</textarea>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label>Observaciones adicionales</label>
-                                <textarea name="observaciones_adicionales" class="form-control">{{ old('observaciones_adicionales', $signos->observaciones_adicionales ?? '') }}</textarea>
+                                <label>Observaciones adicionales @if($isNurse)<small class="text-muted">(solo médico)</small>@endif</label>
+                                <textarea name="observaciones_adicionales" class="form-control" {{ $isNurse ? 'disabled' : '' }}>{{ old('observaciones_adicionales', $signos->observaciones_adicionales ?? '') }}</textarea>
                             </div>
 </div>
 

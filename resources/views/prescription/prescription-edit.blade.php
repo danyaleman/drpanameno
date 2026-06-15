@@ -722,38 +722,7 @@
 <script>
 $(document).ready(function () {
 
-    // ── Protección de signos vitales al hacer submit completo ────────────
-    // Si el usuario es doctor, excluimos los campos de Examen Físico del POST
-    // para no sobrescribir con 0 los valores registrados por la enfermera.
-    (function() {
-        const ROLE = '{{ $role }}';
-        const nurseFieldNames = [
-            'peso', 'talla', 'frec_respiratoria', 'temperatura',
-            'presion_arterial_sistolica', 'presion_arterial_diastolica',
-            'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales'
-        ];
-        if (ROLE === 'doctor') {
-            const form = document.getElementById('prescription-form');
-            if (form) {
-                form.addEventListener('submit', function() {
-                    nurseFieldNames.forEach(function(name) {
-                        const els = form.querySelectorAll('[name="' + name + '"]');
-                        els.forEach(function(el) {
-                            // Deshabilitar para excluir del POST; se re-habilita tras el submit
-                            el.disabled = true;
-                        });
-                    });
-                    // Re-habilitar tras un breve delay (por si el navegador cancela el submit o hay validación)
-                    setTimeout(function() {
-                        nurseFieldNames.forEach(function(name) {
-                            const els = form.querySelectorAll('[name="' + name + '"]');
-                            els.forEach(function(el) { el.disabled = false; });
-                        });
-                    }, 3000);
-                });
-            }
-        }
-    })();
+    // (El filtrado manual de campos por rol ha sido removido según solicitud del usuario)
 
     // ── Funciones de Select2 y carga de paciente ──────────────────────
     function matchCustom(params, data) {
@@ -1763,26 +1732,6 @@ const CURRENT_USER_ROLE = '{{ $role }}';
         for (let [key, value] of data.entries()) {
             if (value instanceof File) continue;
 
-            // Para el snapshot, solo considerar campos relevantes al rol del usuario
-            if (CURRENT_USER_ROLE === 'doctor') {
-                const nurseFields = [
-                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
-                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
-                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
-                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
-                    'lot_number', 'applied_by', 'vaccine_notes'
-                ];
-                if (nurseFields.includes(key) || key.startsWith('archivos')) continue;
-            } else {
-                // Enfermera/Recepcionista: solo guardar campos del Examen Físico/Vacunas
-                const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
-                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
-                    'tipo_consulta_id', 'codigo_id'
-                ];
-                if (doctorFields.includes(key)) continue;
-            }
-
             entries.push(key + '=' + value);
         }
         return entries.sort().join('&');
@@ -1824,32 +1773,6 @@ const CURRENT_USER_ROLE = '{{ $role }}';
                 continue;
             }
 
-            // Si el usuario es Doctor, NO enviar campos de signos vitales (Examen Físico) o vacunas
-            // para evitar sobrescribir lo que la enfermera haya guardado.
-            if (CURRENT_USER_ROLE === 'doctor') {
-                const nurseFields = [
-                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
-                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
-                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
-                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
-                    'lot_number', 'applied_by', 'vaccine_notes'
-                ];
-                if (nurseFields.includes(key) || key.startsWith('archivos')) {
-                    keysToRemove.push(key);
-                }
-            }
-
-            // Si el usuario es Enfermera/Recepción, NO enviar campos del doctor
-            if (CURRENT_USER_ROLE !== 'doctor') {
-                const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
-                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
-                    'tipo_consulta_id', 'codigo_id'
-                ];
-                if (doctorFields.includes(key)) {
-                    keysToRemove.push(key);
-                }
-            }
         }
         keysToRemove.forEach(k => formData.delete(k));
         formData.delete('_method');
@@ -1912,24 +1835,6 @@ const CURRENT_USER_ROLE = '{{ $role }}';
             if (v instanceof File) {
                 remove.push(k);
                 continue;
-            }
-            if (CURRENT_USER_ROLE === 'doctor') {
-                const nurseFields = [
-                    'peso', 'talla', 'frec_respiratoria', 'temperatura',
-                    'presion_arterial_sistolica', 'presion_arterial_diastolica',
-                    'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales',
-                    'vaccine_catalog_id', 'dose_number', 'dose_label', 'applied_date',
-                    'lot_number', 'applied_by', 'vaccine_notes'
-                ];
-                if (nurseFields.includes(k) || k.startsWith('archivos')) remove.push(k);
-            }
-            if (CURRENT_USER_ROLE !== 'doctor') {
-                const doctorFields = [
-                    'consulta_por', 'diagnosis', 'diagnostico', 'evaluacion_medica',
-                    'estudios_laboratorios', 'tratamiento', 'precio_consulta',
-                    'tipo_consulta_id', 'codigo_id'
-                ];
-                if (doctorFields.includes(k)) remove.push(k);
             }
         }
         remove.forEach(k => fd.delete(k));

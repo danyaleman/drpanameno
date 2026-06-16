@@ -162,7 +162,7 @@ class PrescriptionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'archivos.*.file' => 'nullable|file|max:10240',
+            'archivos.*.file' => 'nullable|file',
             'archivos.*.observaciones' => 'nullable|string|max:255',
         ]);
 
@@ -438,7 +438,7 @@ class PrescriptionController extends Controller
                 'appointment_id'    => 'nullable',
                 'consulta_por'      => 'nullable|string',
                 'diagnostico'       => 'nullable|string',
-                'archivos.*.file'   => 'nullable|file|max:10240',
+                'archivos.*.file'   => 'nullable|file',
                 'archivos.*.observaciones' => 'nullable|string|max:255',
             ]);
             try {

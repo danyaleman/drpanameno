@@ -1797,6 +1797,9 @@ const CURRENT_USER_ROLE = '{{ $role }}';
             // Flash verde suave
             panel.style.borderColor = 'rgba(25,135,84,0.5)';
             setTimeout(() => { panel.style.borderColor = ''; }, 1200);
+            // Limpiar dirty tracking: los cambios ya fueron guardados,
+            // el polling puede actualizar estos campos de nuevo.
+            if (typeof window._clearDirtySignos === 'function') window._clearDirtySignos();
         })
         .catch(err => {
             console.error('Autosave error:', err);
@@ -1858,6 +1861,24 @@ const CURRENT_USER_ROLE = '{{ $role }}';
     const CURRENT_USER_ID = {{ Sentinel::getUser()->id ?? 'null' }}; // Para ignorar cambios propios
 
     let lastUpdatedAt = '{{ $prescription->updated_at ? $prescription->updated_at->toISOString() : "" }}';
+
+    // ── Dirty tracking: campos editados por el usuario que aún no se han guardado ──
+    // El polling NO debe sobrescribir estos campos para evitar perder cambios.
+    const dirtyFields = new Set();
+    const signosFieldNames = [
+        'peso', 'talla', 'frec_respiratoria', 'temperatura',
+        'presion_arterial_sistolica', 'presion_arterial_diastolica',
+        'frec_cardiaca', 'spo', 'examen', 'observaciones_adicionales'
+    ];
+    signosFieldNames.forEach(name => {
+        const el = document.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+        if (el) {
+            el.addEventListener('input',  () => dirtyFields.add(name));
+            el.addEventListener('change', () => dirtyFields.add(name));
+        }
+    });
+    // Exponer función para limpiar dirty después de un auto-save exitoso
+    window._clearDirtySignos = function() { dirtyFields.clear(); };
     let toastTimer    = null;
 
     // ── Toast helpers ──────────────────────────────────────────
@@ -1967,23 +1988,24 @@ const CURRENT_USER_ROLE = '{{ $role }}';
         ];
         fields.forEach(f => {
             const el = document.querySelector('input[name="' + f + '"]');
-            if (el && document.activeElement !== el) {
+            // No sobrescribir si el campo está enfocado o fue editado (dirty)
+            if (el && document.activeElement !== el && !dirtyFields.has(f)) {
                 el.value = signos[f] ?? '';
             }
         });
         // Peso: actualizar y refrescar cálculo de kg
         const pesoEl = document.getElementById('peso_lb');
-        if (pesoEl && document.activeElement !== pesoEl) {
+        if (pesoEl && document.activeElement !== pesoEl && !dirtyFields.has('peso')) {
             pesoEl.value = signos.peso ?? '';
             pesoEl.dispatchEvent(new Event('input', { bubbles: true }));
         }
         // Textareas
         const examenEl = document.querySelector('textarea[name="examen"]');
-        if (examenEl && document.activeElement !== examenEl) {
+        if (examenEl && document.activeElement !== examenEl && !dirtyFields.has('examen')) {
             examenEl.value = signos.examen ?? '';
         }
         const obsEl = document.querySelector('textarea[name="observaciones_adicionales"]');
-        if (obsEl && document.activeElement !== obsEl) {
+        if (obsEl && document.activeElement !== obsEl && !dirtyFields.has('observaciones_adicionales')) {
             obsEl.value = signos.observaciones_adicionales ?? '';
         }
     }

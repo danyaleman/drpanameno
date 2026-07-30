@@ -694,7 +694,10 @@ class PrescriptionController extends Controller
             // Guardar Signos Vitales (si están presentes en el request)
             // Enfermera (receptionist) solo actualiza peso, talla y temperatura.
             // Los demás campos del examen físico solo los actualiza el doctor.
-            if ($request->has('peso') || $request->has('talla') || $request->has('temperatura')) {
+            if ($request->has('peso') || $request->has('talla') || $request->has('temperatura')
+                || $request->has('frec_respiratoria') || $request->has('presion_arterial_sistolica')
+                || $request->has('presion_arterial_diastolica') || $request->has('frec_cardiaca')
+                || $request->has('spo') || $request->has('examen') || $request->has('observaciones_adicionales')) {
                 $signosExistentesAuto = Signos::where('patient_id', $request->patient_id_hidden)->first();
                 $userRole = $user->roles[0]->slug ?? '';
                 $signosDataAuto = [

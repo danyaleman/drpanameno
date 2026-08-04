@@ -11,6 +11,7 @@ class Signos extends Model
 
     protected $fillable = [
         'patient_id',
+        'prescription_id',
         'peso',
         'talla',
         'frec_respiratoria',
@@ -26,5 +27,10 @@ class Signos extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function prescription()
+    {
+        return $this->belongsTo(Prescription::class);
     }
 }

@@ -497,18 +497,18 @@ class PatientController extends Controller
                     'non_pathological_history' => $patient->non_pathological_history,
                     'medications_allergies' => $patient->medications_allergies,
     
-                    // Signos vitales más recientes
-                    'signos' => $patient->signos ? [
-                        'peso' => $patient->signos->peso,
-                        'talla' => $patient->signos->talla,
-                        'frec_respiratoria' => $patient->signos->frec_respiratoria,
-                        'temperatura' => $patient->signos->temperatura,
-                        'presion_arterial_sistolica' => $patient->signos->presion_arterial_sistolica,
-                        'presion_arterial_diastolica' => $patient->signos->presion_arterial_diastolica,
-                        'frec_cardiaca' => $patient->signos->frec_cardiaca,
-                        'spo' => $patient->signos->spo,
-                        'examen' => $patient->signos->examen,
-                        'observaciones_adicionales' => $patient->signos->observaciones_adicionales,
+                    // Signos vitales más recientes (último registro de consulta)
+                    'signos' => $patient->latestSignos ? [
+                        'peso' => $patient->latestSignos->peso,
+                        'talla' => $patient->latestSignos->talla,
+                        'frec_respiratoria' => $patient->latestSignos->frec_respiratoria,
+                        'temperatura' => $patient->latestSignos->temperatura,
+                        'presion_arterial_sistolica' => $patient->latestSignos->presion_arterial_sistolica,
+                        'presion_arterial_diastolica' => $patient->latestSignos->presion_arterial_diastolica,
+                        'frec_cardiaca' => $patient->latestSignos->frec_cardiaca,
+                        'spo' => $patient->latestSignos->spo,
+                        'examen' => $patient->latestSignos->examen,
+                        'observaciones_adicionales' => $patient->latestSignos->observaciones_adicionales,
                     ] : null,
     
                     // Historia Clínica (Últimas 10 consultas unidas)

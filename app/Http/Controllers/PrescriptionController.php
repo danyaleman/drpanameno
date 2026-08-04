@@ -189,10 +189,11 @@ class PrescriptionController extends Controller
                 $this->prescription->updated_by       = $user->id;
                 $this->prescription->save();
 
-                // Todos los roles pueden actualizar todos los signos vitales.
+                // Signos vitales vinculados por consulta (prescription_id).
                 // Se preserva el valor existente en BD si el campo enviado viene vacío o nulo.
-                $signosExistentes = Signos::where('patient_id', $request->patient_id_hidden)->first();
+                $signosExistentes = Signos::where('prescription_id', $this->prescription->id)->first();
                 $signosData = [
+                    'patient_id'  => $request->patient_id_hidden,
                     'peso'        => ($request->peso !== null && $request->peso !== '') ? $request->peso : optional($signosExistentes)->peso,
                     'talla'       => ($request->talla !== null && $request->talla !== '') ? $request->talla : optional($signosExistentes)->talla,
                     'temperatura' => ($request->temperatura !== null && $request->temperatura !== '') ? $request->temperatura : optional($signosExistentes)->temperatura,
@@ -205,7 +206,7 @@ class PrescriptionController extends Controller
                     'observaciones_adicionales'  => ($request->observaciones_adicionales !== null && $request->observaciones_adicionales !== '') ? $request->observaciones_adicionales : optional($signosExistentes)->observaciones_adicionales,
                 ];
                 Signos::updateOrCreate(
-                    ['patient_id' => $request->patient_id_hidden],
+                    ['prescription_id' => $this->prescription->id],
                     $signosData
                 );
 
@@ -308,7 +309,7 @@ class PrescriptionController extends Controller
             if ($user_details) {
                 $medicines = Medicine::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
                 $test_reports = TestReport::where('prescription_id', $prescription->id)->where('is_deleted', 0)->get();
-                $signos = Signos::where('patient_id', $prescription->patient_id)->first();
+                $signos = Signos::where('prescription_id', $prescription->id)->first();
                 $evaluacion = $user_details->evaluacion;
 
                 // Cargar datos de teleconsulta y grabaciones para la vista de detalle
@@ -379,7 +380,7 @@ class PrescriptionController extends Controller
                 
                 $vaccines = \App\VaccineCatalog::active()->orderBy('name')->get();
                 $tipoConsultas = \App\TipoConsulta::where('estado', 1)->orderBy('nombre')->get();
-                $signos = Signos::where('patient_id', $prescription->patient_id)->first();
+                $signos = Signos::where('prescription_id', $prescription->id)->first();
 
                 // Obtener grabaciones si es una teleconsulta
                 $teleconsultation = optional($prescription->appointment)->teleconsultation;
@@ -462,10 +463,11 @@ class PrescriptionController extends Controller
                     }
                 }
 
-                // Todos los roles pueden actualizar todos los signos vitales.
+                // Signos vitales vinculados por consulta (prescription_id).
                 // Se preserva el valor existente cuando el campo viene vacío.
-                $signosExistentes = Signos::where('patient_id', $request->patient_id_hidden)->first();
+                $signosExistentes = Signos::where('prescription_id', $prescription->id)->first();
                 $signosData = [
+                    'patient_id'  => $request->patient_id_hidden,
                     'peso'        => ($request->peso !== null && $request->peso !== '') ? $request->peso : optional($signosExistentes)->peso,
                     'talla'       => ($request->talla !== null && $request->talla !== '') ? $request->talla : optional($signosExistentes)->talla,
                     'temperatura' => ($request->temperatura !== null && $request->temperatura !== '') ? $request->temperatura : optional($signosExistentes)->temperatura,
@@ -478,7 +480,7 @@ class PrescriptionController extends Controller
                     'observaciones_adicionales'  => ($request->observaciones_adicionales !== null && $request->observaciones_adicionales !== '') ? $request->observaciones_adicionales : optional($signosExistentes)->observaciones_adicionales,
                 ];
                 Signos::updateOrCreate(
-                    ['patient_id' => $request->patient_id_hidden],
+                    ['prescription_id' => $prescription->id],
                     $signosData
                 );
 
@@ -690,8 +692,9 @@ class PrescriptionController extends Controller
                 || $request->has('frec_respiratoria') || $request->has('presion_arterial_sistolica')
                 || $request->has('presion_arterial_diastolica') || $request->has('frec_cardiaca')
                 || $request->has('spo') || $request->has('examen') || $request->has('observaciones_adicionales')) {
-                $signosExistentesAuto = Signos::where('patient_id', $request->patient_id_hidden)->first();
+                $signosExistentesAuto = Signos::where('prescription_id', $prescription->id)->first();
                 $signosDataAuto = [
+                    'patient_id'  => $request->patient_id_hidden,
                     'peso'        => ($request->peso !== null && $request->peso !== '') ? $request->peso : optional($signosExistentesAuto)->peso,
                     'talla'       => ($request->talla !== null && $request->talla !== '') ? $request->talla : optional($signosExistentesAuto)->talla,
                     'temperatura' => ($request->temperatura !== null && $request->temperatura !== '') ? $request->temperatura : optional($signosExistentesAuto)->temperatura,
@@ -704,7 +707,7 @@ class PrescriptionController extends Controller
                     'observaciones_adicionales'  => ($request->observaciones_adicionales !== null && $request->observaciones_adicionales !== '') ? $request->observaciones_adicionales : optional($signosExistentesAuto)->observaciones_adicionales,
                 ];
                 Signos::updateOrCreate(
-                    ['patient_id' => $request->patient_id_hidden],
+                    ['prescription_id' => $prescription->id],
                     $signosDataAuto
                 );
 
@@ -768,8 +771,8 @@ class PrescriptionController extends Controller
             return response()->json(['success' => false, 'message' => 'Not found'], 404);
         }
 
-        // Signos vitales del paciente
-        $signos = Signos::where('patient_id', $prescription->patient_id)->first();
+        // Signos vitales de esta consulta
+        $signos = Signos::where('prescription_id', $prescription->id)->first();
 
         // Archivos clínicos
         $archivos = $prescription->archivos->map(function ($a) {

@@ -69,11 +69,19 @@ class Patient extends Model
     }
 
     /**
-     * Signos vitales del paciente
+     * Todos los signos vitales del paciente (uno por cada consulta)
      */
     public function signos()
     {
-        return $this->hasOne(Signos::class , 'patient_id', 'id');
+        return $this->hasMany(Signos::class , 'patient_id', 'id');
+    }
+
+    /**
+     * Signos vitales más recientes del paciente
+     */
+    public function latestSignos()
+    {
+        return $this->hasOne(Signos::class , 'patient_id', 'id')->latestOfMany();
     }
 
     /**

@@ -64,11 +64,11 @@ class Prescription extends Model
     }
 
     /**
-     * Signos vitales relacionados
+     * Signos vitales relacionados (por consulta)
      */
     public function signos()
     {
-        return $this->hasOne(Signos::class , 'patient_id', 'patient_id');
+        return $this->hasOne(Signos::class , 'prescription_id');
     }
 
     /**

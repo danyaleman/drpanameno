@@ -264,7 +264,7 @@ class PatientController extends Controller
         $user = Sentinel::getUser();
         if ($user->hasAccess('patient.view')) {
             $role = $user->roles[0]->slug;
-            $patient = Patient::with('signos')->where('id', $id)->where('is_deleted', 0)->first();
+            $patient = Patient::with('latestSignos')->where('id', $id)->where('is_deleted', 0)->first();
             if ($patient) {
                 $medical_Info = $patient->medicalInfo;
 
@@ -282,8 +282,8 @@ class PatientController extends Controller
                 $prescriptions = $patient->prescriptions()->with('doctor', 'evaluacion', 'archivos', 'vacunas')->orderBy('id', 'desc')->paginate($this->limit, '*', 'prescriptions');
                 $invoices = $patient->invoices()->orderBy('id', 'desc')->paginate($this->limit, '*', 'invoice');
 
-                // Signos vitales
-                $signos = $patient->signos;
+                // Signos vitales (último registro individual, no la colección)
+                $signos = $patient->latestSignos;
 
                 // Vacunas registradas en el módulo de vacunación
                 $vaccineRecords = \App\VaccineRecord::where('patient_id', $patient->id)->with('vaccine')->orderBy('scheduled_date', 'desc')->take(20)->get();

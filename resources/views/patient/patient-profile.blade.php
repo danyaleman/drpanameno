@@ -389,9 +389,11 @@
                     $spoClass = 'text-success';
                     if ($signos->spo < 90) $spoClass = 'text-danger fw-bold';
                     elseif ($signos->spo < 95) $spoClass = 'text-warning fw-bold';
-                    function vr($v, $min, $max) {
-                        if ($v === null) return '';
-                        return ($v < $min || $v > $max) ? 'text-danger fw-bold' : 'text-success';
+                    if (!function_exists('vr')) {
+                        function vr($v, $min, $max) {
+                            if ($v === null) return '';
+                            return ($v < $min || $v > $max) ? 'text-danger fw-bold' : 'text-success';
+                        }
                     }
                 @endphp
                 <div class="card border-0 shadow-sm" style="border-radius:12px;">
